@@ -152,7 +152,7 @@ export default function LoginPage() {
             fontWeight: 'bold',
             color: '#1a202c'
           }}>
-            Acceso al Sistema
+              CJ Local
           </h1>
           <p style={{
             margin: 0,

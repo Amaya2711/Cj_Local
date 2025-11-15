@@ -16,6 +16,7 @@ const NAV_ITEMS: NavItem[] = [
   { href: '/cuadrillas', label: 'Cuadrillas' },
   { href: '/tickets-v1', label: 'Tickets V1' },
   { href: '/map-google', label: 'Google Maps' },
+  { href: '/informe', label: 'Informe' },
 ];
 
 export default function TopNav() {

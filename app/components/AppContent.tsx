@@ -1,6 +1,7 @@
 'use client';
 import { useAuth } from '../context/AuthContext';
 import LoginForm from './LoginForm';
+import TopNav from './TopNav';
 
 interface AppContentProps {
   children: React.ReactNode;
@@ -94,16 +95,9 @@ export default function AppContent({ children }: AppContentProps) {
         </button>
       </div>
 
-      {/* Navegación principal */}
-      <header style={{ padding: '12px', borderBottom: '1px solid #ccc' }}>
-        <nav style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-          <a href="/">Inicio</a>
-          <a href="/sites-v1" style={{ fontWeight: 'bold', color: '#28a745' }}>Sites</a>
-          <a href="/cuadrillas">Cuadrillas</a>
-          <a href="/tickets-v1" style={{ fontWeight: 'bold', color: '#007bff' }}>Tickets</a>
-          <a href="/map">Mapa</a>
-          <a href="/map-google" style={{ fontWeight: 'bold', color: '#dc3545' }}>Google Maps</a>
-        </nav>
+      {/* Navegación principal usando TopNav */}
+      <header>
+        <TopNav />
       </header>
 
       {/* Contenido principal */}

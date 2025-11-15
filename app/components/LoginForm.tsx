@@ -94,7 +94,7 @@ export default function LoginForm() {
             fontWeight: 'bold',
             color: '#1a202c'
           }}>
-            CJ INSIGHT
+            CJ Local
           </h1>
           <p style={{
             margin: 0,
