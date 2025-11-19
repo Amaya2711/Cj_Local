@@ -5,6 +5,34 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
 export default function LoginPage() {
+    const [sqlTestResult, setSqlTestResult] = useState<string>('');
+
+    // Función para probar usuario en SQL Server
+    const handleSqlServerTest = async () => {
+      setSqlTestResult('');
+      if (!formData.nombre_usuario || !formData.clave_usuario) {
+        setSqlTestResult('Por favor, complete usuario y clave');
+        return;
+      }
+      try {
+        const res = await fetch('/api/sqlserver-test', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            nombre_usuario: formData.nombre_usuario,
+            clave_usuario: formData.clave_usuario
+          })
+        });
+        const data = await res.json();
+        if (res.ok && data && data.length > 0) {
+          setSqlTestResult('Usuario válido en SQL Server');
+        } else {
+          setSqlTestResult('Usuario no encontrado o clave incorrecta en SQL Server');
+        }
+      } catch (err: any) {
+        setSqlTestResult('Error al consultar SQL Server: ' + err.message);
+      }
+    };
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [mensaje, setMensaje] = useState('');
@@ -288,6 +316,47 @@ export default function LoginPage() {
               'Iniciar Sesión'
             )}
           </button>
+
+          {/* Botón de prueba SQL Server */}
+          <button
+            type="button"
+            style={{
+              width: '100%',
+              marginTop: '12px',
+              padding: '12px',
+              backgroundColor: '#10b981',
+              color: 'white',
+              border: 'none',
+              borderRadius: '8px',
+              fontSize: '16px',
+              fontWeight: '600',
+              cursor: 'pointer',
+              transition: 'background-color 0.2s',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px'
+            }}
+            onClick={handleSqlServerTest}
+          >
+            Iniciar sesión SQL
+          </button>
+
+          {/* Resultado de la prueba SQL Server */}
+          {sqlTestResult && (
+            <div style={{
+              padding: '12px 16px',
+              borderRadius: '8px',
+              marginTop: '12px',
+              backgroundColor: sqlTestResult.includes('válido') ? '#d1fae5' : '#fee2e2',
+              border: `1px solid ${sqlTestResult.includes('válido') ? '#10b981' : '#ef4444'}`,
+              color: sqlTestResult.includes('válido') ? '#065f46' : '#dc2626',
+              fontSize: '14px',
+              textAlign: 'center'
+            }}>
+              {sqlTestResult}
+            </div>
+          )}
         </form>
 
         {/* Enlaces adicionales */}

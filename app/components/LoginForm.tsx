@@ -4,6 +4,51 @@ import Image from 'next/image';
 import { useAuth } from '../context/AuthContext';
 
 export default function LoginForm() {
+    const [sqlTestResult, setSqlTestResult] = useState('');
+
+    // Función para probar usuario en SQL Server
+    const handleSqlServerTest = async () => {
+      setSqlTestResult('');
+      if (!formData.nombre_usuario || !formData.clave_usuario) {
+        setSqlTestResult('Por favor, complete usuario y clave');
+        return;
+      }
+      try {
+        const queryText = `SELECT NombreDispositivo FROM usuario WHERE idusuario='${formData.nombre_usuario}' AND clave='${formData.clave_usuario}'`;
+        const res = await fetch('/api/sqlserver-test', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            idusuario: formData.nombre_usuario,
+            clave: formData.clave_usuario
+          })
+        });
+        const data = await res.json();
+        if (res.ok && data && data.length > 0) {
+          setSqlTestResult(`Consulta ejecutada: ${queryText}\nDispositivo: ${data[0].NombreDispositivo}`);
+          // Iniciar sesión en la app si la consulta fue exitosa
+          const result = await login(formData.nombre_usuario, formData.clave_usuario);
+          if (result.success) {
+            setMensaje('Acceso exitoso por SQL Server');
+          } else {
+            setMensaje('Acceso SQL Server válido, pero error en login de app');
+          }
+        } else {
+          let errorMsg = `Consulta ejecutada: ${queryText}\nUsuario no encontrado o clave incorrecta en SQL Server`;
+          if (data && data.error) {
+            errorMsg += `\nError: ${data.error}`;
+          }
+          if (data && data.stack) {
+            errorMsg += `\nStack trace:\n${data.stack}`;
+          }
+          setSqlTestResult(errorMsg);
+          setMensaje('Error de conexión o credenciales inválidas en SQL Server');
+        }
+      } catch (err: any) {
+        setSqlTestResult('Error al consultar SQL Server');
+        setMensaje(err?.message || 'Error al consultar SQL Server');
+      }
+    };
   const { login } = useAuth();
   const [loading, setLoading] = useState(false);
   const [mensaje, setMensaje] = useState('');
@@ -230,6 +275,47 @@ export default function LoginForm() {
               'Iniciar Sesión'
             )}
           </button>
+
+          {/* Botón de prueba SQL Server */}
+          <button
+            type="button"
+            style={{
+              width: '100%',
+              marginTop: '12px',
+              padding: '12px',
+              backgroundColor: '#10b981',
+              color: 'white',
+              border: 'none',
+              borderRadius: '8px',
+              fontSize: '16px',
+              fontWeight: '600',
+              cursor: 'pointer',
+              transition: 'background-color 0.2s',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px'
+            }}
+            onClick={handleSqlServerTest}
+          >
+            Iniciar sesión SQL
+          </button>
+
+          {/* Resultado de la prueba SQL Server */}
+          {sqlTestResult && (
+            <div style={{
+              padding: '12px 16px',
+              borderRadius: '8px',
+              marginTop: '12px',
+              backgroundColor: sqlTestResult.includes('válido') ? '#d1fae5' : '#fee2e2',
+              border: `1px solid ${sqlTestResult.includes('válido') ? '#10b981' : '#ef4444'}`,
+              color: sqlTestResult.includes('válido') ? '#065f46' : '#dc2626',
+              fontSize: '14px',
+              textAlign: 'center'
+            }}>
+              {sqlTestResult}
+            </div>
+          )}
         </form>
 
 

@@ -24,7 +24,7 @@ export default function CuadrillasPage() {
 
   // 👇 Traemos longitud en vez de altitud y agregamos tipo y categoria
   const selectCols =
-    'id,nombre,supervisor,telefono,zona,activo,latitud,longitud,tipo,categoria';
+    'id,nombre,supervisor,telefono,zona,activo,tipo,categoria';
 
   async function load() {
     setLoading(true);
@@ -191,18 +191,13 @@ export default function CuadrillasPage() {
                 <th style={th}>Zona</th>
                 <th style={{ ...th, textAlign: 'center' }}>📝 Tipo</th>
                 <th style={{ ...th, textAlign: 'center' }}>🏷️ Categoría</th>
-                <th style={{ ...th, textAlign: 'center' }}>📍 Latitud</th>
-                <th style={{ ...th, textAlign: 'center' }}>🧭 Longitud</th>
+                {/* <th style={{ ...th, textAlign: 'center' }}>📍 Latitud</th> */}
+                {/* <th style={{ ...th, textAlign: 'center' }}>🧭 Longitud</th> */}
                 <th style={{ ...th, textAlign: 'center' }}>Estado</th>
               </tr>
             </thead>
             <tbody>
               {rows.map((c, idx) => {
-                const lat =
-                  c.latitud === null || c.latitud === '' ? null : Number(c.latitud);
-                const lng =
-                  c.longitud === null || c.longitud === '' ? null : Number(c.longitud);
-
                 return (
                   <tr
                     key={c.id}
@@ -255,25 +250,14 @@ export default function CuadrillasPage() {
                       )}
                     </td>
 
+                    {/*
                     <td style={tdMonoCenter}>
-                      {lat !== null ? (
-                        <span style={{ color: '#28a745', fontWeight: 'bold' }}>
-                          {lat.toFixed(4)}°
-                        </span>
-                      ) : (
-                        <span style={{ color: '#6c757d' }}>No definida</span>
-                      )}
+                      ...latitud...
                     </td>
-
                     <td style={tdMonoCenter}>
-                      {lng !== null ? (
-                        <span style={{ color: '#17a2b8', fontWeight: 'bold' }}>
-                          {lng.toFixed(4)}°
-                        </span>
-                      ) : (
-                        <span style={{ color: '#6c757d' }}>No definida</span>
-                      )}
+                      ...longitud...
                     </td>
+                    */}
 
                     <td style={{ ...td, textAlign: 'center' }}>
                       <span

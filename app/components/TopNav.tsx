@@ -13,6 +13,7 @@ type NavItem = {
 const NAV_ITEMS: NavItem[] = [
   { href: '/', label: 'Inicio' },
   { href: '/sites-v1', label: 'Sites V1' },
+  { href: '/sites', label: 'Sites' },
   { href: '/cuadrillas', label: 'Cuadrillas' },
   { href: '/tickets-v1', label: 'Tickets V1' },
   { href: '/map-google', label: 'Google Maps' },
