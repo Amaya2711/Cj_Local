@@ -18,6 +18,7 @@ export async function querySqlServer(query: string) {
     const result = await pool.request().query(query);
     return result.recordset;
   } catch (err) {
+    console.error('Error al conectar o consultar SQL Server:', err);
     throw err;
   }
 }

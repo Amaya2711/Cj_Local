@@ -16,6 +16,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const result = await pool.request().query(query);
       res.status(200).json(result.recordset);
     } catch (error: any) {
+      console.error('Error en /api/sqlserver-test (query personalizado):', error);
       res.status(500).json({ error: error.message, stack: error.stack });
     }
     return;
@@ -29,6 +30,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const result = await pool.request().query('SELECT TOP 10 idusuario, clave, NombreDispositivo FROM usuario');
       res.status(200).json(result.recordset);
     } catch (error: any) {
+      console.error('Error en /api/sqlserver-test (TOP 10 usuarios):', error);
       res.status(500).json({ error: error.message, stack: error.stack });
     }
     return;
@@ -43,6 +45,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       .query('SELECT NombreDispositivo FROM usuario WHERE idusuario=@idusuario AND clave=@clave');
     res.status(200).json(result.recordset);
   } catch (error: any) {
+    console.error('Error en /api/sqlserver-test (login usuario):', error);
     res.status(500).json({ error: error.message, stack: error.stack });
   }
 }

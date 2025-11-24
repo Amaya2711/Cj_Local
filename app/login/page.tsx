@@ -1,38 +1,9 @@
 'use client';
 import { useState } from 'react';
-import { supabase } from '@/lib/supabaseClient';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
 export default function LoginPage() {
-    const [sqlTestResult, setSqlTestResult] = useState<string>('');
-
-    // Función para probar usuario en SQL Server
-    const handleSqlServerTest = async () => {
-      setSqlTestResult('');
-      if (!formData.nombre_usuario || !formData.clave_usuario) {
-        setSqlTestResult('Por favor, complete usuario y clave');
-        return;
-      }
-      try {
-        const res = await fetch('/api/sqlserver-test', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            nombre_usuario: formData.nombre_usuario,
-            clave_usuario: formData.clave_usuario
-          })
-        });
-        const data = await res.json();
-        if (res.ok && data && data.length > 0) {
-          setSqlTestResult('Usuario válido en SQL Server');
-        } else {
-          setSqlTestResult('Usuario no encontrado o clave incorrecta en SQL Server');
-        }
-      } catch (err: any) {
-        setSqlTestResult('Error al consultar SQL Server: ' + err.message);
-      }
-    };
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [mensaje, setMensaje] = useState('');
@@ -53,85 +24,39 @@ export default function LoginPage() {
     e.preventDefault();
     setLoading(true);
     setMensaje('');
-
     try {
-      // Validaciones básicas
       if (!formData.nombre_usuario || !formData.clave_usuario) {
         setMensaje('Por favor, complete todos los campos');
         setLoading(false);
         return;
       }
-
-      console.log('Intentando login con:', formData.nombre_usuario);
-
-      // Buscar el usuario en la base de datos
-      const { data: usuarios, error } = await supabase
-        .from('usuario')
-        .select(`
-          id_usuario,
-          nombre_usuario,
-          clave_usuario,
-          id_empleado,
-          empleado:id_empleado (
-            id_empleado,
-            nombre_empleado,
-            estado_empleado
-          )
-        `)
-        .eq('nombre_usuario', formData.nombre_usuario.trim())
-        .single();
-
-      if (error) {
-        console.error('Error buscando usuario:', error);
+      // Validar usuario contra SQL Server
+      const res = await fetch('/api/sqlserver-test', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          idusuario: formData.nombre_usuario,
+          clave: formData.clave_usuario
+        })
+      });
+      const data = await res.json();
+      if (res.ok && data && Array.isArray(data) && data.length > 0) {
+        // Usuario válido, guardar en localStorage
+        const userData = {
+          id_usuario: formData.nombre_usuario,
+          nombre_usuario: formData.nombre_usuario,
+          loginTime: new Date().toISOString()
+        };
+        localStorage.setItem('userData', JSON.stringify(userData));
+        localStorage.setItem('isAuthenticated', 'true');
+        setMensaje('¡Acceso exitoso! Redirigiendo...');
+        setTimeout(() => {
+          router.push('/');
+        }, 1000);
+      } else {
         setMensaje('Usuario o contraseña incorrectos');
-        setLoading(false);
-        return;
       }
-
-      // Verificar que el usuario existe
-      if (!usuarios) {
-        setMensaje('Usuario o contraseña incorrectos');
-        setLoading(false);
-        return;
-      }
-
-      // Verificar que el empleado asociado está activo
-      if (usuarios.empleado && Array.isArray(usuarios.empleado) ? usuarios.empleado[0]?.estado_empleado !== 'ACTIVO' : (usuarios.empleado as any)?.estado_empleado !== 'ACTIVO') {
-        setMensaje('Su cuenta está inactiva. Contacte al administrador');
-        setLoading(false);
-        return;
-      }
-
-      // Verificar contraseña (en un entorno real, aquí compararías hashes)
-      // Por ahora, comparación directa (cambiar en producción)
-      if (usuarios.clave_usuario !== formData.clave_usuario) {
-        setMensaje('Usuario o contraseña incorrectos');
-        setLoading(false);
-        return;
-      }
-
-      console.log('Login exitoso para:', usuarios.nombre_usuario);
-
-      // Guardar información del usuario en localStorage
-      const userData = {
-        id_usuario: usuarios.id_usuario,
-        nombre_usuario: usuarios.nombre_usuario,
-        id_empleado: usuarios.id_empleado,
-        nombre_empleado: Array.isArray(usuarios.empleado) 
-          ? (usuarios.empleado[0] as any)?.nombre_empleado || '' 
-          : (usuarios.empleado as any)?.nombre_empleado || '',
-        loginTime: new Date().toISOString()
-      };
-
-      localStorage.setItem('userData', JSON.stringify(userData));
-      localStorage.setItem('isAuthenticated', 'true');
-
-      // Redirigir al dashboard
-      setMensaje('¡Acceso exitoso! Redirigiendo...');
-      setTimeout(() => {
-        router.push('/');
-      }, 1000);
-
+      setLoading(false);
     } catch (error) {
       console.error('Error en login:', error);
       setMensaje('Error del sistema. Intente nuevamente');
@@ -187,10 +112,9 @@ export default function LoginPage() {
             color: '#64748b',
             fontSize: '14px'
           }}>
-            Ingrese sus credenciales para continuar
+            Ingrese sus credenciales para acceder
           </p>
         </div>
-
         {/* Formulario */}
         <form onSubmit={handleSubmit}>
           <div style={{ marginBottom: '20px' }}>
@@ -220,11 +144,10 @@ export default function LoginPage() {
                 outline: 'none',
                 backgroundColor: loading ? '#f1f5f9' : 'white'
               }}
-              onFocus={(e) => e.target.style.borderColor = '#007bff'}
-              onBlur={(e) => e.target.style.borderColor = '#e2e8f0'}
+              onFocus={e => e.target.style.borderColor = '#007bff'}
+              onBlur={e => e.target.style.borderColor = '#e2e8f0'}
             />
           </div>
-
           <div style={{ marginBottom: '25px' }}>
             <label style={{
               display: 'block',
@@ -252,11 +175,10 @@ export default function LoginPage() {
                 outline: 'none',
                 backgroundColor: loading ? '#f1f5f9' : 'white'
               }}
-              onFocus={(e) => e.target.style.borderColor = '#007bff'}
-              onBlur={(e) => e.target.style.borderColor = '#e2e8f0'}
+              onFocus={e => e.target.style.borderColor = '#007bff'}
+              onBlur={e => e.target.style.borderColor = '#e2e8f0'}
             />
           </div>
-
           {/* Mensaje de estado */}
           {mensaje && (
             <div style={{
@@ -272,15 +194,14 @@ export default function LoginPage() {
               {mensaje}
             </div>
           )}
-
-          {/* Botón de acceso */}
           <button
             type="submit"
             disabled={loading}
             style={{
               width: '100%',
+              marginTop: '12px',
               padding: '12px',
-              backgroundColor: loading ? '#94a3b8' : '#007bff',
+              backgroundColor: loading ? '#10b98180' : '#10b981',
               color: 'white',
               border: 'none',
               borderRadius: '8px',
@@ -292,12 +213,6 @@ export default function LoginPage() {
               alignItems: 'center',
               justifyContent: 'center',
               gap: '8px'
-            }}
-            onMouseEnter={(e) => {
-              if (!loading) e.currentTarget.style.backgroundColor = '#0056b3';
-            }}
-            onMouseLeave={(e) => {
-              if (!loading) e.currentTarget.style.backgroundColor = '#007bff';
             }}
           >
             {loading ? (
@@ -313,52 +228,10 @@ export default function LoginPage() {
                 Verificando...
               </>
             ) : (
-              'Iniciar Sesión'
+              'Ingresar'
             )}
           </button>
-
-          {/* Botón de prueba SQL Server */}
-          <button
-            type="button"
-            style={{
-              width: '100%',
-              marginTop: '12px',
-              padding: '12px',
-              backgroundColor: '#10b981',
-              color: 'white',
-              border: 'none',
-              borderRadius: '8px',
-              fontSize: '16px',
-              fontWeight: '600',
-              cursor: 'pointer',
-              transition: 'background-color 0.2s',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '8px'
-            }}
-            onClick={handleSqlServerTest}
-          >
-            Iniciar sesión SQL
-          </button>
-
-          {/* Resultado de la prueba SQL Server */}
-          {sqlTestResult && (
-            <div style={{
-              padding: '12px 16px',
-              borderRadius: '8px',
-              marginTop: '12px',
-              backgroundColor: sqlTestResult.includes('válido') ? '#d1fae5' : '#fee2e2',
-              border: `1px solid ${sqlTestResult.includes('válido') ? '#10b981' : '#ef4444'}`,
-              color: sqlTestResult.includes('válido') ? '#065f46' : '#dc2626',
-              fontSize: '14px',
-              textAlign: 'center'
-            }}>
-              {sqlTestResult}
-            </div>
-          )}
         </form>
-
         {/* Enlaces adicionales */}
         <div style={{
           textAlign: 'center',
@@ -385,8 +258,6 @@ export default function LoginPage() {
           </Link>
         </div>
       </div>
-
-      {/* CSS para animación */}
       <style jsx>{`
         @keyframes spin {
           0% { transform: rotate(0deg); }

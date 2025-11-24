@@ -125,7 +125,7 @@ export default function SitesPage() {
         >Grabar</button>
       </div>
       <h2 style={{ textAlign: 'center', marginBottom: 32 }}>Sites V1 (Asignación SQL Server)</h2>
-      <div style={{ maxWidth: 500, margin: '0 auto', marginBottom: 32 }}>
+      <div style={{ maxWidth: 700, margin: '0 auto', marginBottom: 32 }}>
         <div style={{ marginBottom: 24 }}>
           <label style={{ fontWeight: 500 }}>Cuadrilla</label>
           {loadingCuadrilla && <div style={{ color: '#2563eb', marginBottom: 8 }}>Cargando cuadrillas...</div>}
