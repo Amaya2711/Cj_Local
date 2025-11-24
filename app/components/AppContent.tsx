@@ -1,6 +1,5 @@
 'use client';
 import { useAuth } from '../context/AuthContext';
-import LoginForm from './LoginForm';
 import TopNav from './TopNav';
 
 interface AppContentProps {
@@ -42,10 +41,6 @@ export default function AppContent({ children }: AppContentProps) {
     );
   }
 
-  // Si NO está autenticado, mostrar formulario de login
-  if (!isAuthenticated) {
-    return <LoginForm />;
-  }
 
   // Si está autenticado, mostrar la aplicación completa con navegación
   return (
