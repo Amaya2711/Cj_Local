@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import CuadrillasPage from '../app/cuadrillas/page';
 
+const menuColor = '#2563eb';
+
 const MainForm: React.FC = () => {
   const usuario = 'ADMIN'; // Puedes reemplazarlo por el usuario autenticado si lo necesitas
   const fecha = new Date().toLocaleDateString('es-PE', {
@@ -35,12 +37,12 @@ const MainForm: React.FC = () => {
       </div>
       {/* Menú principal */}
       <nav style={{ display: 'flex', gap: 24, padding: '18px 32px', background: '#fff', borderBottom: '1px solid #e5e7eb', fontWeight: 600, fontSize: 18 }}>
-        <a href="#" style={{ color: '#222c36', textDecoration: 'none' }} onClick={() => setOpcion('panel')}>Inicio</a>
-        <a href="#" style={{ color: '#059669', textDecoration: 'none' }} onClick={() => setOpcion('sites')}>Sites</a>
-        <a href="#" style={{ color: '#2563eb', textDecoration: 'none' }} onClick={() => setOpcion('cuadrillas')}>Cuadrillas</a>
-        <a href="#" style={{ color: '#dc2626', textDecoration: 'none' }} onClick={() => setOpcion('tickets')}>Tickets</a>
-        <a href="#" style={{ color: '#eab308', textDecoration: 'none' }} onClick={() => setOpcion('mapa')}>Mapa</a>
-        <a href="#" style={{ color: '#ef4444', textDecoration: 'none' }} onClick={() => setOpcion('googlemaps')}>Google Maps</a>
+        <a href="#" style={{ color: menuColor, textDecoration: 'none' }} onClick={() => setOpcion('panel')}>Inicio</a>
+        <a href="#" style={{ color: menuColor, textDecoration: 'none' }} onClick={() => setOpcion('sites')}>Sites</a>
+        <a href="#" style={{ color: menuColor, textDecoration: 'none' }} onClick={() => setOpcion('cuadrillas')}>Cuadrillas</a>
+        <a href="#" style={{ color: menuColor, textDecoration: 'none' }} onClick={() => setOpcion('tickets')}>Tickets</a>
+        <a href="#" style={{ color: menuColor, textDecoration: 'none' }} onClick={() => setOpcion('mapa')}>Mapa</a>
+        <a href="#" style={{ color: menuColor, textDecoration: 'none' }} onClick={() => setOpcion('googlemaps')}>Google Maps</a>
       </nav>
       {/* Contenido principal dinámico */}
       <div style={{ width: '100vw', margin: '32px 0', background: '#fff', borderRadius: 10, boxShadow: '0 4px 24px #0001', padding: 32, minHeight: 400 }}>
