@@ -68,8 +68,6 @@ export default function HomePage() {
         )
       ).sort();
 
-      setOpcionesFaultLevel(uniqueFaultLevels);
-
 import Link from 'next/link';
 
 export default function HomePage() {
