@@ -11,7 +11,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(400).json({ error: 'Faltan datos' });
   }
 
-  const sql = `SELECT * FROM USUARIO WHERE ID_USUARIO = '${usuario}' AND CLAVE = '${clave}'`;
+  const sql = `SELECT * FROM USUARIO WHERE IDUSUARIO = '${usuario}' AND CLAVE = '${clave}'`;
   try {
     const result = await querySqlServer(sql);
     if (Array.isArray(result) && result.length > 0) {
