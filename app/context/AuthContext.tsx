@@ -170,15 +170,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
 // Hook para usar el contexto
 export function useAuth() {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth debe ser usado dentro de un AuthProvider');
-  }
-  return context;
-}
 
 // Función para obtener el usuario actual desde cualquier parte del sistema
 export function getUsuarioActual(): string {
+  // Removed useAuth function as authentication is no longer used
+  // Removed AuthContext references
   if (typeof window === 'undefined') return '';
   
   try {

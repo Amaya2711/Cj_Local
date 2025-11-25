@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
-import { useAuth } from './context/AuthContext';
 import { USUARIO_ACTUAL } from '@/lib/auth';
 
 // ==== Tipos auxiliares de datos que vienen de Supabase ====
@@ -24,7 +23,6 @@ type DatoMensual = {
 type EstadisticaEstado = { estado: string; cantidad: number; porcentaje: number };
 
 export default function HomePage() {
-  const { USUARIO_ACTUAL, userData } = useAuth();
   const [total, setTotal] = useState<number>(0);
   const [cargando, setCargando] = useState<boolean>(false);
   const [fechaDesde, setFechaDesde] = useState<string>('');
@@ -74,76 +72,36 @@ export default function HomePage() {
 
       // ----- Sites
       const { data: sites } = await supabase
-        .from('tickets_v1')
-        .select('site_id, site_name')
-        .not('site_id', 'is', null);
+import Link from 'next/link';
 
-      const uniqueSites: OpcionSite[] = Array.from(
-        new Map(
-          ((sites as SiteRow[] | null) ?? []).map(item => {
-            const id = String(item.site_id); // normalizamos a string para usarlo en <select>
-            const nombre = item.site_name ? `${id} - ${item.site_name}` : id;
-            return [id, { id, nombre }] as const;
-          })
-        ).values()
-      ).sort((a, b) => a.nombre.localeCompare(b.nombre));
-
-      setOpcionesSites(uniqueSites);
-
-      // ----- Attention Types
-      const { data: attentionTypes } = await supabase
-        .from('tickets_v1')
-        .select('attention_type')
-        .not('attention_type', 'is', null);
-
-      const uniqueAttentionTypes: string[] = Array.from(
-        new Set(
-          (attentionTypes as AttentionTypeRow[] | null)?.flatMap(r =>
-            typeof r.attention_type === 'string' ? [r.attention_type] : []
-          ) ?? []
-        )
-      ).sort();
-
-      setOpcionesAttentionType(uniqueAttentionTypes);
-
-      // ----- Estados
-      const { data: estados } = await supabase
-        .from('tickets_v1')
-        .select('estado')
-        .not('estado', 'is', null);
-
-      const uniqueEstados: string[] = Array.from(
-        new Set(
-          (estados as EstadoRow[] | null)?.flatMap(r =>
-            typeof r.estado === 'string' ? [r.estado] : []
-          ) ?? []
-        )
-      ).sort();
-
-      setOpcionesEstado(uniqueEstados);
-
-      console.log('Opciones cargadas');
-    } catch (error) {
-      console.error('Error:', error);
-    }
-  }
-
-  // Función para obtener TODOS los registros usando paginación
-  async function obtenerTodosLosRegistrosFiltrados() {
-    console.log('🔍 Iniciando obtención de registros filtrados...');
-    console.log('📅 Filtros de fecha aplicados:', { fechaDesde, fechaHasta });
-    
-    const BATCH_SIZE = 1000;
-    let allRecords: any[] = [];
-    let from = 0;
-    let hasMore = true;
-
-    while (hasMore) {
-      let query = supabase
-        .from('tickets_v1')
-        .select('fault_occur_time, fault_level, attention_type, site_id, site_name, estado')
-        .range(from, from + BATCH_SIZE - 1)
-        .order('fault_occur_time', { ascending: true, nullsFirst: false });
+export default function HomePage() {
+  // Main menu links
+  return (
+    <div style={{ padding: 32 }}>
+      <nav style={{ marginBottom: 40, textAlign: 'center' }}>
+        <Link href="/sites" style={{ margin: '0 24px', fontWeight: 600, fontSize: 20, color: '#2563eb', textDecoration: 'none' }}>SITES</Link>
+        <Link href="/cuadrillas" style={{ margin: '0 24px', fontWeight: 600, fontSize: 20, color: '#059669', textDecoration: 'none' }}>CUADRILLAS</Link>
+        <Link href="/tickets-v1" style={{ margin: '0 24px', fontWeight: 600, fontSize: 20, color: '#dc2626', textDecoration: 'none' }}>TICKETS_V1</Link>
+      </nav>
+      <div style={{ textAlign: 'center', fontSize: 24, fontWeight: 500 }}>
+        Bienvenido al sistema base de gestión
+      </div>
+    </div>
+  );
+}
+          return (
+            <div style={{ padding: 32 }}>
+              <nav style={{ marginBottom: 40, textAlign: 'center' }}>
+                <Link href="/sites" style={{ margin: '0 24px', fontWeight: 600, fontSize: 20, color: '#2563eb', textDecoration: 'none' }}>SITES</Link>
+                <Link href="/cuadrillas" style={{ margin: '0 24px', fontWeight: 600, fontSize: 20, color: '#059669', textDecoration: 'none' }}>CUADRILLAS</Link>
+                <Link href="/tickets-v1" style={{ margin: '0 24px', fontWeight: 600, fontSize: 20, color: '#dc2626', textDecoration: 'none' }}>TICKETS_V1</Link>
+              </nav>
+              <div style={{ textAlign: 'center', fontSize: 24, fontWeight: 500 }}>
+                Bienvenido al sistema base de gestión
+              </div>
+            </div>
+          );
+        }
       
       console.log(`📊 Aplicando filtros al lote ${Math.floor(from/BATCH_SIZE) + 1}...`);
       query = aplicarFiltros(query);

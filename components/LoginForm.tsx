@@ -37,3 +37,5 @@ export default function LoginForm({ onLogin }: { onLogin: (user: any) => void })
     </form>
   );
 }
+
+  // Archivo eliminado: LoginForm.tsx
