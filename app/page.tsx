@@ -70,8 +70,6 @@ export default function HomePage() {
 
       setOpcionesFaultLevel(uniqueFaultLevels);
 
-      // ----- Sites
-      const { data: sites } = await supabase
 import Link from 'next/link';
 
 export default function HomePage() {
