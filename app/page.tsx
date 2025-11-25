@@ -1,4 +1,15 @@
-﻿import Link from 'next/link';
+﻿"use client";
+import React from "react";
+import ValidarForm from "@/components/ValidarForm";
+
+export default function Home() {
+  return (
+    <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#f8fafc" }}>
+      <ValidarForm onSuccess={() => window.location.reload()} />
+    </div>
+  );
+}
+import Link from 'next/link';
 
 export default function HomePage() {
   return (
@@ -519,38 +530,17 @@ export default function HomePage() {
       <div style={{ marginBottom: 24 }}>
         <h1 style={{ margin: '0 0 8px 0' }}>Dashboard Tickets</h1>
         <p style={{ 
+          "use client";
+          import React from "react";
+          import ValidarForm from "@/components/ValidarForm";
           margin: 0, 
-          color: '#64748b', 
-          fontSize: 14,
-          backgroundColor: '#f1f5f9',
-          padding: '8px 12px',
-          borderRadius: 6,
-          display: 'inline-block'
-        }}>
-          📊 Panel de control • Usuario activo: <strong>{USUARIO_ACTUAL}</strong>
-        </p>
-      </div>
-
-      <div
-        style={{
-          border: '2px solid #e2e8f0',
-          borderRadius: 12,
-          padding: 20,
-          marginBottom: 24,
-          backgroundColor: '#f8fafc',
-        }}
-      >
-        <h3 style={{ margin: '0 0 16px 0' }}>Filtros</h3>
-
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-            gap: 12,
-            marginBottom: 16,
-          }}
-        >
-          <div>
+          export default function Home() {
+            return (
+              <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#f8fafc" }}>
+                <ValidarForm onSuccess={() => window.location.reload()} />
+              </div>
+            );
+          }
             <label style={{ display: 'block', marginBottom: 4, fontSize: 14, fontWeight: 500 }}>
               Fecha Desde
             </label>
