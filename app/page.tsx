@@ -1,4 +1,20 @@
-﻿'use client';
+﻿import Link from 'next/link';
+
+export default function HomePage() {
+  return (
+    <div style={{ padding: 32 }}>
+      <nav style={{ marginBottom: 40, textAlign: 'center' }}>
+        <Link href="/sites" style={{ margin: '0 24px', fontWeight: 600, fontSize: 20, color: '#2563eb', textDecoration: 'none' }}>SITES</Link>
+        <Link href="/cuadrillas" style={{ margin: '0 24px', fontWeight: 600, fontSize: 20, color: '#059669', textDecoration: 'none' }}>CUADRILLAS</Link>
+        <Link href="/tickets-v1" style={{ margin: '0 24px', fontWeight: 600, fontSize: 20, color: '#dc2626', textDecoration: 'none' }}>TICKETS_V1</Link>
+      </nav>
+      <div style={{ textAlign: 'center', fontSize: 24, fontWeight: 500 }}>
+        Bienvenido al sistema base de gestión
+      </div>
+    </div>
+  );
+}
+'use client';
 
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
@@ -63,40 +79,34 @@ export default function HomePage() {
       const uniqueFaultLevels: string[] = Array.from(
         new Set(
           (faultLevels as FaultLevelRow[] | null)?.flatMap(r =>
-            typeof r.fault_level === 'string' ? [r.fault_level] : []
-          ) ?? []
-        )
-      ).sort();
+
 
 import Link from 'next/link';
 
 export default function HomePage() {
-  // Main menu links
   return (
     <div style={{ padding: 32 }}>
       <nav style={{ marginBottom: 40, textAlign: 'center' }}>
         <Link href="/sites" style={{ margin: '0 24px', fontWeight: 600, fontSize: 20, color: '#2563eb', textDecoration: 'none' }}>SITES</Link>
         <Link href="/cuadrillas" style={{ margin: '0 24px', fontWeight: 600, fontSize: 20, color: '#059669', textDecoration: 'none' }}>CUADRILLAS</Link>
         <Link href="/tickets-v1" style={{ margin: '0 24px', fontWeight: 600, fontSize: 20, color: '#dc2626', textDecoration: 'none' }}>TICKETS_V1</Link>
-      </nav>
-      <div style={{ textAlign: 'center', fontSize: 24, fontWeight: 500 }}>
-        Bienvenido al sistema base de gestión
-      </div>
-    </div>
-  );
-}
-          return (
-            <div style={{ padding: 32 }}>
-              <nav style={{ marginBottom: 40, textAlign: 'center' }}>
-                <Link href="/sites" style={{ margin: '0 24px', fontWeight: 600, fontSize: 20, color: '#2563eb', textDecoration: 'none' }}>SITES</Link>
-                <Link href="/cuadrillas" style={{ margin: '0 24px', fontWeight: 600, fontSize: 20, color: '#059669', textDecoration: 'none' }}>CUADRILLAS</Link>
-                <Link href="/tickets-v1" style={{ margin: '0 24px', fontWeight: 600, fontSize: 20, color: '#dc2626', textDecoration: 'none' }}>TICKETS_V1</Link>
-              </nav>
-              <div style={{ textAlign: 'center', fontSize: 24, fontWeight: 500 }}>
-                Bienvenido al sistema base de gestión
-              </div>
+
+      import Link from 'next/link';
+
+      export default function HomePage() {
+        return (
+          <div style={{ padding: 32 }}>
+            <nav style={{ marginBottom: 40, textAlign: 'center' }}>
+              <Link href="/sites" style={{ margin: '0 24px', fontWeight: 600, fontSize: 20, color: '#2563eb', textDecoration: 'none' }}>SITES</Link>
+              <Link href="/cuadrillas" style={{ margin: '0 24px', fontWeight: 600, fontSize: 20, color: '#059669', textDecoration: 'none' }}>CUADRILLAS</Link>
+              <Link href="/tickets-v1" style={{ margin: '0 24px', fontWeight: 600, fontSize: 20, color: '#dc2626', textDecoration: 'none' }}>TICKETS_V1</Link>
+            </nav>
+            <div style={{ textAlign: 'center', fontSize: 24, fontWeight: 500 }}>
+              Bienvenido al sistema base de gestión
             </div>
-          );
+          </div>
+        );
+      }
         }
       
       console.log(`📊 Aplicando filtros al lote ${Math.floor(from/BATCH_SIZE) + 1}...`);
