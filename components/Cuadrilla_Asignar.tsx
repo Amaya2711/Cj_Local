@@ -71,13 +71,20 @@ const Cuadrilla_Asignar: React.FC = () => {
       .every(word => nombre.includes(word));
   });
 
-  // Filtrado por palabra en el site (NroInterno y Concatenado)
-  const filteredSites = sites.filter(s => {
-    const texto = ((s.NroInterno ? s.NroInterno + ' - ' : '') + s.Concatenado).toLowerCase();
-    return siteInput
+  // Filtrado por palabra en el site (NroInterno y Concatenado), ignorando tildes y mayúsculas
+  function normalize(str: string) {
+    return str
       .toLowerCase()
+      .normalize('NFD')
+      .replace(/\p{Diacritic}/gu, '');
+  }
+
+  const filteredSites = sites.filter(s => {
+    const nroInterno = normalize(String(s.NroInterno ?? ''));
+    const concatenado = normalize(s.Concatenado ?? '');
+    return normalize(siteInput)
       .split(' ')
-      .every(word => texto.includes(word));
+      .every(word => nroInterno.includes(word) || concatenado.includes(word));
   });
 
   const handleCuadrillaInput = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -215,7 +222,7 @@ const Cuadrilla_Asignar: React.FC = () => {
           }}>
             {filteredSites.map((s, idx) => (
               <li
-                key={s.NroInterno ?? s.Concatenado}
+                key={String(s.NroInterno) + '-' + s.Concatenado + '-' + idx}
                 style={{
                   padding: '8px 12px',
                   cursor: 'pointer',

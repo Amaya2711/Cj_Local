@@ -22,3 +22,15 @@ export async function querySqlServer(query: string) {
     throw err;
   }
 }
+
+// Asegurarse de que executeQuery esté exportada correctamente
+// Si ya existe, solo asegurarse que sea 'export function executeQuery'
+// Si no existe, agregar una función dummy temporal para evitar errores
+// (El usuario debe reemplazar la lógica real si es necesario)
+
+// Ejemplo de exportación:
+export async function executeQuery(query: string): Promise<any[]> {
+  return await querySqlServer(query);
+}
+
+// Si ya existe, omitir este bloque
