@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import CuadrillasPage from '../app/cuadrillas/page';
+import Cuadrilla_Asignar from '../components/Cuadrilla_Asignar';
 
 const menuColor = '#2563eb';
 
@@ -12,7 +12,7 @@ const MainForm: React.FC = () => {
 
   let contenido = null;
   if (opcion === 'cuadrillas') {
-    contenido = <CuadrillasPage />;
+    contenido = <Cuadrilla_Asignar />;
   } else {
     contenido = (
       <>
