@@ -26,6 +26,32 @@ const Cuadrilla_Asignar: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [errorSites, setErrorSites] = useState('');
   const [errorCuadrillas, setErrorCuadrillas] = useState('');
+  // Estado para el gridcontrol
+  const [gridData, setGridData] = useState<Array<{ id_cuadrilla: string; Empleado: string; NroInterno: string; Concatenado: string }>>([]);
+
+  // Eliminar fila del grid
+  const handleDeleteRow = (idx: number) => {
+    setGridData(prev => prev.filter((_, i) => i !== idx));
+  };
+
+  // Exportar a CSV
+  const handleExportCSV = () => {
+    if (gridData.length === 0) return;
+    const header = ['id_cuadrilla', 'Empleado', 'NroInterno', 'Concatenado'];
+    const rows = gridData.map(row => [row.id_cuadrilla, row.Empleado, row.NroInterno, row.Concatenado]);
+    const csvContent = [header, ...rows]
+      .map(e => e.map(v => '"' + String(v).replace(/"/g, '""') + '"').join(','))
+      .join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', 'asignaciones.csv');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
 
   useEffect(() => {
     async function fetchCuadrillas() {
@@ -140,8 +166,24 @@ const Cuadrilla_Asignar: React.FC = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Aquí puedes manejar la asignación
-    alert(`Asignar cuadrilla ${selectedCuadrilla} al site ${selectedSite}`);
+    // Buscar datos completos de cuadrilla y site seleccionados
+    const cuadrilla = cuadrillas.find(c => String(c.IdEmpleado ?? c.idempleado) === selectedCuadrilla);
+    const site = sites.find(s => (s.NroInterno ? String(s.NroInterno) : s.Concatenado) === selectedSite);
+    if (!cuadrilla || !site) return;
+    setGridData(prev => [
+      ...prev,
+      {
+        id_cuadrilla: String(cuadrilla.IdEmpleado ?? cuadrilla.idempleado ?? ''),
+        Empleado: cuadrilla.NombreEmpleado ?? cuadrilla.nombreempleado ?? '',
+        NroInterno: String(site.NroInterno ?? ''),
+        Concatenado: site.Concatenado ?? ''
+      }
+    ]);
+    // Limpiar inputs
+    setCuadrillaInput('');
+    setSelectedCuadrilla('');
+    setSiteInput('');
+    setSelectedSite('');
   };
 
   return (
@@ -243,6 +285,46 @@ const Cuadrilla_Asignar: React.FC = () => {
         Asignar
       </button>
     </form>
+
+    {/* GridControl de registros anexados */}
+    {gridData.length > 0 && (
+      <div style={{ maxWidth: 800, margin: '32px auto 0', background: 'white', borderRadius: 12, boxShadow: '0 4px 16px rgba(0,0,0,0.06)', padding: 20 }}>
+        <h3 style={{ marginBottom: 16, textAlign: 'center' }}>Registros anexados</h3>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 10, gap: 8 }}>
+          <button type="button" onClick={handleExportCSV} style={{ background: '#059669', color: 'white', border: 'none', borderRadius: 5, padding: '7px 16px', fontWeight: 600, cursor: 'pointer' }}>
+            Exportar CSV
+          </button>
+        </div>
+        <div style={{ overflowX: 'auto' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 15 }}>
+            <thead>
+              <tr style={{ background: '#f1f5f9' }}>
+                <th style={{ padding: 8, border: '1px solid #e5e7eb' }}>id_cuadrilla</th>
+                <th style={{ padding: 8, border: '1px solid #e5e7eb' }}>Empleado</th>
+                <th style={{ padding: 8, border: '1px solid #e5e7eb' }}>NroInterno</th>
+                <th style={{ padding: 8, border: '1px solid #e5e7eb' }}>Concatenado</th>
+                <th style={{ padding: 8, border: '1px solid #e5e7eb', minWidth: 80 }}>Acción</th>
+              </tr>
+            </thead>
+            <tbody>
+              {gridData.map((row, idx) => (
+                <tr key={row.id_cuadrilla + '-' + row.NroInterno + '-' + idx}>
+                  <td style={{ padding: 8, border: '1px solid #e5e7eb' }}>{row.id_cuadrilla}</td>
+                  <td style={{ padding: 8, border: '1px solid #e5e7eb' }}>{row.Empleado}</td>
+                  <td style={{ padding: 8, border: '1px solid #e5e7eb' }}>{row.NroInterno}</td>
+                  <td style={{ padding: 8, border: '1px solid #e5e7eb' }}>{row.Concatenado}</td>
+                  <td style={{ padding: 8, border: '1px solid #e5e7eb', textAlign: 'center' }}>
+                    <button type="button" onClick={() => handleDeleteRow(idx)} style={{ background: '#dc2626', color: 'white', border: 'none', borderRadius: 4, padding: '4px 10px', fontWeight: 600, cursor: 'pointer' }}>
+                      Eliminar
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    )}
   );
 };
 
