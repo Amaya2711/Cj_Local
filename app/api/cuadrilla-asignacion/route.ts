@@ -1,0 +1,34 @@
+import { NextResponse } from 'next/server';
+import { executeQuery } from '../../../lib/sqlServerClient';
+
+export async function POST(req: Request) {
+  try {
+    let { asignaciones, usuario } = await req.json();
+    if (!usuario) usuario = 'ADMIN';
+    if (!Array.isArray(asignaciones) || asignaciones.length === 0) {
+      return NextResponse.json({ error: 'No hay datos para grabar.' }, { status: 400 });
+    }
+    let errores: string[] = [];
+    const sqlComandos: string[] = [];
+    for (const row of asignaciones) {
+      const { id_cuadrilla, idsite, correlativo } = row;
+      if (!id_cuadrilla || !idsite || !correlativo) {
+        errores.push(`Faltan datos en registro: ${JSON.stringify(row)}`);
+        continue;
+      }
+      const sql = `INSERT INTO CuadrillaAsignacion (ID_CUADRILLA, IDSITE, CORRESITE, fecha, estado, UsuarioCreacion, FECHACREACION) VALUES (${Number(id_cuadrilla)}, '${idsite}', ${Number(correlativo)}, CONVERT(date, GETDATE()), 3, '${usuario}', GETDATE())`;
+      sqlComandos.push(sql);
+      try {
+        await executeQuery(sql);
+      } catch (err: any) {
+        errores.push(`Error en registro ${JSON.stringify(row)}: ${err?.message || err}`);
+      }
+    }
+    if (errores.length > 0) {
+      return NextResponse.json({ error: errores.join('; '), sql: sqlComandos.map(s => s + ';') }, { status: 500 });
+    }
+    return NextResponse.json({ ok: true, sql: sqlComandos.map(s => s + ';') });
+  } catch (error: any) {
+    return NextResponse.json({ error: error?.message || 'Error inesperado.' }, { status: 500 });
+  }
+}

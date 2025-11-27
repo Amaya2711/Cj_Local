@@ -53,7 +53,13 @@ export default function CuadrillasPage() {
 
       const { data, error } = await query;
       if (error) throw error;
-      setRows(data || []);
+      setRows(
+        (data || []).map((row: any) => ({
+          ...row,
+          latitud: row.latitud ?? null,
+          longitud: row.longitud ?? null,
+        }))
+      );
     } catch (e: any) {
       console.error('Error loading cuadrillas:', e?.message || e);
       setErr(e?.message || 'Error cargando cuadrillas');
