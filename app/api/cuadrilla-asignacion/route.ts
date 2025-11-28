@@ -4,8 +4,11 @@ import { executeQuery } from '../../../lib/sqlServerClient';
 export async function POST(req: Request) {
   try {
     let { asignaciones, usuario } = await req.json();
-    if (!usuario) usuario = 'ADMIN';
+    if (!usuario) {
+      usuario = 'ADMIN';
+    }
     if (!Array.isArray(asignaciones) || asignaciones.length === 0) {
+      console.error('No hay datos para grabar:', asignaciones);
       return NextResponse.json({ error: 'No hay datos para grabar.' }, { status: 400 });
     }
     let errores: string[] = [];
@@ -16,7 +19,8 @@ export async function POST(req: Request) {
         errores.push(`Faltan datos en registro: ${JSON.stringify(row)}`);
         continue;
       }
-      const sql = `INSERT INTO CuadrillaAsignacion (ID_CUADRILLA, IDSITE, CORRESITE, fecha, estado, UsuarioCreacion, FECHACREACION) VALUES (${Number(id_cuadrilla)}, '${idsite}', ${Number(correlativo)}, CONVERT(date, GETDATE()), 3, '${usuario}', GETDATE())`;
+      const sql = `INSERT INTO CuadrillaAsignacion (id_cuadrilla, idsite, corresite, fecha, Estado, UsuarioCreacion, FechaCreacion)
+        VALUES (${Number(id_cuadrilla)}, '${idsite}', ${Number(correlativo)}, CONVERT(nvarchar(15), GETDATE(), 23), 3, '${usuario}', GETDATE())`;
       sqlComandos.push(sql);
       try {
         await executeQuery(sql);
@@ -29,6 +33,7 @@ export async function POST(req: Request) {
     }
     return NextResponse.json({ ok: true, sql: sqlComandos.map(s => s + ';') });
   } catch (error: any) {
-    return NextResponse.json({ error: error?.message || 'Error inesperado.' }, { status: 500 });
+    console.error('Error inesperado:', error);
+    return NextResponse.json({ error: error?.message || 'Error inesperado.', details: error instanceof Error ? error.message : error }, { status: 500 });
   }
 }

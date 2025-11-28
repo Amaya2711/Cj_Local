@@ -17,29 +17,6 @@ interface SiteAsignacion {
   correlativo?: string | number;
 }
 
-
-  // (moved inside the component)
-
-interface EmpleadoCuadrilla {
-  IdEmpleado?: number;
-  NombreEmpleado?: string;
-  idempleado?: number;
-  nombreempleado?: string;
-}
-
-interface SiteAsignacion {
-  NroInterno?: string | number;
-  Concatenado: string;
-  IDSite?: string | number;
-  idsite?: string | number;
-  IdSite?: string | number;
-  Correlativo?: string | number;
-  correlativo?: string | number;
-}
-
-
-// (removed duplicate component declaration and state initialization)
-
 const Cuadrilla_Asignar: React.FC = () => {
   // Estado para asignaciones del día
   const [asignacionesDia, setAsignacionesDia] = useState<any[]>([]);
@@ -224,6 +201,58 @@ const Cuadrilla_Asignar: React.FC = () => {
     }, 100);
   };
 
+  // Grabar registros del grid en la base de datos
+  const handleGrabar = async () => {
+    if (gridData.length === 0) return alert('No hay registros para grabar.');
+    setLoading(true);
+    try {
+      for (const row of gridData) {
+        // Convertir a numérico
+        const id_cuadrilla_num = Number(row.id_cuadrilla);
+        const correlativo_num = Number(row.correlativo);
+        // Comando SQL que se usará
+        const sql = `INSERT INTO CUADRILLAASIGNACION (ID_CUADRILLA, IDSITE, CORRESITE, FECHA, USUARIOCREACION) VALUES (${id_cuadrilla_num}, '${row.idsite}', ${correlativo_num}, GETDATE(), SYSTEM_USER)`;
+        // Mostrar el comando SQL en consola
+        console.log('SQL:', sql);
+        // Llamar al endpoint para grabar
+        const res = await fetch('/api/cuadrilla-asignacion', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            id_cuadrilla: id_cuadrilla_num,
+            idsite: row.idsite,
+            correlativo: correlativo_num
+          })
+        });
+        if (!res.ok) throw new Error('Error al grabar asignación');
+      }
+      alert('Registros grabados correctamente.');
+      setGridData([]);
+      // Refrescar asignaciones del día
+      fetchAsignacionesDia();
+    } catch (err) {
+      alert('Error al grabar: ' + (err instanceof Error ? err.message : 'Error desconocido'));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Obtener asignaciones del día
+  const fetchAsignacionesDia = async () => {
+    try {
+      const res = await fetch('/api/cuadrilla-asignacion-dia');
+      if (!res.ok) throw new Error('No se pudo cargar asignaciones del día');
+      const data = await res.json();
+      setAsignacionesDia(data);
+    } catch {
+      setAsignacionesDia([]);
+    }
+  };
+
+  useEffect(() => {
+    fetchAsignacionesDia();
+  }, []);
+
   return (
     <div>
       <form
@@ -354,6 +383,24 @@ const Cuadrilla_Asignar: React.FC = () => {
           {errorSites && (
             <div style={{ color: '#dc2626', marginTop: 8 }}>{errorSites}</div>
           )}
+            <div style={{ display: 'flex', gap: 12, marginTop: 16 }}>
+              <button
+                type="button"
+                style={{ width: '50%', height: 40, fontSize: 16 }}
+                onClick={() => {
+                  // Forzar búsqueda de asignaciones del día
+                  setSelectedCuadrilla(cuadrillaInput);
+                }}
+              >
+                Buscar
+              </button>
+              <button
+                type="submit"
+                style={{ width: '50%', height: 40, fontSize: 16, background: '#2563eb', color: 'white', border: 'none', borderRadius: 6, fontWeight: 700, marginLeft: 0 }}
+              >
+                Asignar
+              </button>
+            </div>
         </div>
         <button
           type="submit"
@@ -373,8 +420,9 @@ const Cuadrilla_Asignar: React.FC = () => {
           Asignar
         </button>
       </form>
-      {/* GridControl de registros anexados */}
+      {/* Grids de registros anexados y asignaciones del día */}
       <div style={{ display: 'flex', gap: 24, justifyContent: 'center', marginTop: 32 }}>
+        {/* Grid de registros anexados */}
         {gridData.length > 0 && (
           <div style={{ maxWidth: 800, background: 'white', borderRadius: 12, boxShadow: '0 4px 16px rgba(0,0,0,0.06)', padding: 20, flex: 1 }}>
             <h3 style={{ marginBottom: 16, textAlign: 'center' }}>Registros anexados</h3>
@@ -438,11 +486,15 @@ const Cuadrilla_Asignar: React.FC = () => {
               </thead>
               <tbody>
                 {asignacionesDia.map((row, idx) => (
-                  <tr key={row.ID_CUADRILLA + '-' + row.IDSITE + '-' + row.CORRESITE + '-' + idx}>
-                    <td style={{ padding: 8, border: '1px solid #e5e7eb' }}>{row.ID_CUADRILLA}</td>
-                    <td style={{ padding: 8, border: '1px solid #e5e7eb' }}>{row.IDSITE}</td>
-                    <td style={{ padding: 8, border: '1px solid #e5e7eb' }}>{row.CORRESITE}</td>
-                    <td style={{ padding: 8, border: '1px solid #e5e7eb' }}>{row.fecha?.substring(0, 10)}</td>
+                  <tr key={
+                    (row.ID_CUADRILLA ?? row.id_cuadrilla ?? row.idempleado ?? row.IdEmpleado ?? idx) +
+                    '-' + (row.IDSITE ?? row.idsite ?? row.IdSite ?? idx) +
+                    '-' + (row.CORRESITE ?? row.correlativo ?? row.Correlativo ?? idx)
+                  }>
+                    <td style={{ padding: 8, border: '1px solid #e5e7eb' }}>{row.ID_CUADRILLA ?? row.id_cuadrilla ?? row.idempleado ?? row.IdEmpleado ?? ''}</td>
+                    <td style={{ padding: 8, border: '1px solid #e5e7eb' }}>{row.IDSITE ?? row.idsite ?? row.IdSite ?? ''}</td>
+                    <td style={{ padding: 8, border: '1px solid #e5e7eb' }}>{row.CORRESITE ?? row.correlativo ?? row.Correlativo ?? ''}</td>
+                    <td style={{ padding: 8, border: '1px solid #e5e7eb' }}>{row.fecha ? String(row.fecha).substring(0, 10) : ''}</td>
                     <td style={{ padding: 8, border: '1px solid #e5e7eb' }}>{row.UsuarioCreacion ?? row.usuario ?? ''}</td>
                   </tr>
                 ))}
@@ -453,27 +505,6 @@ const Cuadrilla_Asignar: React.FC = () => {
       </div>
     </div>
   );
-
-  // Grabar registros del grid en la tabla CUADRILLAASIGNACION
-    async function handleGrabar() {
-      if (gridData.length === 0) return;
-      try {
-        const res = await fetch('/api/cuadrilla-asignacion', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ asignaciones: gridData })
-        });
-        const data = await res.json();
-        if (res.ok) {
-          alert('Registros grabados correctamente.');
-          setGridData([]);
-        } else {
-          alert('Error al grabar: ' + (data?.error || 'Error desconocido.'));
-        }
-      } catch (err) {
-        alert('Error de red al grabar.');
-      }
-    }
 };
 
 export default Cuadrilla_Asignar;
