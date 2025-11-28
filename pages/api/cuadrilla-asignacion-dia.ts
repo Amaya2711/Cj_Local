@@ -1,6 +1,5 @@
 const { sqlServerClient, querySqlServer } = require('../../lib/sqlServerClient');
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { querySqlServer } from '../../lib/sqlServerClient';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') {
