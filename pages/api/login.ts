@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { querySqlServer } from '@/lib/sqlServerClient';
+const { querySqlServer } = require('../../lib/sqlServerClient');
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
@@ -11,7 +11,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(400).json({ error: 'Faltan datos' });
   }
 
-  const sql = `SELECT * FROM USUARIO WHERE IDUSUARIO = '${usuario}' AND CLAVE = '${clave}'`;
+  const sql = `SELECT * FROM USUARIO WHERE ID_USUARIO = '${usuario}' AND CLAVE = '${clave}'`;
   try {
     const result = await querySqlServer(sql);
     if (Array.isArray(result) && result.length > 0) {
@@ -20,6 +20,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(401).json({ error: 'Usuario o clave incorrectos' });
     }
   } catch (err) {
-    return res.status(500).json({ error: 'Error en el servidor', details: err });
+    console.error('Error en /api/login:', err);
+    return res.status(500).json({ error: 'Error en el servidor', details: err?.message || err });
   }
 }

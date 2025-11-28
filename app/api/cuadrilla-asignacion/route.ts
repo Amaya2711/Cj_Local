@@ -1,6 +1,7 @@
+const { sqlServerClient, querySqlServer } = require('../../../lib/sqlServerClient');
 // Por favor, revisa y comparte el contenido de este archivo para depuración.
 import { NextResponse } from 'next/server';
-import { executeQuery } from '../../../lib/sqlServerClient';
+// import { executeQuery } from '../../../lib/sqlServerClient';
 
 export async function POST(req: Request) {
   try {
@@ -25,7 +26,7 @@ export async function POST(req: Request) {
       console.log('SQL ejecutado:', sql);
       sqlComandos.push(sql);
       try {
-        await executeQuery(sql);
+        await querySqlServer(sql);
       } catch (err: any) {
         errores.push(`Error en registro ${JSON.stringify(row)}: ${err?.message || err}`);
       }

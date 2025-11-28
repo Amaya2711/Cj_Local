@@ -18,6 +18,41 @@ interface SiteAsignacion {
 }
 
 const Cuadrilla_Asignar: React.FC = () => {
+      // Buscar asignaciones de cuadrilla usando el SP
+  const handleBuscarAsignaciones = async () => {
+    // Buscar el id de la cuadrilla según el input
+    let id = selectedCuadrilla;
+    let cuadrilla = cuadrillas.find(c => String(c.IdEmpleado ?? c.idempleado) === id);
+    if (!cuadrilla) {
+      cuadrilla = cuadrillas.find(c => (c.NombreEmpleado ?? c.nombreempleado ?? '').toLowerCase() === cuadrillaInput.toLowerCase());
+      if (cuadrilla) {
+        id = String(cuadrilla.IdEmpleado ?? cuadrilla.idempleado);
+        setSelectedCuadrilla(id);
+      }
+    }
+    // Si no hay cuadrilla válida, mostrar mensaje y no hacer petición
+    if (!cuadrilla || !id || isNaN(Number(id))) {
+      alert('Seleccione una cuadrilla válida del listado.');
+      return;
+    }
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/cuadrilla-asignacion-dia?idCuadrilla=${id}`);
+      if (!res.ok) throw new Error('No se pudo obtener asignaciones.');
+      const data = await res.json();
+      setAsignacionesDia(data);
+    } catch (err) {
+      setAsignacionesDia([]);
+      alert('Error al obtener asignaciones.');
+    } finally {
+      setLoading(false);
+    }
+  };
+    // Placeholder for the Asignar button handler
+    const handleAsignar = () => {
+      // TODO: Implement the logic for assigning cuadrilla to site
+      alert('Asignar clicked');
+    };
   // Estado para asignaciones del día
   const [asignacionesDia, setAsignacionesDia] = useState<any[]>([]);
   const [cuadrillas, setCuadrillas] = useState<EmpleadoCuadrilla[]>([]);
@@ -42,6 +77,8 @@ const Cuadrilla_Asignar: React.FC = () => {
     idsite?: string;
     correlativo?: string;
   }>>([]);
+
+  // Add the rest of your component logic and return statement here
 
   useEffect(() => {
     async function fetchCuadrillas() {
@@ -72,31 +109,8 @@ const Cuadrilla_Asignar: React.FC = () => {
 
     fetchCuadrillas();
     fetchSites();
+    // No return here; useEffect should not return JSX
   }, []);
-
-  // Eliminar fila del grid
-  const handleDeleteRow = (idx: number) => {
-    setGridData(prev => prev.filter((_, i) => i !== idx));
-  };
-
-  // Exportar a CSV
-  const handleExportCSV = () => {
-    if (gridData.length === 0) return;
-    const header = ['id_cuadrilla', 'Empleado', 'NroInterno', 'Concatenado'];
-    const rows = gridData.map(row => [row.id_cuadrilla, row.Empleado, row.NroInterno, row.Concatenado]);
-    const csvContent = [header, ...rows]
-      .map(e => e.map(v => '"' + String(v).replace(/"/g, '""') + '"').join(','))
-      .join('\n');
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', 'asignaciones.csv');
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-  };
 
   const filteredCuadrillas = cuadrillas.filter(c => {
     const nombre = (c.NombreEmpleado ?? c.nombreempleado ?? '').toLowerCase();
@@ -106,21 +120,21 @@ const Cuadrilla_Asignar: React.FC = () => {
       .every(word => nombre.includes(word));
   });
 
-  // Filtrado por palabra en el site (NroInterno y Concatenado), ignorando tildes y mayúsculas
-  function normalize(str: string) {
+  // Normaliza cadenas para búsquedas insensibles a mayúsculas/minúsculas y tildes
+  function normalize(str: string): string {
     return str
       .toLowerCase()
       .normalize('NFD')
-      .replace(/\p{Diacritic}/gu, '');
+      .replace(/[\u0300-\u036f]/g, '');
   }
-
-  const filteredSites = sites.filter(s => {
-    const nroInterno = normalize(String(s.NroInterno ?? ''));
-    const concatenado = normalize(s.Concatenado ?? '');
-    return normalize(siteInput)
-      .split(' ')
-      .every(word => nroInterno.includes(word) || concatenado.includes(word));
-  });
+  
+    const filteredSites = sites.filter(s => {
+      const nroInterno = normalize(String(s.NroInterno ?? ''));
+      const concatenado = normalize(s.Concatenado ?? '');
+      return normalize(siteInput)
+        .split(' ')
+        .every(word => nroInterno.includes(word) || concatenado.includes(word));
+    });
 
   const handleCuadrillaInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     setCuadrillaInput(e.target.value);
@@ -236,6 +250,36 @@ const Cuadrilla_Asignar: React.FC = () => {
       setLoading(false);
     }
   };
+
+  // Exportar registros anexados a CSV
+  const handleExportCSV = () => {
+    if (gridData.length === 0) {
+      alert('No hay datos para exportar.');
+      return;
+    }
+    const headers = ['id_cuadrilla', 'Empleado', 'NroInterno', 'Concatenado', 'idsite', 'correlativo'];
+    const csvRows = [
+      headers.join(','),
+      ...gridData.map(row =>
+        headers.map(h => `"${(row as any)[h] ?? ''}"`).join(',')
+      )
+    ];
+    const csvContent = csvRows.join('\r\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', 'registros_anexados.csv');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  // Eliminar una fila del gridData por índice
+  const handleDeleteRow = (idx: number) => {
+    setGridData(prev => prev.filter((_, i) => i !== idx));
+  };
           // ...código existente...
 
   // Obtener asignaciones del día
@@ -336,17 +380,26 @@ const Cuadrilla_Asignar: React.FC = () => {
             onKeyDown={handleSiteInputKeyDown}
             onFocus={() => setShowSiteSuggestions(true)}
             placeholder="Buscar site por NroInterno o Concatenado..."
-            style={{
-              width: '100%',
-              padding: 10,
-              borderRadius: 6,
-              border: '1px solid #cbd5e1',
-              marginTop: 6,
-              fontSize: 16,
-            }}
+            style={{ width: '100%', padding: 10, borderRadius: 6, border: '1px solid #cbd5e1', marginTop: 6, fontSize: 16 }}
             autoComplete="off"
             ref={siteInputRef}
           />
+          <div style={{ display: 'flex', gap: '10px', marginTop: 10 }}>
+            <button
+              type="button"
+              style={{ flex: 1, height: 40, fontSize: 16 }}
+              onClick={handleBuscarAsignaciones}
+            >
+              Buscar
+            </button>
+            <button
+              type="button"
+              style={{ flex: 1, height: 40, fontSize: 16, backgroundColor: '#2563eb', color: 'white', border: 'none', borderRadius: '4px', fontWeight: 'bold' }}
+              onClick={handleAsignar}
+            >
+              Asignar
+            </button>
+          </div>
           {showSiteSuggestions && siteInput && filteredSites.length > 0 && (
             <ul
               style={{
@@ -384,36 +437,8 @@ const Cuadrilla_Asignar: React.FC = () => {
           {errorSites && (
             <div style={{ color: '#dc2626', marginTop: 8 }}>{errorSites}</div>
           )}
-            <div style={{ display: 'flex', gap: 12, marginTop: 16 }}>
-              <button
-                type="button"
-                style={{ width: '50%', height: 40, fontSize: 16 }}
-                onClick={() => {
-                  // Forzar búsqueda de asignaciones del día
-                  setSelectedCuadrilla(cuadrillaInput);
-                }}
-              >
-                Buscar
-              </button>
-            </div>
         </div>
-        <button
-          type="submit"
-          style={{
-            width: '100%',
-            padding: 12,
-            background: '#2563eb',
-            color: 'white',
-            border: 'none',
-            borderRadius: 6,
-            fontWeight: 700,
-            fontSize: 17,
-            cursor: loading ? 'not-allowed' : 'pointer',
-            marginBottom: 8,
-          }}
-        >
-          Asignar
-        </button>
+        {/* Botón Asignar eliminado, solo queda el de la línea con Buscar */}
       </form>
       {/* Grids de registros anexados y asignaciones del día */}
       <div style={{ display: 'flex', gap: 24, justifyContent: 'center', marginTop: 32 }}>
