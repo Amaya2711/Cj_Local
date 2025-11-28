@@ -1,3 +1,4 @@
+// Por favor, revisa y comparte el contenido de este archivo para depuración.
 import { NextResponse } from 'next/server';
 import { executeQuery } from '../../../lib/sqlServerClient';
 
@@ -21,6 +22,7 @@ export async function POST(req: Request) {
       }
       const sql = `INSERT INTO CuadrillaAsignacion (id_cuadrilla, idsite, corresite, fecha, Estado, UsuarioCreacion, FechaCreacion)
         VALUES (${Number(id_cuadrilla)}, '${idsite}', ${Number(correlativo)}, CONVERT(nvarchar(15), GETDATE(), 23), 3, '${usuario}', GETDATE())`;
+      console.log('SQL ejecutado:', sql);
       sqlComandos.push(sql);
       try {
         await executeQuery(sql);
@@ -29,9 +31,9 @@ export async function POST(req: Request) {
       }
     }
     if (errores.length > 0) {
-      return NextResponse.json({ error: errores.join('; '), sql: sqlComandos.map(s => s + ';') }, { status: 500 });
+      return NextResponse.json({ error: errores.join('; '), sql: sqlComandos }, { status: 500 });
     }
-    return NextResponse.json({ ok: true, sql: sqlComandos.map(s => s + ';') });
+    return NextResponse.json({ ok: true, sql: sqlComandos });
   } catch (error: any) {
     console.error('Error inesperado:', error);
     return NextResponse.json({ error: error?.message || 'Error inesperado.', details: error instanceof Error ? error.message : error }, { status: 500 });

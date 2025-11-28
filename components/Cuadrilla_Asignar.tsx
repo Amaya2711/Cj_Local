@@ -203,32 +203,32 @@ const Cuadrilla_Asignar: React.FC = () => {
 
   // Grabar registros del grid en la base de datos
   const handleGrabar = async () => {
-    if (gridData.length === 0) return alert('No hay registros para grabar.');
+    if (gridData.length === 0) {
+      alert('No hay registros para grabar.');
+      return;
+    }
     setLoading(true);
     try {
-      for (const row of gridData) {
-        // Convertir a numérico
-        const id_cuadrilla_num = Number(row.id_cuadrilla);
-        const correlativo_num = Number(row.correlativo);
-        // Comando SQL que se usará
-        const sql = `INSERT INTO CUADRILLAASIGNACION (ID_CUADRILLA, IDSITE, CORRESITE, FECHA, USUARIOCREACION) VALUES (${id_cuadrilla_num}, '${row.idsite}', ${correlativo_num}, GETDATE(), SYSTEM_USER)`;
-        // Mostrar el comando SQL en consola
-        console.log('SQL:', sql);
-        // Llamar al endpoint para grabar
-        const res = await fetch('/api/cuadrilla-asignacion', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            id_cuadrilla: id_cuadrilla_num,
-            idsite: row.idsite,
-            correlativo: correlativo_num
-          })
-        });
-        if (!res.ok) throw new Error('Error al grabar asignación');
+      const response = await fetch('/api/cuadrilla-asignacion', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ asignaciones: gridData, usuario: 'ADMIN' }),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        if (data.sql) {
+          console.log('SQL ejecutado con error:', data.sql);
+          alert('Error al grabar: ' + (data.error || 'Error al grabar asignación') + '\nSQL ejecutado:\n' + data.sql.join('\n'));
+        } else {
+          alert('Error al grabar: ' + (data.error || 'Error al grabar asignación'));
+        }
+        setLoading(false);
+        return;
       }
-      alert('Registros grabados correctamente.');
+      if (data.sql) {
+        alert('Grabado exitoso.');
+      }
       setGridData([]);
-      // Refrescar asignaciones del día
       fetchAsignacionesDia();
     } catch (err) {
       alert('Error al grabar: ' + (err instanceof Error ? err.message : 'Error desconocido'));
@@ -236,6 +236,7 @@ const Cuadrilla_Asignar: React.FC = () => {
       setLoading(false);
     }
   };
+          // ...código existente...
 
   // Obtener asignaciones del día
   const fetchAsignacionesDia = async () => {
@@ -393,12 +394,6 @@ const Cuadrilla_Asignar: React.FC = () => {
                 }}
               >
                 Buscar
-              </button>
-              <button
-                type="submit"
-                style={{ width: '50%', height: 40, fontSize: 16, background: '#2563eb', color: 'white', border: 'none', borderRadius: 6, fontWeight: 700, marginLeft: 0 }}
-              >
-                Asignar
               </button>
             </div>
         </div>
