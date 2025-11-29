@@ -21,8 +21,8 @@ export async function POST(req: Request) {
         errores.push(`Faltan datos en registro: ${JSON.stringify(row)}`);
         continue;
       }
-      const sql = `INSERT INTO CuadrillaAsignacion (id_cuadrilla, idsite, corresite, fecha, Estado, UsuarioCreacion, FechaCreacion)
-        VALUES (${Number(id_cuadrilla)}, '${idsite}', ${Number(correlativo)}, CONVERT(nvarchar(15), GETDATE(), 23), 3, '${usuario}', GETDATE())`;
+        const sql = `INSERT INTO CuadrillaAsignacion (id_cuadrilla, idsite, corresite, fecha, Estado, UsuarioCreacion, FechaCreacion, NroInterno)
+          VALUES (${Number(id_cuadrilla)}, '${idsite}', ${Number(correlativo)}, CONVERT(nvarchar(15), GETDATE(), 23), 3, '${usuario}', GETDATE(), ${row.NroInterno ?? 'NULL'})`;
       console.log('SQL ejecutado:', sql);
       sqlComandos.push(sql);
       try {

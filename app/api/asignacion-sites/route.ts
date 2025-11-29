@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server';
-import { executeQuery } from '../../../lib/sqlServerClient';
+const { querySqlServer } = require('../../../lib/sqlServerClient');
 
 export async function GET() {
   try {
     console.log('Llamando SP: EXEC Asignacion_Sites');
-    const result = await executeQuery('EXEC Asignacion_Sites');
+    const result = await querySqlServer('EXEC Asignacion_Sites');
     console.log('Resultado crudo del SP:', result);
     if (!Array.isArray(result)) {
       console.error('El resultado no es un array:', result);

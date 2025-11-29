@@ -48,10 +48,33 @@ const Cuadrilla_Asignar: React.FC = () => {
       setLoading(false);
     }
   };
-    // Placeholder for the Asignar button handler
+    // Handler para el botón Asignar: agrega el registro al gridData
     const handleAsignar = () => {
-      // TODO: Implement the logic for assigning cuadrilla to site
-      alert('Asignar clicked');
+      // Buscar datos completos de cuadrilla y site seleccionados
+      const cuadrilla = cuadrillas.find(c => String(c.IdEmpleado ?? c.idempleado) === selectedCuadrilla);
+      const site = sites.find(s => (s.NroInterno ? String(s.NroInterno) : s.Concatenado) === selectedSite);
+      if (!cuadrilla || !site) {
+        alert('Seleccione una cuadrilla y un site válidos.');
+        return;
+      }
+      setGridData(prev => [
+        ...prev,
+        {
+          id_cuadrilla: String(cuadrilla.IdEmpleado ?? cuadrilla.idempleado ?? ''),
+          Empleado: cuadrilla.NombreEmpleado ?? cuadrilla.nombreempleado ?? '',
+          NroInterno: String(site.NroInterno ?? ''),
+          Concatenado: site.Concatenado ?? '',
+          idsite: String(site.IDSite ?? site.idsite ?? site.IdSite ?? ''),
+          correlativo: String(site.Correlativo ?? site.correlativo ?? site.Correlativo ?? '')
+        }
+      ]);
+      // Limpiar solo el campo Site y poner focus
+      setSiteInput('');
+      setSelectedSite('');
+      setShowSiteSuggestions(true);
+      setTimeout(() => {
+        siteInputRef.current?.focus();
+      }, 100);
     };
   // Estado para asignaciones del día
   const [asignacionesDia, setAsignacionesDia] = useState<any[]>([]);
@@ -223,10 +246,15 @@ const Cuadrilla_Asignar: React.FC = () => {
     }
     setLoading(true);
     try {
+      // Asegurarse de enviar NroInterno como parte de cada asignación
+      const asignacionesConNroInterno = gridData.map(row => ({
+        ...row,
+        NroInterno: row.NroInterno ?? ''
+      }));
       const response = await fetch('/api/cuadrilla-asignacion', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ asignaciones: gridData, usuario: 'ADMIN' }),
+        body: JSON.stringify({ asignaciones: asignacionesConNroInterno, usuario: 'ADMIN' }),
       });
       const data = await response.json();
       if (!response.ok) {
@@ -498,10 +526,11 @@ const Cuadrilla_Asignar: React.FC = () => {
               <thead>
                 <tr style={{ background: '#f1f5f9' }}>
                   <th style={{ padding: 8, border: '1px solid #e5e7eb' }}>id_cuadrilla</th>
+                  <th style={{ padding: 8, border: '1px solid #e5e7eb' }}>Empleado</th>
+                  <th style={{ padding: 8, border: '1px solid #e5e7eb' }}>NroInterno</th>
+                  <th style={{ padding: 8, border: '1px solid #e5e7eb' }}>Concatenado</th>
                   <th style={{ padding: 8, border: '1px solid #e5e7eb' }}>idsite</th>
                   <th style={{ padding: 8, border: '1px solid #e5e7eb' }}>correlativo</th>
-                  <th style={{ padding: 8, border: '1px solid #e5e7eb' }}>fecha</th>
-                  <th style={{ padding: 8, border: '1px solid #e5e7eb' }}>usuario</th>
                 </tr>
               </thead>
               <tbody>
@@ -512,10 +541,11 @@ const Cuadrilla_Asignar: React.FC = () => {
                     '-' + (row.CORRESITE ?? row.correlativo ?? row.Correlativo ?? idx)
                   }>
                     <td style={{ padding: 8, border: '1px solid #e5e7eb' }}>{row.ID_CUADRILLA ?? row.id_cuadrilla ?? row.idempleado ?? row.IdEmpleado ?? ''}</td>
+                    <td style={{ padding: 8, border: '1px solid #e5e7eb' }}>{row.Empleado ?? row.NombreEmpleado ?? row.nombreempleado ?? ''}</td>
+                    <td style={{ padding: 8, border: '1px solid #e5e7eb' }}>{row.NroInterno ?? row.nrointerno ?? ''}</td>
+                    <td style={{ padding: 8, border: '1px solid #e5e7eb' }}>{row.Concatenado ?? row.concatenado ?? ''}</td>
                     <td style={{ padding: 8, border: '1px solid #e5e7eb' }}>{row.IDSITE ?? row.idsite ?? row.IdSite ?? ''}</td>
                     <td style={{ padding: 8, border: '1px solid #e5e7eb' }}>{row.CORRESITE ?? row.correlativo ?? row.Correlativo ?? ''}</td>
-                    <td style={{ padding: 8, border: '1px solid #e5e7eb' }}>{row.fecha ? String(row.fecha).substring(0, 10) : ''}</td>
-                    <td style={{ padding: 8, border: '1px solid #e5e7eb' }}>{row.UsuarioCreacion ?? row.usuario ?? ''}</td>
                   </tr>
                 ))}
               </tbody>
