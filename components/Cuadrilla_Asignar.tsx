@@ -67,149 +67,31 @@ const Cuadrilla_Asignar: React.FC = () => {
 
     // Buscar asignaciones de cuadrilla usando el SP
     const handleBuscarAsignaciones = async () => {
-      let id = selectedCuadrilla;
-      let cuadrilla = cuadrillas.find(c => String(c.IdEmpleado ?? c.idempleado) === id);
-      if (!cuadrilla) {
-        cuadrilla = cuadrillas.find(c => (c.NombreEmpleado ?? c.nombreempleado ?? '').toLowerCase() === cuadrillaInput.toLowerCase());
-        if (cuadrilla) {
-          id = String(cuadrilla.IdEmpleado ?? cuadrilla.idempleado);
-          setSelectedCuadrilla(id);
-        }
-      }
-      // Si no hay cuadrilla válida, mostrar mensaje y no hacer petición
-      if (!cuadrilla || !id || isNaN(Number(id))) {
-        alert('Seleccione una cuadrilla válida del listado.');
+      const idCuadrilla = selectedCuadrilla;
+      const nombreStore = 'sp_ObtenerCuadrillaAsignacion';
+      if (!idCuadrilla) {
+        alert('Seleccione una cuadrilla válida.');
         return;
       }
-            {/* Tab principal */}
-            <div style={{ display: 'flex', borderBottom: '2px solid #aaa', marginBottom: 24 }}>
-              {mainTabNames.map((name, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => setMainTab(idx)}
-                  style={{
-                    padding: '12px 32px',
-                    border: 'none',
-                    borderBottom: mainTab === idx ? '3px solid #1976d2' : 'none',
-                    background: 'none',
-                    fontWeight: mainTab === idx ? 'bold' : 'normal',
-                    color: mainTab === idx ? '#1976d2' : '#333',
-                    cursor: 'pointer',
-                    outline: 'none',
-                    fontSize: '16px',
-                  }}
-                >
-                  {name}
-                </button>
-              ))}
-            </div>
-            {/* Contenido de cada tab principal */}
-            <div>
-              {mainTab === 0 && (
-                <div>
-                  {/* Subtabs de Cuadrilla */}
-                  <div style={{ display: 'flex', borderBottom: '2px solid #eee', marginBottom: 24 }}>
-                    {TabNames.map((name, idx) => (
-                      <button
-                        key={idx}
-                        onClick={() => setActiveTab(idx)}
-                        style={{
-                          padding: '12px 32px',
-                          border: 'none',
-                          borderBottom: activeTab === idx ? '3px solid #1976d2' : 'none',
-                          background: 'none',
-                          fontWeight: activeTab === idx ? 'bold' : 'normal',
-                          color: activeTab === idx ? '#1976d2' : '#333',
-                          cursor: 'pointer',
-                          outline: 'none',
-                          fontSize: '16px',
-                        }}
-                      >
-                        {name}
-                      </button>
-                    ))}
-                  </div>
-                  <div>
-                    {activeTab === 0 && (
-                      <div>
-                        <form onSubmit={e => { e.preventDefault(); handleBuscarAsignaciones(); }}>
-                          <div>
-                            <label>Cuadrilla</label>
-                            <input
-                              type="text"
-                              value={cuadrillaInput}
-                              onChange={e => setCuadrillaInput(e.target.value)}
-                              placeholder="Buscar cuadrilla por nombre..."
-                            />
-                          </div>
-                          <div>
-                            <label>Site</label>
-                            <input
-                              type="text"
-                              value={siteInput}
-                              onChange={e => setSiteInput(e.target.value)}
-                              placeholder="Buscar site por NroInterno o Concatenado..."
-                            />
-                          </div>
-                          <button type="submit" disabled={loading}>Buscar</button>
-                        </form>
-                        <div style={{ marginTop: 32 }}>
-                          <h3>Asignaciones del día</h3>
-                          <table>
-                            <thead>
-                              <tr>
-                                <th>id_cuadrilla</th>
-                                <th>Empleado</th>
-                                <th>Asignacion</th>
-                                <th>Fecha</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {asignacionesDia.map((row: Asignacion, idx: number) => (
-                                <tr key={idx}>
-                                  <td>{row.id_cuadrilla ?? ''}</td>
-                                  <td>{row.empleado ?? ''}</td>
-                                  <td>{row.asignacion ?? ''}</td>
-                                  <td>{row.fecha ?? ''}</td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                        </div>
-                      </div>
-                    )}
-                    {activeTab === 1 && (
-                      <div>
-                        <h2>Buscar asignación</h2>
-                        {/* Aquí puedes agregar el contenido para buscar asignaciones */}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-              {mainTab === 1 && (
-                <div>
-                  <h2>Contenido de la segunda pestaña principal</h2>
-                  {/* Aquí puedes agregar el contenido del segundo tab principal */}
-                </div>
-              )}
-            </div>
+      const pFecha = new Date().toISOString().slice(0, 10);
       setLoading(true);
       try {
-        const res = await fetch(`/api/cuadrilla-asignacion?id_cuadrilla=${id}`);
-        if (!res.ok) throw new Error('No se pudo obtener asignaciones.');
+        const res = await fetch(`/api/cuadrilla-asignacion?id_cuadrilla=${idCuadrilla}&pFecha=${pFecha}`);
         const data = await res.json();
-        // Filtrar por la fecha actual (YYYY-MM-DD)
-        const today = new Date().toISOString().slice(0, 10);
-        const dataFiltrada = data.filter((row: any) => row.fecha === today);
-        setAsignacionesDia(dataFiltrada);
-        // Si no hay datos, no mostrar alerta
-      } catch (err) {
-        setAsignacionesDia([]);
-        // Solo mostrar alerta si el error no es por falta de datos
-        if (err instanceof Error && err.message !== 'No se pudo obtener asignaciones.') {
-          alert('Error al obtener asignaciones.');
+        if (!res.ok) {
+          alert(`Error API: ${data.errorMessage || JSON.stringify(data.error)}`);
+          setAsignacionesDia([]);
+          return;
         }
+        if (!data || data.length === 0) {
+          alert(`No existe coincidencia\nStore ejecutado: ${nombreStore}\nParámetros enviados:\nidCuadrilla: ${idCuadrilla}\npFecha: ${pFecha}`);
+          setAsignacionesDia([]);
+        } else {
+          setAsignacionesDia(data);
+        }
+      } catch (err) {
+        alert(`Error inesperado: ${err instanceof Error ? err.message : String(err)}`);
+        setAsignacionesDia([]);
       } finally {
         setLoading(false);
       }
@@ -421,7 +303,7 @@ const Cuadrilla_Asignar: React.FC = () => {
 
   const handleSiteSuggestionClick = (s: SiteAsignacion) => {
     setSiteInput((s.NroInterno ? s.NroInterno + ' - ' : '') + s.Concatenado);
-    setSelectedSite(String(s.NroInterno ?? s.Concatenado));
+    setSelectedSite(String(s.NroInterno));
     setShowSiteSuggestions(false);
     setSelectedSiteObj(s);
   };

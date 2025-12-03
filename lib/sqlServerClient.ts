@@ -1,39 +1,42 @@
 import sql from 'mssql';
 
 const config = {
-  user: process.env.SQLSERVER_USER || 'sa',
-  password: process.env.SQLSERVER_PASSWORD || '7@1l6DknPRBHhtJ6eg32xss',
-  server: process.env.SQLSERVER_SERVER || '161.132.4.67',
-  database: process.env.SQLSERVER_DATABASE || 'n8n_produccion',
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  server: process.env.DB_SERVER,
+  database: process.env.DB_NAME,
   options: {
-    encrypt: false, // Cambia a true si usas Azure o conexión cifrada
-    trustServerCertificate: true
+    encrypt: true,
+    trustServerCertificate: true,
   },
-  port: process.env.SQLSERVER_PORT ? parseInt(process.env.SQLSERVER_PORT) : 1433
 };
 
-let pool: any = null;
+let pool: any;
 
-async function sqlServerClient() {
-  if (pool) {
-    try {
-      if (!pool.connected) await pool.connect();
-      return pool;
-    } catch (e) {
-      pool = null;
-    }
+export async function getPool() {
+  if (!pool) {
+    console.log('Conexión SQL Server - Parámetros:');
+    console.log('user:', config.user);
+    console.log('password:', config.password ? '***' : undefined);
+    console.log('server:', config.server);
+    console.log('database:', config.database);
+    pool = await sql.connect(config);
   }
-  pool = await sql.connect(config);
   return pool;
 }
 
-async function querySqlServer(query: string) {
-  const pool = await sqlServerClient();
-  const result = await pool.request().query(query);
-  return result.recordset;
-}
+export { sql };
 
-export { sqlServerClient, querySqlServer, pool };
+// Función genérica para ejecutar consultas SQL
+export async function querySqlServer(query: string, params: any[] = []) {
+  const pool = await getPool();
+  const request = pool.request();
+  // Si hay parámetros, agregarlos
+  params.forEach((param) => {
+    request.input(param.name, param.type, param.value);
+  });
+  return await request.query(query);
+}
 
 // Configuración de conexión a SQL Server
 // (Eliminado: declaración duplicada de 'config')

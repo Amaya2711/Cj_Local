@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-const { querySqlServer } = require('../../lib/sqlServerClient');
+import { querySqlServer, sql } from '../../lib/sqlServerClient';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
@@ -11,11 +11,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(400).json({ error: 'Faltan datos' });
   }
 
-  const sql = `SELECT * FROM USUARIO WHERE IdUsuario = '${usuario}' AND Clave = '${clave}'`;
   try {
-    const result = await querySqlServer(sql);
-    if (Array.isArray(result) && result.length > 0) {
-      return res.status(200).json({ ok: true, usuario: result[0] });
+    const result = await querySqlServer(
+      'SELECT * FROM USUARIO WHERE IdUsuario = @usuario AND Clave = @clave',
+      [
+        { name: 'usuario', type: sql.NVarChar, value: usuario },
+        { name: 'clave', type: sql.NVarChar, value: clave }
+      ]
+    );
+    if (result.recordset && result.recordset.length > 0) {
+      return res.status(200).json({ ok: true, usuario: result.recordset[0] });
     } else {
       return res.status(401).json({ error: 'Usuario o clave incorrectos' });
     }

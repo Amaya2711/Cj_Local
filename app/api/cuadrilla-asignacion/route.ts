@@ -1,5 +1,5 @@
 import * as sql from 'mssql';
-import { querySqlServer, pool } from '../../../lib/sqlServerClient';
+import { getPool } from '../../../lib/sqlServerClient';
 import { NextResponse } from 'next/server';
 
 export async function POST(req: Request) {
@@ -25,7 +25,6 @@ export async function POST(req: Request) {
       console.log('SQL ejecutado:', sqlInsert);
       sqlComandos.push(sqlInsert);
       try {
-        await querySqlServer(sqlInsert);
         // Ejecutar el procedimiento almacenado para cada registro
         await pool.request()
           .input('pidCuadrilla', sql.Int, Number(id_cuadrilla))
@@ -51,26 +50,20 @@ export async function POST(req: Request) {
 }
 
 export async function GET(req: Request) {
+  const { searchParams } = new URL(req.url);
+  const idCuadrilla = searchParams.get('id_cuadrilla');
+  const pFecha = searchParams.get('pFecha');
+  if (!idCuadrilla || !pFecha) {
+    return new Response(JSON.stringify({ error: 'Faltan parámetros' }), { status: 400 });
+  }
   try {
-    const { searchParams } = new URL(req.url);
-    const id_cuadrilla = searchParams.get('id_cuadrilla');
-    if (!id_cuadrilla) {
-      return new Response(JSON.stringify({ error: 'Falta id_cuadrilla' }), { status: 400 });
-    }
-    const fechaActual = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+    const pool = await getPool();
     const result = await pool.request()
-      .input('id_cuadrilla', sql.Int, Number(id_cuadrilla))
-      .input('pFecha', sql.NVarChar(15), fechaActual)
+      .input('idCuadrilla', sql.Int, Number(idCuadrilla))
+      .input('pFecha', sql.NVarChar(15), pFecha)
       .execute('sp_ObtenerCuadrillaAsignacion');
-    return new Response(JSON.stringify({
-      store: 'sp_ObtenerCuadrillaAsignacion',
-      parametros: {
-        id_cuadrilla: Number(id_cuadrilla),
-        pFecha: fechaActual
-      },
-      datos: result.recordset
-    }), { status: 200 });
+    return new Response(JSON.stringify(result.recordset), { status: 200 });
   } catch (error) {
-    return new Response(JSON.stringify({ error: (error instanceof Error ? error.message : String(error)) }), { status: 500 });
+    return new Response(JSON.stringify({ error: error, errorMessage: error instanceof Error ? error.message : String(error) }), { status: 500 });
   }
 }
