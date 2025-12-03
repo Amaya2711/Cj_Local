@@ -1,4 +1,39 @@
+// import React, { useState, useEffect } from 'react';
+// (Removed duplicate import. Keep only one import for React and hooks below.)
+
+
+
+// (Removed duplicate Cuadrilla_Asignar component implementation. The correct implementation is below.)
+
+// import React, { useState } from 'react';
+// (Removed duplicate import. Keep only one import for React and hooks below.)
 import React, { useState, useEffect } from 'react';
+
+// Removed duplicate Cuadrilla and Asignacion type declarations.
+
+// (Removed duplicate Cuadrilla_Asignar component implementation. The correct implementation is below.)
+// (Removed duplicate imports and duplicate type/component definitions.)
+// The main, correct implementation starts below.
+
+
+type Cuadrilla = {
+	IdEmpleado?: number;
+  idempleado?: number;
+  NombreEmpleado?: string;
+  nombreempleado?: string;
+}
+
+type Asignacion = {
+  id_cuadrilla?: string;
+  empleado?: string;
+  asignacion?: string;
+  fecha?: string;
+}
+
+// Removed duplicate declaration of activeTab, TabNames, cuadrillaInput, siteInput, asignacionesDia, loading
+
+// (Removed duplicate broken export default function and its logic.)
+// The correct Cuadrilla_Asignar React.FC is defined below and already includes TabNames and all required state.
 
 interface EmpleadoCuadrilla {
   IdEmpleado?: number;
@@ -15,57 +50,234 @@ interface SiteAsignacion {
   IdSite?: string | number;
   Correlativo?: string | number;
   correlativo?: string | number;
+  TipoTrabajo?: string;
 }
 
 const Cuadrilla_Asignar: React.FC = () => {
-      // Buscar asignaciones de cuadrilla usando el SP
-  const handleBuscarAsignaciones = async () => {
-    // Buscar el id de la cuadrilla según el input
-    let id = selectedCuadrilla;
-    let cuadrilla = cuadrillas.find(c => String(c.IdEmpleado ?? c.idempleado) === id);
-    if (!cuadrilla) {
-      cuadrilla = cuadrillas.find(c => (c.NombreEmpleado ?? c.nombreempleado ?? '').toLowerCase() === cuadrillaInput.toLowerCase());
-      if (cuadrilla) {
-        id = String(cuadrilla.IdEmpleado ?? cuadrilla.idempleado);
-        setSelectedCuadrilla(id);
+  const [mainTab, setMainTab] = useState<number>(0);
+  const mainTabNames = ['Cuadrilla', 'Otro Tab'];
+
+    const [activeTab, setActiveTab] = useState(0);
+    const TabNames = ['Nueva asignación', 'Buscar asignación'];
+
+    // Estado para asignaciones del día
+    // (Eliminado: const [asignacionesDia, setAsignacionesDia] = useState<any[]>([]);)
+      // Removed duplicate declaration: const [cuadrillas, setCuadrillas] = useState<EmpleadoCuadrilla[]>([]);
+      // (Removed duplicate state declarations for sites, selectedCuadrilla, cuadrillaInput, showSuggestions, activeSuggestion, selectedSite, siteInput, showSiteSuggestions, activeSiteSuggestion, loading, errorSites, errorCuadrillas, and gridData)
+
+    // Buscar asignaciones de cuadrilla usando el SP
+    const handleBuscarAsignaciones = async () => {
+      let id = selectedCuadrilla;
+      let cuadrilla = cuadrillas.find(c => String(c.IdEmpleado ?? c.idempleado) === id);
+      if (!cuadrilla) {
+        cuadrilla = cuadrillas.find(c => (c.NombreEmpleado ?? c.nombreempleado ?? '').toLowerCase() === cuadrillaInput.toLowerCase());
+        if (cuadrilla) {
+          id = String(cuadrilla.IdEmpleado ?? cuadrilla.idempleado);
+          setSelectedCuadrilla(id);
+        }
       }
-    }
-    // Si no hay cuadrilla válida, mostrar mensaje y no hacer petición
-    if (!cuadrilla || !id || isNaN(Number(id))) {
-      alert('Seleccione una cuadrilla válida del listado.');
-      return;
-    }
-    setLoading(true);
-    try {
-      const res = await fetch(`/api/cuadrilla-asignacion-dia?idCuadrilla=${id}`);
-      if (!res.ok) throw new Error('No se pudo obtener asignaciones.');
-      const data = await res.json();
-      setAsignacionesDia(data);
-    } catch (err) {
-      setAsignacionesDia([]);
-      alert('Error al obtener asignaciones.');
-    } finally {
-      setLoading(false);
-    }
-  };
+      // Si no hay cuadrilla válida, mostrar mensaje y no hacer petición
+      if (!cuadrilla || !id || isNaN(Number(id))) {
+        alert('Seleccione una cuadrilla válida del listado.');
+        return;
+      }
+            {/* Tab principal */}
+            <div style={{ display: 'flex', borderBottom: '2px solid #aaa', marginBottom: 24 }}>
+              {mainTabNames.map((name, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => setMainTab(idx)}
+                  style={{
+                    padding: '12px 32px',
+                    border: 'none',
+                    borderBottom: mainTab === idx ? '3px solid #1976d2' : 'none',
+                    background: 'none',
+                    fontWeight: mainTab === idx ? 'bold' : 'normal',
+                    color: mainTab === idx ? '#1976d2' : '#333',
+                    cursor: 'pointer',
+                    outline: 'none',
+                    fontSize: '16px',
+                  }}
+                >
+                  {name}
+                </button>
+              ))}
+            </div>
+            {/* Contenido de cada tab principal */}
+            <div>
+              {mainTab === 0 && (
+                <div>
+                  {/* Subtabs de Cuadrilla */}
+                  <div style={{ display: 'flex', borderBottom: '2px solid #eee', marginBottom: 24 }}>
+                    {TabNames.map((name, idx) => (
+                      <button
+                        key={idx}
+                        onClick={() => setActiveTab(idx)}
+                        style={{
+                          padding: '12px 32px',
+                          border: 'none',
+                          borderBottom: activeTab === idx ? '3px solid #1976d2' : 'none',
+                          background: 'none',
+                          fontWeight: activeTab === idx ? 'bold' : 'normal',
+                          color: activeTab === idx ? '#1976d2' : '#333',
+                          cursor: 'pointer',
+                          outline: 'none',
+                          fontSize: '16px',
+                        }}
+                      >
+                        {name}
+                      </button>
+                    ))}
+                  </div>
+                  <div>
+                    {activeTab === 0 && (
+                      <div>
+                        <form onSubmit={e => { e.preventDefault(); handleBuscarAsignaciones(); }}>
+                          <div>
+                            <label>Cuadrilla</label>
+                            <input
+                              type="text"
+                              value={cuadrillaInput}
+                              onChange={e => setCuadrillaInput(e.target.value)}
+                              placeholder="Buscar cuadrilla por nombre..."
+                            />
+                          </div>
+                          <div>
+                            <label>Site</label>
+                            <input
+                              type="text"
+                              value={siteInput}
+                              onChange={e => setSiteInput(e.target.value)}
+                              placeholder="Buscar site por NroInterno o Concatenado..."
+                            />
+                          </div>
+                          <button type="submit" disabled={loading}>Buscar</button>
+                        </form>
+                        <div style={{ marginTop: 32 }}>
+                          <h3>Asignaciones del día</h3>
+                          <table>
+                            <thead>
+                              <tr>
+                                <th>id_cuadrilla</th>
+                                <th>Empleado</th>
+                                <th>Asignacion</th>
+                                <th>Fecha</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {asignacionesDia.map((row: Asignacion, idx: number) => (
+                                <tr key={idx}>
+                                  <td>{row.id_cuadrilla ?? ''}</td>
+                                  <td>{row.empleado ?? ''}</td>
+                                  <td>{row.asignacion ?? ''}</td>
+                                  <td>{row.fecha ?? ''}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    )}
+                    {activeTab === 1 && (
+                      <div>
+                        <h2>Buscar asignación</h2>
+                        {/* Aquí puedes agregar el contenido para buscar asignaciones */}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+              {mainTab === 1 && (
+                <div>
+                  <h2>Contenido de la segunda pestaña principal</h2>
+                  {/* Aquí puedes agregar el contenido del segundo tab principal */}
+                </div>
+              )}
+            </div>
+      setLoading(true);
+      try {
+        const res = await fetch(`/api/cuadrilla-asignacion?id_cuadrilla=${id}`);
+        if (!res.ok) throw new Error('No se pudo obtener asignaciones.');
+        const data = await res.json();
+        // Filtrar por la fecha actual (YYYY-MM-DD)
+        const today = new Date().toISOString().slice(0, 10);
+        const dataFiltrada = data.filter((row: any) => row.fecha === today);
+        setAsignacionesDia(dataFiltrada);
+        // Si no hay datos, no mostrar alerta
+      } catch (err) {
+        setAsignacionesDia([]);
+        // Solo mostrar alerta si el error no es por falta de datos
+        if (err instanceof Error && err.message !== 'No se pudo obtener asignaciones.') {
+          alert('Error al obtener asignaciones.');
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
     // Handler para el botón Asignar: agrega el registro al gridData
-    const handleAsignar = () => {
+    const handleAsignar = async () => {
       // Buscar datos completos de cuadrilla y site seleccionados
       const cuadrilla = cuadrillas.find(c => String(c.IdEmpleado ?? c.idempleado) === selectedCuadrilla);
-      const site = sites.find(s => (s.NroInterno ? String(s.NroInterno) : s.Concatenado) === selectedSite);
+      //const site = sites.find(s => (s.NroInterno ? String(s.NroInterno) : s.Concatenado) === selectedSite);
+      const site = selectedSiteObj;
+      setSelectedSiteObj(null);
       if (!cuadrilla || !site) {
         alert('Seleccione una cuadrilla y un site válidos.');
         return;
       }
+      const id_cuadrilla = String(cuadrilla.IdEmpleado ?? cuadrilla.idempleado ?? '');
+      const NroInterno = String(site.NroInterno ?? '');
+      const fecha = new Date().toISOString().slice(0, 10);
+
+      // Validar en el grid local
+      const existeEnGrid = gridData.some(row => row.id_cuadrilla === id_cuadrilla && row.NroInterno === NroInterno && row.fecha === fecha);
+      if (existeEnGrid) {
+        alert('Ya existe relacion CUADRILLA - FECHA');
+        return;
+      }
+
+      // Validar en la base de datos (asignaciones del día) por id_cuadrilla, NroInterno y fecha
+      const existeEnAsignaciones = asignacionesDia.some(row => {
+        // Usar los nombres de columna según el SQL y los datos
+        const rowIdCuadrilla = String(row.id_cuadrilla ?? row.ID_CUADRILLA ?? row.idempleado ?? row.IdEmpleado ?? '');
+        // NroInterno puede estar como string o número, normalizar ambos a string y quitar espacios
+        let rowNroInterno = row.NroInterno ?? row.nrointerno ?? row.NroInterno ?? row.nroInterno ?? '';
+        let nroInternoLocal = NroInterno;
+        rowNroInterno = String(rowNroInterno).trim();
+        nroInternoLocal = String(nroInternoLocal).trim();
+        // Fecha puede venir como '2025-11-29' o '29/11/2025', normalizar a YYYY-MM-DD
+        let rowFecha = String(row.fecha ?? row.fechacreacion ?? row.FechaCreacion ?? '');
+        let fechaLocal = fecha;
+        // Si la fecha viene como DD/MM/YYYY, convertir a YYYY-MM-DD
+        if (/^\d{2}\/\d{2}\/\d{4}$/.test(rowFecha)) {
+          const [d, m, y] = rowFecha.split('/');
+          rowFecha = `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
+        }
+        if (/^\d{2}\/\d{2}\/\d{4}$/.test(fechaLocal)) {
+          const [d, m, y] = fechaLocal.split('/');
+          fechaLocal = `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
+        }
+        // Depuración
+        // console.log('Comparando:', {rowIdCuadrilla, id_cuadrilla, rowNroInterno, nroInternoLocal, rowFecha, fechaLocal});
+        return rowIdCuadrilla === id_cuadrilla && rowNroInterno === nroInternoLocal && rowFecha === fechaLocal;
+      });
+      if (existeEnAsignaciones) {
+        alert('Ya existe relacion CUADRILLA - FECHA');
+        return;
+      }
+
       setGridData(prev => [
         ...prev,
         {
-          id_cuadrilla: String(cuadrilla.IdEmpleado ?? cuadrilla.idempleado ?? ''),
+          id_cuadrilla,
           Empleado: cuadrilla.NombreEmpleado ?? cuadrilla.nombreempleado ?? '',
-          NroInterno: String(site.NroInterno ?? ''),
+          NroInterno,
           Concatenado: site.Concatenado ?? '',
           idsite: String(site.IDSite ?? site.idsite ?? site.IdSite ?? ''),
-          correlativo: String(site.Correlativo ?? site.correlativo ?? site.Correlativo ?? '')
+          correlativo: String(site.Correlativo ?? site.correlativo ?? site.Correlativo ?? ''),
+          fecha,
+          TipoTrabajo: site.TipoTrabajo ?? ''
         }
       ]);
       // Limpiar solo el campo Site y poner focus
@@ -76,6 +288,8 @@ const Cuadrilla_Asignar: React.FC = () => {
         siteInputRef.current?.focus();
       }, 100);
     };
+
+    // ...rest of the component logic and return statement...
   // Estado para asignaciones del día
   const [asignacionesDia, setAsignacionesDia] = useState<any[]>([]);
   const [cuadrillas, setCuadrillas] = useState<EmpleadoCuadrilla[]>([]);
@@ -86,6 +300,8 @@ const Cuadrilla_Asignar: React.FC = () => {
   const [activeSuggestion, setActiveSuggestion] = useState(0);
   const [selectedSite, setSelectedSite] = useState('');
   const [siteInput, setSiteInput] = useState('');
+  // Nuevo estado para guardar el objeto completo del site seleccionado
+  const [selectedSiteObj, setSelectedSiteObj] = useState<SiteAsignacion | null>(null);
   const [showSiteSuggestions, setShowSiteSuggestions] = useState(false);
   const [activeSiteSuggestion, setActiveSiteSuggestion] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -99,6 +315,8 @@ const Cuadrilla_Asignar: React.FC = () => {
     Concatenado: string;
     idsite?: string;
     correlativo?: string;
+    fecha?: string;
+    TipoTrabajo?: string;
   }>>([]);
 
   // Add the rest of your component logic and return statement here
@@ -164,13 +382,22 @@ const Cuadrilla_Asignar: React.FC = () => {
     setShowSuggestions(true);
     setSelectedCuadrilla('');
     setActiveSuggestion(0);
+    setAsignacionesDia([]); // Limpiar asignaciones al cambiar input manualmente
   };
 
   const handleSuggestionClick = (c: EmpleadoCuadrilla) => {
     setCuadrillaInput(c.NombreEmpleado ?? c.nombreempleado ?? '');
     setSelectedCuadrilla(String(c.IdEmpleado ?? c.idempleado));
     setShowSuggestions(false);
+    // La búsqueda se ejecutará automáticamente por useEffect
   };
+  // Ejecutar búsqueda automáticamente cuando cambia la cuadrilla seleccionada manualmente
+  useEffect(() => {
+    if (selectedCuadrilla) {
+      handleBuscarAsignaciones();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedCuadrilla]);
 
   const handleInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (!showSuggestions || filteredCuadrillas.length === 0) return;
@@ -196,6 +423,7 @@ const Cuadrilla_Asignar: React.FC = () => {
     setSiteInput((s.NroInterno ? s.NroInterno + ' - ' : '') + s.Concatenado);
     setSelectedSite(String(s.NroInterno ?? s.Concatenado));
     setShowSiteSuggestions(false);
+    setSelectedSiteObj(s);
   };
 
   const handleSiteInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -216,7 +444,9 @@ const Cuadrilla_Asignar: React.FC = () => {
     e.preventDefault();
     // Buscar datos completos de cuadrilla y site seleccionados
     const cuadrilla = cuadrillas.find(c => String(c.IdEmpleado ?? c.idempleado) === selectedCuadrilla);
-    const site = sites.find(s => (s.NroInterno ? String(s.NroInterno) : s.Concatenado) === selectedSite);
+    //const site = sites.find(s => (s.NroInterno ? String(s.NroInterno) : s.Concatenado) === selectedSite);
+    const site = selectedSiteObj;
+    setSelectedSiteObj(null);
     if (!cuadrilla || !site) return;
     setGridData(prev => [
       ...prev,
@@ -226,7 +456,8 @@ const Cuadrilla_Asignar: React.FC = () => {
         NroInterno: String(site.NroInterno ?? ''),
         Concatenado: site.Concatenado ?? '',
         idsite: String(site.IDSite ?? site.idsite ?? site.IdSite ?? ''),
-        correlativo: String(site.Correlativo ?? site.correlativo ?? site.Correlativo ?? '')
+        correlativo: String(site.Correlativo ?? site.correlativo ?? site.Correlativo ?? ''),
+        fecha: new Date().toISOString().slice(0, 10)
       }
     ]);
     // Limpiar solo el campo Site y poner focus
@@ -246,11 +477,12 @@ const Cuadrilla_Asignar: React.FC = () => {
     }
     setLoading(true);
     try {
-      // Asegurarse de enviar NroInterno como parte de cada asignación
-      const asignacionesConNroInterno = gridData.map(row => ({
-        ...row,
-        NroInterno: row.NroInterno ?? ''
-      }));
+        // Asegurarse de enviar NroInterno y @ptipotrabajo como parte de cada asignación
+        const asignacionesConNroInterno = gridData.map(row => ({
+          ...row,
+          NroInterno: row.NroInterno ?? '',
+          ptipotrabajo: row.TipoTrabajo ?? '' // Enviar como @ptipotrabajo
+        }));
       const response = await fetch('/api/cuadrilla-asignacion', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -326,6 +558,47 @@ const Cuadrilla_Asignar: React.FC = () => {
     fetchAsignacionesDia();
   }, []);
 
+
+  // Exportar asignaciones del día a CSV
+  const handleExportAsignacionesDiaCSV = () => {
+    if (asignacionesDia.length === 0) {
+      alert('No hay datos para exportar.');
+      return;
+    }
+    // Obtener todas las claves únicas de los objetos como columnas
+    const allKeys = Array.from(
+      asignacionesDia.reduce((keys, row) => {
+        Object.keys(row).forEach(k => keys.add(k));
+        return keys;
+      }, new Set())
+    );
+    const headers = allKeys;
+    const separator = ';';
+    const csvRows = [
+      headers.join(separator),
+      ...asignacionesDia.map(row =>
+        headers.map(h => {
+          const val = row[h as string] !== undefined ? row[h as string] : '';
+          // Solo poner comillas si el valor contiene punto y coma, comilla o salto de línea
+          if (typeof val === 'string' && /[";\n]/.test(val)) {
+            return '"' + val.replace(/"/g, '""') + '"';
+          }
+          return val;
+        }).join(separator)
+      )
+    ];
+    const csvContent = csvRows.join('\r\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', 'asignaciones_dia.csv');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+  // Asegurarse de que no hay un cierre de bloque extra antes del return
   return (
     <div>
       <form
@@ -484,11 +757,10 @@ const Cuadrilla_Asignar: React.FC = () => {
                 <thead>
                   <tr style={{ background: '#f1f5f9' }}>
                     <th style={{ padding: 8, border: '1px solid #e5e7eb' }}>id_cuadrilla</th>
-                    <th style={{ padding: 8, border: '1px solid #e5e7eb' }}>Empleado</th>
-                    <th style={{ padding: 8, border: '1px solid #e5e7eb' }}>NroInterno</th>
-                    <th style={{ padding: 8, border: '1px solid #e5e7eb' }}>Concatenado</th>
-                    <th style={{ padding: 8, border: '1px solid #e5e7eb' }}>idsite</th>
-                    <th style={{ padding: 8, border: '1px solid #e5e7eb' }}>correlativo</th>
+                    <th style={{ padding: 8, border: '1px solid #e5e7eb', minWidth: 160 }}>Empleado</th>
+                    <th style={{ padding: 8, border: '1px solid #e5e7eb' }}>Asignacion</th>
+                    <th style={{ padding: 8, border: '1px solid #e5e7eb', minWidth: 110 }}>Fecha</th>
+                     <th style={{ padding: 8, border: '1px solid #e5e7eb', minWidth: 110 }}>Tipo Trabajo</th>
                     <th style={{ padding: 8, border: '1px solid #e5e7eb', minWidth: 80 }}>Acción</th>
                   </tr>
                 </thead>
@@ -497,10 +769,9 @@ const Cuadrilla_Asignar: React.FC = () => {
                     <tr key={row.id_cuadrilla + '-' + row.NroInterno + '-' + idx}>
                       <td style={{ padding: 8, border: '1px solid #e5e7eb' }}>{row.id_cuadrilla}</td>
                       <td style={{ padding: 8, border: '1px solid #e5e7eb' }}>{row.Empleado}</td>
-                      <td style={{ padding: 8, border: '1px solid #e5e7eb' }}>{row.NroInterno}</td>
                       <td style={{ padding: 8, border: '1px solid #e5e7eb' }}>{row.Concatenado}</td>
-                      <td style={{ padding: 8, border: '1px solid #e5e7eb' }}>{row.idsite}</td>
-                      <td style={{ padding: 8, border: '1px solid #e5e7eb' }}>{row.correlativo}</td>
+                      <td style={{ padding: 8, border: '1px solid #e5e7eb' }}>{row.fecha ?? ''}</td>
+                      <td style={{ padding: 8, border: '1px solid #e5e7eb' }}>{row.TipoTrabajo ?? ''}</td>
                       <td style={{ padding: 8, border: '1px solid #e5e7eb', textAlign: 'center' }}>
                         <button type="button" onClick={() => handleDeleteRow(idx)} style={{ background: '#dc2626', color: 'white', border: 'none', borderRadius: 4, padding: '4px 10px', fontWeight: 600, cursor: 'pointer' }}>
                           Eliminar
@@ -521,31 +792,31 @@ const Cuadrilla_Asignar: React.FC = () => {
         {/* Grid de asignaciones del día */}
         <div style={{ maxWidth: 800, background: 'white', borderRadius: 12, boxShadow: '0 4px 16px rgba(0,0,0,0.06)', padding: 20, flex: 1 }}>
           <h3 style={{ marginBottom: 16, textAlign: 'center' }}>Asignaciones del día</h3>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 10, gap: 8 }}>
+            <button type="button" onClick={() => handleExportAsignacionesDiaCSV()} style={{ background: '#059669', color: 'white', border: 'none', borderRadius: 5, padding: '7px 16px', fontWeight: 600, cursor: 'pointer' }}>
+              Exportar CSV
+            </button>
+          </div>
           <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 15 }}>
               <thead>
                 <tr style={{ background: '#f1f5f9' }}>
                   <th style={{ padding: 8, border: '1px solid #e5e7eb' }}>id_cuadrilla</th>
-                  <th style={{ padding: 8, border: '1px solid #e5e7eb' }}>Empleado</th>
-                  <th style={{ padding: 8, border: '1px solid #e5e7eb' }}>NroInterno</th>
-                  <th style={{ padding: 8, border: '1px solid #e5e7eb' }}>Concatenado</th>
-                  <th style={{ padding: 8, border: '1px solid #e5e7eb' }}>idsite</th>
-                  <th style={{ padding: 8, border: '1px solid #e5e7eb' }}>correlativo</th>
+                  <th style={{ padding: 8, border: '1px solid #e5e7eb', minWidth: 160 }}>Empleado</th>
+                  <th style={{ padding: 8, border: '1px solid #e5e7eb' }}>Asignacion</th>
+                  <th style={{ padding: 8, border: '1px solid #e5e7eb', minWidth: 110 }}>Fecha</th>
                 </tr>
               </thead>
               <tbody>
                 {asignacionesDia.map((row, idx) => (
                   <tr key={
                     (row.ID_CUADRILLA ?? row.id_cuadrilla ?? row.idempleado ?? row.IdEmpleado ?? idx) +
-                    '-' + (row.IDSITE ?? row.idsite ?? row.IdSite ?? idx) +
-                    '-' + (row.CORRESITE ?? row.correlativo ?? row.Correlativo ?? idx)
+                    '-' + (row.IDSITE ?? row.idsite ?? row.IdSite ?? idx)
                   }>
                     <td style={{ padding: 8, border: '1px solid #e5e7eb' }}>{row.ID_CUADRILLA ?? row.id_cuadrilla ?? row.idempleado ?? row.IdEmpleado ?? ''}</td>
                     <td style={{ padding: 8, border: '1px solid #e5e7eb' }}>{row.Empleado ?? row.NombreEmpleado ?? row.nombreempleado ?? ''}</td>
-                    <td style={{ padding: 8, border: '1px solid #e5e7eb' }}>{row.NroInterno ?? row.nrointerno ?? ''}</td>
                     <td style={{ padding: 8, border: '1px solid #e5e7eb' }}>{row.Concatenado ?? row.concatenado ?? ''}</td>
-                    <td style={{ padding: 8, border: '1px solid #e5e7eb' }}>{row.IDSITE ?? row.idsite ?? row.IdSite ?? ''}</td>
-                    <td style={{ padding: 8, border: '1px solid #e5e7eb' }}>{row.CORRESITE ?? row.correlativo ?? row.Correlativo ?? ''}</td>
+                    <td style={{ padding: 8, border: '1px solid #e5e7eb' }}>{row.fecha ?? ''}</td>
                   </tr>
                 ))}
               </tbody>

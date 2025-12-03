@@ -1,7 +1,6 @@
-const { sqlServerClient, querySqlServer } = require('../../../lib/sqlServerClient');
-// Por favor, revisa y comparte el contenido de este archivo para depuración.
+import * as sql from 'mssql';
+import { querySqlServer, pool } from '../../../lib/sqlServerClient';
 import { NextResponse } from 'next/server';
-// import { executeQuery } from '../../../lib/sqlServerClient';
 
 export async function POST(req: Request) {
   try {
@@ -21,16 +20,26 @@ export async function POST(req: Request) {
         errores.push(`Faltan datos en registro: ${JSON.stringify(row)}`);
         continue;
       }
-        const sql = `INSERT INTO CuadrillaAsignacion (id_cuadrilla, idsite, corresite, fecha, Estado, UsuarioCreacion, FechaCreacion, NroInterno)
-          VALUES (${Number(id_cuadrilla)}, '${idsite}', ${Number(correlativo)}, CONVERT(nvarchar(15), GETDATE(), 23), 3, '${usuario}', GETDATE(), ${row.NroInterno ?? 'NULL'})`;
-      console.log('SQL ejecutado:', sql);
-      sqlComandos.push(sql);
+        const sqlInsert = `INSERT INTO CuadrillaAsignacion (id_cuadrilla, idsite, corresite, fecha, Estado, UsuarioCreacion, FechaCreacion, NroInterno, tipotrabajo)
+          VALUES (${Number(id_cuadrilla)}, '${idsite}', ${Number(correlativo)}, CONVERT(nvarchar(15), GETDATE(), 23), 3, '${usuario}', GETDATE(), ${row.NroInterno ?? 'NULL'}, '${row.ptipotrabajo ?? ''}')`;
+      console.log('SQL ejecutado:', sqlInsert);
+      sqlComandos.push(sqlInsert);
       try {
-        await querySqlServer(sql);
+        await querySqlServer(sqlInsert);
+        // Ejecutar el procedimiento almacenado para cada registro
+        await pool.request()
+          .input('pidCuadrilla', sql.Int, Number(id_cuadrilla))
+          .input('pNroInterno', sql.Numeric(18,0), Number(row.NroInterno))
+          .input('pFecha', sql.NVarChar(15), row.fecha)
+          .input('pEstado', sql.Int, 3)
+          .input('pUsuario', sql.NVarChar(10), usuario)
+          .input('ptipotrabajo', sql.NVarChar(250), row.ptipotrabajo ?? '')
+          .execute('sp_CrearSeguimiento');
       } catch (err: any) {
         errores.push(`Error en registro ${JSON.stringify(row)}: ${err?.message || err}`);
       }
-    }
+    } // <-- Close for loop here
+
     if (errores.length > 0) {
       return NextResponse.json({ error: errores.join('; '), sql: sqlComandos }, { status: 500 });
     }
@@ -38,5 +47,30 @@ export async function POST(req: Request) {
   } catch (error: any) {
     console.error('Error inesperado:', error);
     return NextResponse.json({ error: error?.message || 'Error inesperado.', details: error instanceof Error ? error.message : error }, { status: 500 });
+  }
+}
+
+export async function GET(req: Request) {
+  try {
+    const { searchParams } = new URL(req.url);
+    const id_cuadrilla = searchParams.get('id_cuadrilla');
+    if (!id_cuadrilla) {
+      return new Response(JSON.stringify({ error: 'Falta id_cuadrilla' }), { status: 400 });
+    }
+    const fechaActual = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+    const result = await pool.request()
+      .input('id_cuadrilla', sql.Int, Number(id_cuadrilla))
+      .input('pFecha', sql.NVarChar(15), fechaActual)
+      .execute('sp_ObtenerCuadrillaAsignacion');
+    return new Response(JSON.stringify({
+      store: 'sp_ObtenerCuadrillaAsignacion',
+      parametros: {
+        id_cuadrilla: Number(id_cuadrilla),
+        pFecha: fechaActual
+      },
+      datos: result.recordset
+    }), { status: 200 });
+  } catch (error) {
+    return new Response(JSON.stringify({ error: (error instanceof Error ? error.message : String(error)) }), { status: 500 });
   }
 }

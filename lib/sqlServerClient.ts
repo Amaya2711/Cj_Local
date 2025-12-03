@@ -33,7 +33,7 @@ async function querySqlServer(query: string) {
   return result.recordset;
 }
 
-module.exports = { sqlServerClient, querySqlServer };
+export { sqlServerClient, querySqlServer, pool };
 
 // Configuración de conexión a SQL Server
 // (Eliminado: declaración duplicada de 'config')

@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 
-type Row = {
+// type Row = {
   id: number;
   nombre: string | null;
   supervisor: string | null;
@@ -18,13 +18,48 @@ type Row = {
 
 export default function CuadrillasPage() {
   const [rows, setRows] = useState<Row[]>([]);
-  const [q, setQ] = useState('');
-  const [loading, setLoading] = useState(true);
-  const [err, setErr] = useState<string | null>(null);
-
-  // 👇 Traemos longitud en vez de altitud y agregamos tipo y categoria
-  const selectCols =
-    'id,nombre,supervisor,telefono,zona,activo,tipo,categoria';
+  const [activeTab, setActiveTab] = useState(0);
+  const TabNames = ['Nueva asignación', 'Buscar asignación'];
+  return (
+    <div style={{ margin: '32px' }}>
+      <div style={{ display: 'flex', borderBottom: '2px solid #eee' }}>
+        {TabNames.map((name, idx) => (
+          <button
+            key={name}
+            onClick={() => setActiveTab(idx)}
+            style={{
+              padding: '12px 32px',
+              border: 'none',
+              borderBottom: activeTab === idx ? '3px solid #1976d2' : 'none',
+              background: 'none',
+              fontWeight: activeTab === idx ? 'bold' : 'normal',
+              color: activeTab === idx ? '#1976d2' : '#333',
+              cursor: 'pointer',
+              outline: 'none',
+              fontSize: '16px',
+            }}
+          >
+            {name}
+          </button>
+        ))}
+      </div>
+      <div style={{ padding: '24px 0' }}>
+        {activeTab === 0 && (
+          <div>
+            <h2>Nueva asignación</h2>
+            {/* Aquí va el contenido de Nueva asignación */}
+          </div>
+        )}
+        {activeTab === 1 && (
+          <div>
+            <h2>Buscar asignación</h2>
+            {/* Aquí va el contenido de Buscar asignación */}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
 
   async function load() {
     setLoading(true);
