@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { Table } from 'antd';
-import Button from 'antd/lib/button';
-import type { ColumnsType } from 'antd';
+import Table from 'antd/es/table';
+import Button from 'antd/es/button';
+import type { ColumnsType } from 'antd/es/table';
 
 function Cuadrilla_Asignar() {
   const [mensajeBuscar, setMensajeBuscar] = useState<string>('');
@@ -9,7 +9,10 @@ function Cuadrilla_Asignar() {
   // Define the type for your data rows
   interface DataType {
     NroInterno: string;
-    // Add more fields as needed
+    id_cuadrilla: string;
+    Empleado: string;
+    Asignacion: string;
+    Fecha: string;
   }
 
   // Solo mostrar columnas explícitamente definidas
@@ -39,7 +42,10 @@ function Cuadrilla_Asignar() {
   const dataSource: DataType[] = [
     {
       NroInterno: '1',
-      // Add more fields as needed
+      id_cuadrilla: 'C01',
+      Empleado: 'Juan Perez',
+      Asignacion: 'Tarea 1',
+      Fecha: '2024-06-01'
     },
     // Add more data rows as needed
   ];
