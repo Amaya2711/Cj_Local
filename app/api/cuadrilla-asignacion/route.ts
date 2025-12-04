@@ -14,18 +14,31 @@ export async function POST(req: Request) {
     }
     let errores: string[] = [];
     const sqlComandos: string[] = [];
+      // Inicializar pool correctamente
+      const pool = await getPool(); // Asegurarse de que el pool esté inicializado
     for (const row of asignaciones) {
       const { id_cuadrilla, idsite, correlativo } = row;
       if (!id_cuadrilla || !idsite || !correlativo) {
         errores.push(`Faltan datos en registro: ${JSON.stringify(row)}`);
         continue;
       }
-        const sqlInsert = `INSERT INTO CuadrillaAsignacion (id_cuadrilla, idsite, corresite, fecha, Estado, UsuarioCreacion, FechaCreacion, NroInterno, tipotrabajo)
-          VALUES (${Number(id_cuadrilla)}, '${idsite}', ${Number(correlativo)}, CONVERT(nvarchar(15), GETDATE(), 23), 3, '${usuario}', GETDATE(), ${row.NroInterno ?? 'NULL'}, '${row.ptipotrabajo ?? ''}')`;
+      const sqlInsert = `INSERT INTO CuadrillaAsignacion (id_cuadrilla, idsite, corresite, fecha, Estado, UsuarioCreacion, FechaCreacion, NroInterno, tipotrabajo)
+        VALUES (${Number(id_cuadrilla)}, '${idsite}', ${Number(correlativo)}, CONVERT(nvarchar(15), GETDATE(), 23), 3, '${usuario}', GETDATE(), ${row.NroInterno ?? 'NULL'}, '${row.ptipotrabajo ?? ''}')`;
       console.log('SQL ejecutado:', sqlInsert);
       sqlComandos.push(sqlInsert);
       try {
-        // Ejecutar el procedimiento almacenado para cada registro
+        // Ejecutar primero sp_CrearAsignacion
+        await pool.request()
+          .input('pidCuadrilla', sql.Int, Number(id_cuadrilla))
+          .input('pidsite', sql.VarChar, row.idsite)
+          .input('pcorresite', sql.Int, Number(row.correlativo))
+          .input('pNroInterno', sql.Numeric(18,0), Number(row.NroInterno))
+          .input('pFecha', sql.NVarChar(15), row.fecha)
+          .input('pEstado', sql.Int, 3)
+          .input('pUsuario', sql.NVarChar(10), usuario)
+          .input('ptipotrabajo', sql.NVarChar(250), row.ptipotrabajo ?? '')
+          .execute('sp_CrearAsignacion');
+        // Luego ejecutar sp_CrearSeguimiento (sin pidsite y pcorresite)
         await pool.request()
           .input('pidCuadrilla', sql.Int, Number(id_cuadrilla))
           .input('pNroInterno', sql.Numeric(18,0), Number(row.NroInterno))
@@ -37,7 +50,7 @@ export async function POST(req: Request) {
       } catch (err: any) {
         errores.push(`Error en registro ${JSON.stringify(row)}: ${err?.message || err}`);
       }
-    } // <-- Close for loop here
+    }
 
     if (errores.length > 0) {
       return NextResponse.json({ error: errores.join('; '), sql: sqlComandos }, { status: 500 });

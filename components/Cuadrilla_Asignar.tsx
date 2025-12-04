@@ -73,7 +73,9 @@ const Cuadrilla_Asignar: React.FC = () => {
         alert('Seleccione una cuadrilla válida.');
         return;
       }
-      const pFecha = new Date().toISOString().slice(0, 10);
+      // Obtener fecha local en formato YYYY-MM-DD
+      const now = new Date();
+      const pFecha = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
       setLoading(true);
       try {
         const res = await fetch(`/api/cuadrilla-asignacion?id_cuadrilla=${idCuadrilla}&pFecha=${pFecha}`);
@@ -110,7 +112,9 @@ const Cuadrilla_Asignar: React.FC = () => {
       }
       const id_cuadrilla = String(cuadrilla.IdEmpleado ?? cuadrilla.idempleado ?? '');
       const NroInterno = String(site.NroInterno ?? '');
-      const fecha = new Date().toISOString().slice(0, 10);
+      // Obtener fecha local en formato YYYY-MM-DD
+      const now = new Date();
+      const fecha = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 
       // Validar en el grid local
       const existeEnGrid = gridData.some(row => row.id_cuadrilla === id_cuadrilla && row.NroInterno === NroInterno && row.fecha === fecha);
@@ -149,19 +153,19 @@ const Cuadrilla_Asignar: React.FC = () => {
         return;
       }
 
-      setGridData(prev => [
-        ...prev,
-        {
-          id_cuadrilla,
-          Empleado: cuadrilla.NombreEmpleado ?? cuadrilla.nombreempleado ?? '',
-          NroInterno,
-          Concatenado: site.Concatenado ?? '',
-          idsite: String(site.IDSite ?? site.idsite ?? site.IdSite ?? ''),
-          correlativo: String(site.Correlativo ?? site.correlativo ?? site.Correlativo ?? ''),
-          fecha,
-          TipoTrabajo: site.TipoTrabajo ?? ''
-        }
-      ]);
+      // Crear el registro en el grid
+      const nuevoRegistro = {
+        id_cuadrilla,
+        Empleado: cuadrilla.NombreEmpleado ?? cuadrilla.nombreempleado ?? '',
+        NroInterno,
+        Concatenado: site.Concatenado ?? '',
+        idsite: String(site.IDSite ?? site.idsite ?? site.IdSite ?? ''),
+        correlativo: String(site.Correlativo ?? site.correlativo ?? site.Correlativo ?? ''),
+        fecha,
+        TipoTrabajo: site.TipoTrabajo ?? ''
+      };
+      setGridData(prev => [...prev, nuevoRegistro]);
+
       // Limpiar solo el campo Site y poner focus
       setSiteInput('');
       setSelectedSite('');
@@ -235,13 +239,15 @@ const Cuadrilla_Asignar: React.FC = () => {
     // No return here; useEffect should not return JSX
   }, []);
 
-  const filteredCuadrillas = cuadrillas.filter(c => {
-    const nombre = (c.NombreEmpleado ?? c.nombreempleado ?? '').toLowerCase();
-    return cuadrillaInput
-      .toLowerCase()
-      .split(' ')
-      .every(word => nombre.includes(word));
-  });
+    const filteredCuadrillas = Array.isArray(cuadrillas)
+      ? cuadrillas.filter(c => {
+          const nombre = (c.NombreEmpleado ?? c.nombreempleado ?? '').toLowerCase();
+          return cuadrillaInput
+            .toLowerCase()
+            .split(' ')
+            .every(word => nombre.includes(word));
+        })
+      : [];
 
   // Normaliza cadenas para búsquedas insensibles a mayúsculas/minúsculas y tildes
   function normalize(str: string): string {
@@ -330,6 +336,9 @@ const Cuadrilla_Asignar: React.FC = () => {
     const site = selectedSiteObj;
     setSelectedSiteObj(null);
     if (!cuadrilla || !site) return;
+    // Obtener fecha local en formato YYYY-MM-DD
+    const now = new Date();
+    const fechaLocal = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
     setGridData(prev => [
       ...prev,
       {
@@ -339,7 +348,7 @@ const Cuadrilla_Asignar: React.FC = () => {
         Concatenado: site.Concatenado ?? '',
         idsite: String(site.IDSite ?? site.idsite ?? site.IdSite ?? ''),
         correlativo: String(site.Correlativo ?? site.correlativo ?? site.Correlativo ?? ''),
-        fecha: new Date().toISOString().slice(0, 10)
+        fecha: fechaLocal
       }
     ]);
     // Limpiar solo el campo Site y poner focus
@@ -359,31 +368,40 @@ const Cuadrilla_Asignar: React.FC = () => {
     }
     setLoading(true);
     try {
-        // Asegurarse de enviar NroInterno y @ptipotrabajo como parte de cada asignación
-        const asignacionesConNroInterno = gridData.map(row => ({
-          ...row,
-          NroInterno: row.NroInterno ?? '',
-          ptipotrabajo: row.TipoTrabajo ?? '' // Enviar como @ptipotrabajo
-        }));
-      const response = await fetch('/api/cuadrilla-asignacion', {
+      // Asegurarse de enviar NroInterno y @ptipotrabajo como parte de cada asignación
+      const asignacionesConNroInterno = gridData.map(row => ({
+        ...row,
+        NroInterno: row.NroInterno ?? '',
+        ptipotrabajo: row.TipoTrabajo ?? '' // Enviar como @ptipotrabajo
+      }));
+
+      // 1. Ejecutar el store sp_CrearAsignacion
+      const crearResponse = await fetch('/api/cuadrilla-asignacion', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ asignaciones: asignacionesConNroInterno, usuario: 'ADMIN' }),
+        body: JSON.stringify({ asignaciones: asignacionesConNroInterno, usuario: 'ADMIN', crearAsignacion: true }),
       });
-      const data = await response.json();
-      if (!response.ok) {
-        if (data.sql) {
-          console.log('SQL ejecutado con error:', data.sql);
-          alert('Error al grabar: ' + (data.error || 'Error al grabar asignación') + '\nSQL ejecutado:\n' + data.sql.join('\n'));
-        } else {
-          alert('Error al grabar: ' + (data.error || 'Error al grabar asignación'));
-        }
+      const crearData = await crearResponse.json();
+      if (!crearResponse.ok) {
+        alert('Error al crear asignación: ' + (crearData.error || 'Error desconocido'));
         setLoading(false);
         return;
       }
-      if (data.sql) {
-        alert('Grabado exitoso.');
+
+      // 2. Ejecutar el store sp_CrearSeguimiento
+      const seguimientoResponse = await fetch('/api/cuadrilla-asignacion', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ asignaciones: asignacionesConNroInterno, usuario: 'ADMIN', crearSeguimiento: true }),
+      });
+      const seguimientoData = await seguimientoResponse.json();
+      if (!seguimientoResponse.ok) {
+        alert('Error al crear seguimiento: ' + (seguimientoData.error || 'Error desconocido'));
+        setLoading(false);
+        return;
       }
+
+      alert('Grabado exitoso.');
       setGridData([]);
       fetchAsignacionesDia();
     } catch (err) {
@@ -483,199 +501,221 @@ const Cuadrilla_Asignar: React.FC = () => {
   // Asegurarse de que no hay un cierre de bloque extra antes del return
   return (
     <div>
-      <form
-        onSubmit={handleSubmit}
-        style={{
-          maxWidth: 500,
-          margin: '40px auto',
-          background: 'white',
-          borderRadius: 16,
-          boxShadow: '0 8px 32px rgba(0,0,0,0.08)',
-          padding: 32,
-        }}
-      >
-        <h2 style={{ textAlign: 'center', marginBottom: 32 }}>
-          Asignar Cuadrilla a Site
-        </h2>
-        <div style={{ marginBottom: 24, position: 'relative' }}>
-          <label style={{ fontWeight: 600 }}>Cuadrilla</label>
-          <input
-            type="text"
-            value={cuadrillaInput}
-            onChange={handleCuadrillaInput}
-            onKeyDown={handleInputKeyDown}
-            onFocus={() => setShowSuggestions(true)}
-            placeholder="Buscar cuadrilla por nombre..."
+      {/* Tabs secundarios */}
+      <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 24, marginTop: 24 }}>
+        {TabNames.map((tabName, idx) => (
+          <button
+            key={tabName}
+            onClick={() => setActiveTab(idx)}
             style={{
-              width: '100%',
-              padding: 10,
-              borderRadius: 6,
-              border: '1px solid #cbd5e1',
-              marginTop: 6,
+              padding: '8px 24px',
+              marginRight: 8,
+              borderRadius: 8,
+              border: 'none',
+              background: activeTab === idx ? '#059669' : '#e5e7eb',
+              color: activeTab === idx ? 'white' : '#222',
+              fontWeight: activeTab === idx ? 700 : 500,
               fontSize: 16,
+              cursor: 'pointer',
+              boxShadow: activeTab === idx ? '0 2px 8px rgba(5,150,105,0.12)' : 'none',
             }}
-            autoComplete="off"
-          />
-          {showSuggestions && cuadrillaInput && filteredCuadrillas.length > 0 && (
-            <ul
+          >
+            {tabName}
+          </button>
+        ))}
+      </div>
+      {/* Contenido de la pestaña secundaria seleccionada */}
+      {activeTab === 0 && (
+        <form
+          onSubmit={handleSubmit}
+          style={{
+            maxWidth: 500,
+            margin: '40px auto',
+            background: 'white',
+            borderRadius: 16,
+            boxShadow: '0 8px 32px rgba(0,0,0,0.08)',
+            padding: 32,
+          }}
+        >
+          <h2 style={{ textAlign: 'center', marginBottom: 32 }}>
+            Asignar Cuadrilla a Site
+          </h2>
+          {/* ...existing code for cuadrilla and site inputs, buttons... */}
+          <div style={{ marginBottom: 24, position: 'relative' }}>
+            <label style={{ fontWeight: 600 }}>Cuadrilla</label>
+            <input
+              type="text"
+              value={cuadrillaInput}
+              onChange={handleCuadrillaInput}
+              onKeyDown={handleInputKeyDown}
+              onFocus={() => setShowSuggestions(true)}
+              placeholder="Buscar cuadrilla por nombre..."
               style={{
-                position: 'absolute',
-                zIndex: 10,
-                background: '#fff',
-                border: '1px solid #e2e8f0',
-                borderRadius: 8,
                 width: '100%',
-                maxHeight: 180,
-                overflowY: 'auto',
-                margin: 0,
-                padding: 0,
-                listStyle: 'none',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+                padding: 10,
+                borderRadius: 6,
+                border: '1px solid #cbd5e1',
+                marginTop: 6,
+                fontSize: 16,
               }}
-            >
-              {filteredCuadrillas.map((c, idx) => (
-                <li
-                  key={c.IdEmpleado ?? c.idempleado}
-                  style={{
-                    padding: '8px 12px',
-                    cursor: 'pointer',
-                    borderBottom: '1px solid #f1f5f9',
-                    background: idx === activeSuggestion ? '#e0e7ff' : 'transparent',
-                  }}
-                  onMouseEnter={() => setActiveSuggestion(idx)}
-                  onClick={() => handleSuggestionClick(c)}
-                >
-                  {c.NombreEmpleado ?? c.nombreempleado}
-                </li>
-              ))}
-            </ul>
-          )}
-          {errorCuadrillas && (
-            <div style={{ color: '#dc2626', marginTop: 8 }}>{errorCuadrillas}</div>
-          )}
-        </div>
-        <div style={{ marginBottom: 24, position: 'relative' }}>
-          <label style={{ fontWeight: 600 }}>Site</label>
-          <input
-            type="text"
-            value={siteInput}
-            onChange={handleSiteInput}
-            onKeyDown={handleSiteInputKeyDown}
-            onFocus={() => setShowSiteSuggestions(true)}
-            placeholder="Buscar site por NroInterno o Concatenado..."
-            style={{ width: '100%', padding: 10, borderRadius: 6, border: '1px solid #cbd5e1', marginTop: 6, fontSize: 16 }}
-            autoComplete="off"
-            ref={siteInputRef}
-          />
-          <div style={{ display: 'flex', gap: '10px', marginTop: 10 }}>
-            <button
-              type="button"
-              style={{ flex: 1, height: 40, fontSize: 16 }}
-              onClick={handleBuscarAsignaciones}
-            >
-              Buscar
-            </button>
-            <button
-              type="button"
-              style={{ flex: 1, height: 40, fontSize: 16, backgroundColor: '#2563eb', color: 'white', border: 'none', borderRadius: '4px', fontWeight: 'bold' }}
-              onClick={handleAsignar}
-            >
-              Asignar
-            </button>
+              autoComplete="off"
+            />
+            {showSuggestions && cuadrillaInput && filteredCuadrillas.length > 0 && (
+              <ul
+                style={{
+                  position: 'absolute',
+                  zIndex: 10,
+                  background: '#fff',
+                  border: '1px solid #e2e8f0',
+                  borderRadius: 8,
+                  width: '100%',
+                  maxHeight: 180,
+                  overflowY: 'auto',
+                  margin: 0,
+                  padding: 0,
+                  listStyle: 'none',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+                }}
+              >
+                {filteredCuadrillas.map((c, idx) => (
+                  <li
+                    key={c.IdEmpleado ?? c.idempleado}
+                    style={{
+                      padding: '8px 12px',
+                      cursor: 'pointer',
+                      borderBottom: '1px solid #f1f5f9',
+                      background: idx === activeSuggestion ? '#e0e7ff' : 'transparent',
+                    }}
+                    onMouseEnter={() => setActiveSuggestion(idx)}
+                    onClick={() => handleSuggestionClick(c)}
+                  >
+                    {c.NombreEmpleado ?? c.nombreempleado}
+                  </li>
+                ))}
+              </ul>
+            )}
+            {errorCuadrillas && (
+              <div style={{ color: '#dc2626', marginTop: 8 }}>{errorCuadrillas}</div>
+            )}
           </div>
-          {showSiteSuggestions && siteInput && filteredSites.length > 0 && (
-            <ul
-              style={{
-                position: 'absolute',
-                zIndex: 10,
-                background: '#fff',
-                border: '1px solid #e2e8f0',
-                borderRadius: 8,
-                width: '100%',
-                maxHeight: 180,
-                overflowY: 'auto',
-                margin: 0,
-                padding: 0,
-                listStyle: 'none',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-              }}
-            >
-              {filteredSites.map((s, idx) => (
-                <li
-                  key={String(s.NroInterno) + '-' + s.Concatenado + '-' + idx}
-                  style={{
-                    padding: '8px 12px',
-                    cursor: 'pointer',
-                    borderBottom: '1px solid #f1f5f9',
-                    background: idx === activeSiteSuggestion ? '#e0e7ff' : 'transparent',
-                  }}
-                  onMouseEnter={() => setActiveSiteSuggestion(idx)}
-                  onClick={() => handleSiteSuggestionClick(s)}
-                >
-                  {(s.NroInterno ? s.NroInterno + ' - ' : '') + s.Concatenado}
-                </li>
-              ))}
-            </ul>
-          )}
-          {errorSites && (
-            <div style={{ color: '#dc2626', marginTop: 8 }}>{errorSites}</div>
-          )}
-        </div>
-        {/* Botón Asignar eliminado, solo queda el de la línea con Buscar */}
-      </form>
-      {/* Grids de registros anexados y asignaciones del día */}
-      <div style={{ display: 'flex', gap: 24, justifyContent: 'center', marginTop: 32 }}>
-        {/* Grid de registros anexados */}
-        {gridData.length > 0 && (
-          <div style={{ maxWidth: 800, background: 'white', borderRadius: 12, boxShadow: '0 4px 16px rgba(0,0,0,0.06)', padding: 20, flex: 1 }}>
-            <h3 style={{ marginBottom: 16, textAlign: 'center' }}>Registros anexados</h3>
-            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 10, gap: 8 }}>
-              <button type="button" onClick={handleExportCSV} style={{ background: '#059669', color: 'white', border: 'none', borderRadius: 5, padding: '7px 16px', fontWeight: 600, cursor: 'pointer' }}>
-                Exportar CSV
+          <div style={{ marginBottom: 24, position: 'relative' }}>
+            <label style={{ fontWeight: 600 }}>Site</label>
+            <input
+              type="text"
+              value={siteInput}
+              onChange={handleSiteInput}
+              onKeyDown={handleSiteInputKeyDown}
+              onFocus={() => setShowSiteSuggestions(true)}
+              placeholder="Buscar site por NroInterno o Concatenado..."
+              style={{ width: '100%', padding: 10, borderRadius: 6, border: '1px solid #cbd5e1', marginTop: 6, fontSize: 16 }}
+              autoComplete="off"
+              ref={siteInputRef}
+            />
+            <div style={{ display: 'flex', gap: '10px', marginTop: 10 }}>
+              <button
+                type="button"
+                style={{ flex: 1, height: 40, fontSize: 16 }}
+                onClick={handleBuscarAsignaciones}
+              >
+                Buscar
+              </button>
+              <button
+                type="button"
+                style={{ flex: 1, height: 40, fontSize: 16, backgroundColor: '#2563eb', color: 'white', border: 'none', borderRadius: '4px', fontWeight: 'bold' }}
+                onClick={handleAsignar}
+              >
+                Asignar
               </button>
             </div>
-            <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 15 }}>
-                <thead>
-                  <tr style={{ background: '#f1f5f9' }}>
-                    <th style={{ padding: 8, border: '1px solid #e5e7eb' }}>id_cuadrilla</th>
-                    <th style={{ padding: 8, border: '1px solid #e5e7eb', minWidth: 160 }}>Empleado</th>
-                    <th style={{ padding: 8, border: '1px solid #e5e7eb' }}>Asignacion</th>
-                    <th style={{ padding: 8, border: '1px solid #e5e7eb', minWidth: 110 }}>Fecha</th>
-                     <th style={{ padding: 8, border: '1px solid #e5e7eb', minWidth: 110 }}>Tipo Trabajo</th>
-                    <th style={{ padding: 8, border: '1px solid #e5e7eb', minWidth: 80 }}>Acción</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {gridData.map((row, idx) => (
-                    <tr key={row.id_cuadrilla + '-' + row.NroInterno + '-' + idx}>
-                      <td style={{ padding: 8, border: '1px solid #e5e7eb' }}>{row.id_cuadrilla}</td>
-                      <td style={{ padding: 8, border: '1px solid #e5e7eb' }}>{row.Empleado}</td>
-                      <td style={{ padding: 8, border: '1px solid #e5e7eb' }}>{row.Concatenado}</td>
-                      <td style={{ padding: 8, border: '1px solid #e5e7eb' }}>{row.fecha ?? ''}</td>
-                      <td style={{ padding: 8, border: '1px solid #e5e7eb' }}>{row.TipoTrabajo ?? ''}</td>
-                      <td style={{ padding: 8, border: '1px solid #e5e7eb', textAlign: 'center' }}>
-                        <button type="button" onClick={() => handleDeleteRow(idx)} style={{ background: '#dc2626', color: 'white', border: 'none', borderRadius: 4, padding: '4px 10px', fontWeight: 600, cursor: 'pointer' }}>
-                          Eliminar
-                        </button>
-                      </td>
+            {showSiteSuggestions && siteInput && filteredSites.length > 0 && (
+              <ul
+                style={{
+                  position: 'absolute',
+                  zIndex: 10,
+                  background: '#fff',
+                  border: '1px solid #e2e8f0',
+                  borderRadius: 8,
+                  width: '100%',
+                  maxHeight: 180,
+                  overflowY: 'auto',
+                  margin: 0,
+                  padding: 0,
+                  listStyle: 'none',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+                }}
+              >
+                {filteredSites.map((s, idx) => (
+                  <li
+                    key={String(s.NroInterno) + '-' + s.Concatenado + '-' + idx}
+                    style={{
+                      padding: '8px 12px',
+                      cursor: 'pointer',
+                      borderBottom: '1px solid #f1f5f9',
+                      background: idx === activeSiteSuggestion ? '#e0e7ff' : 'transparent',
+                    }}
+                    onMouseEnter={() => setActiveSiteSuggestion(idx)}
+                    onClick={() => handleSiteSuggestionClick(s)}
+                  >
+                    {(s.NroInterno ? s.NroInterno + ' - ' : '') + s.Concatenado}
+                  </li>
+                ))}
+              </ul>
+            )}
+            {errorSites && (
+              <div style={{ color: '#dc2626', marginTop: 8 }}>{errorSites}</div>
+            )}
+          </div>
+          {/* Botón Asignar eliminado, solo queda el de la línea con Buscar */}
+        </form>
+      )}
+      {activeTab === 1 && (
+        <div style={{ maxWidth: 600, margin: '40px auto', background: 'white', borderRadius: 16, boxShadow: '0 8px 32px rgba(0,0,0,0.08)', padding: 32 }}>
+          <h2 style={{ textAlign: 'center', marginBottom: 32 }}>Buscar asignación</h2>
+          {/* Aquí puedes agregar filtros o información de búsqueda adicional si lo necesitas */}
+          <div style={{ display: 'flex', gap: 24, justifyContent: 'center', marginTop: 32 }}>
+            {/* Grid de asignaciones del día */}
+            <div style={{ maxWidth: 800, background: 'white', borderRadius: 12, boxShadow: '0 4px 16px rgba(0,0,0,0.06)', padding: 20, flex: 1 }}>
+              <h3 style={{ marginBottom: 16, textAlign: 'center' }}>Asignaciones del día</h3>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 10, gap: 8 }}>
+                <button type="button" onClick={() => handleExportAsignacionesDiaCSV()} style={{ background: '#059669', color: 'white', border: 'none', borderRadius: 5, padding: '7px 16px', fontWeight: 600, cursor: 'pointer' }}>
+                  Exportar CSV
+                </button>
+              </div>
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 15 }}>
+                  <thead>
+                    <tr style={{ background: '#f1f5f9' }}>
+                      <th style={{ padding: 8, border: '1px solid #e5e7eb' }}>id_cuadrilla</th>
+                      <th style={{ padding: 8, border: '1px solid #e5e7eb', minWidth: 160 }}>Empleado</th>
+                      <th style={{ padding: 8, border: '1px solid #e5e7eb' }}>Asignacion</th>
+                      <th style={{ padding: 8, border: '1px solid #e5e7eb', minWidth: 110 }}>Fecha</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 18 }}>
-              <button type="button" onClick={handleGrabar} style={{ background: '#2563eb', color: 'white', border: 'none', borderRadius: 5, padding: '10px 28px', fontWeight: 700, fontSize: 16, cursor: 'pointer' }}>
-                Grabar
-              </button>
+                  </thead>
+                  <tbody>
+                    {asignacionesDia.map((row, idx) => (
+                      <tr key={
+                        (row.ID_CUADRILLA ?? row.id_cuadrilla ?? row.idempleado ?? row.IdEmpleado ?? idx) +
+                        '-' + (row.IDSITE ?? row.idsite ?? row.IdSite ?? idx)
+                      }>
+                        <td style={{ padding: 8, border: '1px solid #e5e7eb' }}>{row.ID_CUADRILLA ?? row.id_cuadrilla ?? row.idempleado ?? row.IdEmpleado ?? ''}</td>
+                        <td style={{ padding: 8, border: '1px solid #e5e7eb' }}>{row.Empleado ?? row.NombreEmpleado ?? row.nombreempleado ?? ''}</td>
+                        <td style={{ padding: 8, border: '1px solid #e5e7eb' }}>{row.Concatenado ?? row.concatenado ?? ''}</td>
+                        <td style={{ padding: 8, border: '1px solid #e5e7eb' }}>{row.fecha ?? ''}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
-        )}
-        {/* Grid de asignaciones del día */}
-        <div style={{ maxWidth: 800, background: 'white', borderRadius: 12, boxShadow: '0 4px 16px rgba(0,0,0,0.06)', padding: 20, flex: 1 }}>
-          <h3 style={{ marginBottom: 16, textAlign: 'center' }}>Asignaciones del día</h3>
+        </div>
+      )}
+      {/* Grid de registros anexados solo en la pestaña de nueva asignación */}
+      {activeTab === 0 && gridData.length > 0 && (
+        <div style={{ maxWidth: 800, background: 'white', borderRadius: 12, boxShadow: '0 4px 16px rgba(0,0,0,0.06)', padding: 20, flex: 1, margin: '40px auto' }}>
+          <h3 style={{ marginBottom: 16, textAlign: 'center' }}>Registros anexados</h3>
           <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 10, gap: 8 }}>
-            <button type="button" onClick={() => handleExportAsignacionesDiaCSV()} style={{ background: '#059669', color: 'white', border: 'none', borderRadius: 5, padding: '7px 16px', fontWeight: 600, cursor: 'pointer' }}>
+            <button type="button" onClick={handleExportCSV} style={{ background: '#059669', color: 'white', border: 'none', borderRadius: 5, padding: '7px 16px', fontWeight: 600, cursor: 'pointer' }}>
               Exportar CSV
             </button>
           </div>
@@ -685,27 +725,41 @@ const Cuadrilla_Asignar: React.FC = () => {
                 <tr style={{ background: '#f1f5f9' }}>
                   <th style={{ padding: 8, border: '1px solid #e5e7eb' }}>id_cuadrilla</th>
                   <th style={{ padding: 8, border: '1px solid #e5e7eb', minWidth: 160 }}>Empleado</th>
+                  <th style={{ padding: 8, border: '1px solid #e5e7eb' }}>idsite</th>
+                  <th style={{ padding: 8, border: '1px solid #e5e7eb' }}>correlativo</th>
                   <th style={{ padding: 8, border: '1px solid #e5e7eb' }}>Asignacion</th>
                   <th style={{ padding: 8, border: '1px solid #e5e7eb', minWidth: 110 }}>Fecha</th>
+                  <th style={{ padding: 8, border: '1px solid #e5e7eb', minWidth: 110 }}>Tipo Trabajo</th>
+                  <th style={{ padding: 8, border: '1px solid #e5e7eb', minWidth: 80 }}>Acción</th>
                 </tr>
               </thead>
               <tbody>
-                {asignacionesDia.map((row, idx) => (
-                  <tr key={
-                    (row.ID_CUADRILLA ?? row.id_cuadrilla ?? row.idempleado ?? row.IdEmpleado ?? idx) +
-                    '-' + (row.IDSITE ?? row.idsite ?? row.IdSite ?? idx)
-                  }>
-                    <td style={{ padding: 8, border: '1px solid #e5e7eb' }}>{row.ID_CUADRILLA ?? row.id_cuadrilla ?? row.idempleado ?? row.IdEmpleado ?? ''}</td>
-                    <td style={{ padding: 8, border: '1px solid #e5e7eb' }}>{row.Empleado ?? row.NombreEmpleado ?? row.nombreempleado ?? ''}</td>
-                    <td style={{ padding: 8, border: '1px solid #e5e7eb' }}>{row.Concatenado ?? row.concatenado ?? ''}</td>
+                {gridData.map((row, idx) => (
+                  <tr key={row.id_cuadrilla + '-' + row.NroInterno + '-' + idx}>
+                    <td style={{ padding: 8, border: '1px solid #e5e7eb' }}>{row.id_cuadrilla}</td>
+                    <td style={{ padding: 8, border: '1px solid #e5e7eb' }}>{row.Empleado}</td>
+                    <td style={{ padding: 8, border: '1px solid #e5e7eb' }}>{row.idsite ?? ''}</td>
+                    <td style={{ padding: 8, border: '1px solid #e5e7eb' }}>{row.correlativo ?? ''}</td>
+                    <td style={{ padding: 8, border: '1px solid #e5e7eb' }}>{row.Concatenado}</td>
                     <td style={{ padding: 8, border: '1px solid #e5e7eb' }}>{row.fecha ?? ''}</td>
+                    <td style={{ padding: 8, border: '1px solid #e5e7eb' }}>{row.TipoTrabajo ?? ''}</td>
+                    <td style={{ padding: 8, border: '1px solid #e5e7eb', textAlign: 'center' }}>
+                      <button type="button" onClick={() => handleDeleteRow(idx)} style={{ background: '#dc2626', color: 'white', border: 'none', borderRadius: 4, padding: '4px 10px', fontWeight: 600, cursor: 'pointer' }}>
+                        Eliminar
+                      </button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 18 }}>
+            <button type="button" onClick={handleGrabar} style={{ background: '#2563eb', color: 'white', border: 'none', borderRadius: 5, padding: '10px 28px', fontWeight: 700, fontSize: 16, cursor: 'pointer' }}>
+              Grabar
+            </button>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };

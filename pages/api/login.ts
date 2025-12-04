@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { querySqlServer, sql } from '../../lib/sqlServerClient';
+import { getPool, sql } from '../../lib/sqlServerClient';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
@@ -12,20 +12,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    const result = await querySqlServer(
-      'SELECT * FROM USUARIO WHERE IdUsuario = @usuario AND Clave = @clave',
-      [
-        { name: 'usuario', type: sql.NVarChar, value: usuario },
-        { name: 'clave', type: sql.NVarChar, value: clave }
-      ]
-    );
+    const pool = await getPool();
+    const result = await pool.request()
+      .input('pIdUsuario', sql.NVarChar, usuario)
+      .input('pClave', sql.NVarChar, clave)
+      .execute('sp_ValidarUsuario');
     if (result.recordset && result.recordset.length > 0) {
       return res.status(200).json({ ok: true, usuario: result.recordset[0] });
     } else {
       return res.status(401).json({ error: 'Usuario o clave incorrectos' });
     }
-  } catch (err) {
+  } catch (err: any) {
     console.error('Error en /api/login:', err);
-    return res.status(500).json({ error: 'Error en el servidor', details: err?.message || err });
+    return res.status(500).json({ error: 'Error en el servidor', details: err && err.message ? err.message : String(err) });
   }
 }

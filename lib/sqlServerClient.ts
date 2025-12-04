@@ -1,10 +1,11 @@
 import sql from 'mssql';
 
 const config = {
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  server: process.env.DB_SERVER,
-  database: process.env.DB_NAME,
+  user: process.env.SQLSERVER_USER,
+  password: process.env.SQLSERVER_PASSWORD,
+  server: process.env.SQLSERVER_HOST,
+  port: process.env.SQLSERVER_PORT ? parseInt(process.env.SQLSERVER_PORT) : 1433,
+  database: process.env.SQLSERVER_DB,
   options: {
     encrypt: true,
     trustServerCertificate: true,

@@ -10,8 +10,10 @@
   "dependencies": {
     "@googlemaps/js-api-loader": "^2.0.2",
     "@supabase/supabase-js": "^2.45.0",
+    "@types/antd": "^0.12.32",
     "@types/google.maps": "^3.58.1",
     "@types/leaflet-routing-machine": "^3.2.9",
+    "antd": "^6.0.1",
     "leaflet": "^1.9.4",
     "leaflet-routing-machine": "^3.2.12",
     "leaflet.heat": "^0.2.0",
