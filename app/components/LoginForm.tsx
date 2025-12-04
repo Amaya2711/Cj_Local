@@ -49,7 +49,24 @@ export default function LoginForm() {
         setMensaje(err?.message || 'Error al consultar SQL Server');
       }
     };
-  const { login } = useAuth();
+  const auth = useAuth();
+  let login;
+  if (auth && typeof auth === 'object' && 'login' in auth) {
+    login = auth.login;
+  } else {
+    return (
+      <div style={{ color: 'white', background: '#dc2626', padding: 32, borderRadius: 12, margin: 32, textAlign: 'center', fontWeight: 'bold', fontSize: 18 }}>
+        <div>❌ Error de autenticación</div>
+        <div style={{ marginTop: 12 }}>
+          El contexto <b>AuthContext</b> no provee la función <b>login</b>.<br />
+          Verifica que <b>AuthContext</b> exporte correctamente la función <b>login</b>.<br />
+          <div style={{ marginTop: 12, fontSize: 14, fontWeight: 'normal', background: '#fff', color: '#dc2626', borderRadius: 8, padding: 8 }}>
+            Ejemplo: <pre style={{ margin: 0 }}>{`<AuthContext.Provider value={{ login, ... }}>`}</pre>
+          </div>
+        </div>
+      </div>
+    );
+  }
   const [loading, setLoading] = useState(false);
   const [mensaje, setMensaje] = useState('');
   const [formData, setFormData] = useState({

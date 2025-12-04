@@ -4,11 +4,16 @@ import Button from 'antd/es/button';
 import type { ColumnsType } from 'antd/es/table';
 
 function Cuadrilla_Asignar() {
+        // Estados para los campos del formulario
+        const [formCuadrilla, setFormCuadrilla] = useState('');
+        const [formEmpleado, setFormEmpleado] = useState('');
+        const [formAsignacion, setFormAsignacion] = useState('');
+        const [formFecha, setFormFecha] = useState('');
+    const [mensajeAsignar, setMensajeAsignar] = useState<string>('');
   const [mensajeBuscar, setMensajeBuscar] = useState<string>('');
 
   // Define the type for your data rows
   interface DataType {
-    NroInterno: string;
     id_cuadrilla: string;
     Empleado: string;
     Asignacion: string;
@@ -39,16 +44,7 @@ function Cuadrilla_Asignar() {
     },
   ];
 
-  const dataSource: DataType[] = [
-    {
-      NroInterno: '1',
-      id_cuadrilla: 'C01',
-      Empleado: 'Juan Perez',
-      Asignacion: 'Tarea 1',
-      Fecha: '2024-06-01'
-    },
-    // Add more data rows as needed
-  ];
+  // Eliminar dataSource, solo usar gridData
 
   // Estado para controlar si está grabando
   const [grabando, setGrabando] = useState(false);
@@ -58,15 +54,15 @@ function Cuadrilla_Asignar() {
 
   // Simulación del evento Asignar
   const handleAsignar = (nuevoRegistro: any) => {
-    // Filtrar solo los campos permitidos
-    const registroFiltrado = {
-      NroInterno: nuevoRegistro.NroInterno,
+    // Solo agregar los campos permitidos
+    const registroFiltrado: DataType = {
       id_cuadrilla: nuevoRegistro.id_cuadrilla,
       Empleado: nuevoRegistro.Empleado,
       Asignacion: nuevoRegistro.Asignacion,
       Fecha: nuevoRegistro.Fecha
     };
     setGridData([...gridData, registroFiltrado]);
+    setMensajeAsignar('HOLA');
   };
 
   const handleGrabar = async () => {
@@ -93,6 +89,45 @@ function Cuadrilla_Asignar() {
           pagination={false}
           rowKey={(record) => record.id_cuadrilla + '-' + record.Fecha}
         />
+        {mensajeAsignar && (
+          <div style={{ marginTop: 10, color: 'green', fontWeight: 'bold' }}>{mensajeAsignar}</div>
+        )}
+        <div style={{ marginTop: 16 }}>
+          <input
+            type="text"
+            placeholder="Cuadrilla"
+            value={formCuadrilla}
+            onChange={e => setFormCuadrilla(e.target.value)}
+            style={{ marginRight: 8 }}
+          />
+          <input
+            type="text"
+            placeholder="Empleado"
+            value={formEmpleado}
+            onChange={e => setFormEmpleado(e.target.value)}
+            style={{ marginRight: 8 }}
+          />
+          <input
+            type="text"
+            placeholder="Asignacion"
+            value={formAsignacion}
+            onChange={e => setFormAsignacion(e.target.value)}
+            style={{ marginRight: 8 }}
+          />
+          <input
+            type="date"
+            placeholder="Fecha"
+            value={formFecha}
+            onChange={e => setFormFecha(e.target.value)}
+            style={{ marginRight: 8 }}
+          />
+          <Button type="primary" onClick={() => handleAsignar({
+            id_cuadrilla: formCuadrilla,
+            Empleado: formEmpleado,
+            Asignacion: formAsignacion,
+            Fecha: formFecha
+          })}>Asignar</Button>
+        </div>
       </div>
       <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 16 }}>
         <Button type="primary" onClick={handleGrabar} disabled={grabando}>Grabar</Button>

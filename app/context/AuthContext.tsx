@@ -134,7 +134,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.log('Login exitoso para:', usuarios.nombre_usuario);
       return { success: true, message: 'Acceso exitoso' };
 
-    } catch (error) {
+      login, // Exportar correctamente la función login
       console.error('Error en login:', error);
       return { success: false, message: 'Error del sistema. Intente nuevamente' };
     }
