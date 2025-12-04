@@ -12,6 +12,7 @@ function Cuadrilla_Asignar() {
     // Add more fields as needed
   }
 
+  // Solo mostrar columnas explícitamente definidas
   const columns: ColumnsType<DataType> = [
     {
       title: 'id_cuadrilla',
@@ -33,7 +34,6 @@ function Cuadrilla_Asignar() {
       dataIndex: 'Fecha',
       key: 'Fecha',
     },
-    // Las columnas idsite, correlativo y Tipo Trabajo están presentes en los datos pero no en el array de columnas, por lo que no se mostrarán
   ];
 
   const dataSource: DataType[] = [
@@ -46,6 +46,22 @@ function Cuadrilla_Asignar() {
 
   // Estado para controlar si está grabando
   const [grabando, setGrabando] = useState(false);
+
+  // Estado para los datos del grid
+  const [gridData, setGridData] = useState<DataType[]>([]);
+
+  // Simulación del evento Asignar
+  const handleAsignar = (nuevoRegistro: any) => {
+    // Filtrar solo los campos permitidos
+    const registroFiltrado = {
+      NroInterno: nuevoRegistro.NroInterno,
+      id_cuadrilla: nuevoRegistro.id_cuadrilla,
+      Empleado: nuevoRegistro.Empleado,
+      Asignacion: nuevoRegistro.Asignacion,
+      Fecha: nuevoRegistro.Fecha
+    };
+    setGridData([...gridData, registroFiltrado]);
+  };
 
   const handleGrabar = async () => {
     if (grabando) return;
@@ -67,10 +83,9 @@ function Cuadrilla_Asignar() {
       <div style={{ width: '100%', maxWidth: '100%', overflowX: 'auto' }}>
         <Table
           columns={columns}
-          dataSource={dataSource}
+          dataSource={gridData}
           pagination={false}
-          rowKey={(record) => record.NroInterno}
-          style={{ width: '100%' }}
+          rowKey={(record) => record.id_cuadrilla + '-' + record.Fecha}
         />
       </div>
       <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 16 }}>
