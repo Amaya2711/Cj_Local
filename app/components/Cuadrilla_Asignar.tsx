@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { Table, Button } from 'antd';
-import type { ColumnsType } from 'antd/es/table';
+import { Table } from 'antd';
+import Button from 'antd/lib/button';
+import type { ColumnsType } from 'antd';
 
 function Cuadrilla_Asignar() {
   const [mensajeBuscar, setMensajeBuscar] = useState<string>('');
@@ -13,10 +14,26 @@ function Cuadrilla_Asignar() {
 
   const columns: ColumnsType<DataType> = [
     {
-      title: 'NroInterno',
-      dataIndex: 'NroInterno',
-      key: 'NroInterno',
+      title: 'id_cuadrilla',
+      dataIndex: 'id_cuadrilla',
+      key: 'id_cuadrilla',
     },
+    {
+      title: 'Empleado',
+      dataIndex: 'Empleado',
+      key: 'Empleado',
+    },
+    {
+      title: 'Asignacion',
+      dataIndex: 'Asignacion',
+      key: 'Asignacion',
+    },
+    {
+      title: 'Fecha',
+      dataIndex: 'Fecha',
+      key: 'Fecha',
+    },
+    // Las columnas idsite, correlativo y Tipo Trabajo están presentes en los datos pero no en el array de columnas, por lo que no se mostrarán
   ];
 
   const dataSource: DataType[] = [
@@ -34,8 +51,12 @@ function Cuadrilla_Asignar() {
     if (grabando) return;
     setGrabando(true);
     try {
-      // Implementa aquí la lógica de guardado
-      // await tuFuncionDeGrabar();
+      // Filtrar registros únicos por NroInterno antes de enviar
+      const uniqueData = dataSource.filter((item, index, self) =>
+        index === self.findIndex((t) => t.NroInterno === item.NroInterno)
+      );
+      // Aquí deberías enviar uniqueData al backend
+      // await tuFuncionDeGrabar(uniqueData);
     } finally {
       setGrabando(false);
     }
@@ -43,7 +64,7 @@ function Cuadrilla_Asignar() {
 
   return (
     <>
-      <div>
+      <div style={{ width: '100%', maxWidth: '100%', overflowX: 'auto' }}>
         <Table
           columns={columns}
           dataSource={dataSource}

@@ -22,12 +22,18 @@ export async function POST(req: Request) {
         errores.push(`Faltan datos en registro: ${JSON.stringify(row)}`);
         continue;
       }
-      const sqlInsert = `INSERT INTO CuadrillaAsignacion (id_cuadrilla, idsite, corresite, fecha, Estado, UsuarioCreacion, FechaCreacion, NroInterno, tipotrabajo)
-        VALUES (${Number(id_cuadrilla)}, '${idsite}', ${Number(correlativo)}, CONVERT(nvarchar(15), GETDATE(), 23), 3, '${usuario}', GETDATE(), ${row.NroInterno ?? 'NULL'}, '${row.ptipotrabajo ?? ''}')`;
-      console.log('SQL ejecutado:', sqlInsert);
-      sqlComandos.push(sqlInsert);
+      // Validar si ya existe el registro antes de insertar
+      const existe = await pool.request()
+        .input('id_cuadrilla', sql.Int, Number(id_cuadrilla))
+        .input('idsite', sql.VarChar, row.idsite)
+        .input('correlativo', sql.Int, Number(row.correlativo))
+        .query(`SELECT 1 FROM CuadrillaAsignacion WHERE id_cuadrilla = @id_cuadrilla AND idsite = @idsite AND corresite = @correlativo`);
+      if (existe.recordset.length > 0) {
+        // Ya existe, omitir inserción y seguimiento
+        continue;
+      }
       try {
-        // Ejecutar primero sp_CrearAsignacion
+        // Ejecutar primero sp_CrearAsignacion SOLO UNA VEZ por registro
         await pool.request()
           .input('pidCuadrilla', sql.Int, Number(id_cuadrilla))
           .input('pidsite', sql.VarChar, row.idsite)
