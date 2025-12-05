@@ -55,7 +55,7 @@ interface SiteAsignacion {
 
 const Cuadrilla_Asignar: React.FC = () => {
   const [mainTab, setMainTab] = useState<number>(0);
-  const mainTabNames = ['Cuadrilla', 'Otro Tab'];
+  const mainTabNames = ['Asignacion', 'Otro Tab'];
 
     const [activeTab, setActiveTab] = useState(0);
     const TabNames = ['Nueva asignación', 'Buscar asignación'];
@@ -70,7 +70,7 @@ const Cuadrilla_Asignar: React.FC = () => {
       const idCuadrilla = selectedCuadrilla;
       const nombreStore = 'sp_ObtenerCuadrillaAsignacion';
       if (!idCuadrilla) {
-        alert('Seleccione una cuadrilla válida.');
+        alert('Seleccione una asignacion válida.');
         return;
       }
       // Obtener fecha local en formato YYYY-MM-DD
@@ -92,10 +92,8 @@ const Cuadrilla_Asignar: React.FC = () => {
           setActiveTab(0);
         } else {
           setAsignacionesDia(data);
-          // Si hay data en gridData, cambiar al tab de "Buscar asignación"
-          if (gridData.length > 0) {
-            setActiveTab(1);
-          }
+          // Cambiar al tab de "Buscar asignación" después de actualizar el estado
+          setTimeout(() => setActiveTab(1), 0);
         }
       } catch (err) {
         alert(`Error inesperado: ${err instanceof Error ? err.message : String(err)}`);
@@ -114,7 +112,7 @@ const Cuadrilla_Asignar: React.FC = () => {
       const site = selectedSiteObj;
       setSelectedSiteObj(null);
       if (!cuadrilla || !site) {
-        alert('Seleccione una cuadrilla y un site válidos.');
+        alert('Seleccione una asignacion y un site válidos.');
         return;
       }
       const id_cuadrilla = String(cuadrilla.IdEmpleado ?? cuadrilla.idempleado ?? '');
@@ -126,7 +124,7 @@ const Cuadrilla_Asignar: React.FC = () => {
       // Validar en el grid local
       const existeEnGrid = gridData.some(row => row.id_cuadrilla === id_cuadrilla && row.NroInterno === NroInterno && row.fecha === fecha);
       if (existeEnGrid) {
-        alert('Ya existe relacion CUADRILLA - FECHA');
+        alert('Ya existe relacion ASIGNACION - FECHA');
         return;
       }
 
@@ -156,7 +154,7 @@ const Cuadrilla_Asignar: React.FC = () => {
         return rowIdCuadrilla === id_cuadrilla && rowNroInterno === nroInternoLocal && rowFecha === fechaLocal;
       });
       if (existeEnAsignaciones) {
-        alert('Ya existe relacion CUADRILLA - FECHA');
+        alert('Ya existe relacion ASIGNACION - FECHA');
         return;
       }
 
@@ -545,18 +543,18 @@ const Cuadrilla_Asignar: React.FC = () => {
           }}
         >
           <h2 style={{ textAlign: 'center', marginBottom: 32 }}>
-            Asignar Cuadrilla a Site
+            Asignar Asignacion a Site
           </h2>
           {/* ...existing code for cuadrilla and site inputs, buttons... */}
           <div style={{ marginBottom: 24, position: 'relative' }}>
-            <label style={{ fontWeight: 600 }}>Cuadrilla</label>
+            <label style={{ fontWeight: 600 }}>Asignacion</label>
             <input
               type="text"
               value={cuadrillaInput}
               onChange={handleCuadrillaInput}
               onKeyDown={handleInputKeyDown}
               onFocus={() => setShowSuggestions(true)}
-              placeholder="Buscar cuadrilla por nombre..."
+              placeholder="Buscar asignacion por nombre..."
               style={{
                 width: '100%',
                 padding: 10,
