@@ -49,9 +49,10 @@ export default function LoginForm() {
         setMensaje(err?.message || 'Error al consultar SQL Server');
       }
     };
-  const auth = useAuth();
-  let login;
-  if (auth && typeof auth === 'object' && 'login' in auth) {
+  const auth = useAuth() as unknown as { login?: (username: string, password: string) => Promise<{ success: boolean; message: string }> } | null;
+  type LoginFunction = (username: string, password: string) => Promise<{ success: boolean; message: string }>;
+  let login: LoginFunction;
+  if (auth && typeof auth === 'object' && typeof auth.login === 'function') {
     login = auth.login;
   } else {
     return (

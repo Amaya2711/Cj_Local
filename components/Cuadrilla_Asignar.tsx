@@ -88,12 +88,19 @@ const Cuadrilla_Asignar: React.FC = () => {
         if (!data || data.length === 0) {
           alert(`No existe coincidencia\nStore ejecutado: ${nombreStore}\nParámetros enviados:\nidCuadrilla: ${idCuadrilla}\npFecha: ${pFecha}`);
           setAsignacionesDia([]);
+          // Mantener en el primer tab
+          setActiveTab(0);
         } else {
           setAsignacionesDia(data);
+          // Si hay data en gridData, cambiar al tab de "Buscar asignación"
+          if (gridData.length > 0) {
+            setActiveTab(1);
+          }
         }
       } catch (err) {
         alert(`Error inesperado: ${err instanceof Error ? err.message : String(err)}`);
         setAsignacionesDia([]);
+        setActiveTab(0);
       } finally {
         setLoading(false);
       }
@@ -725,11 +732,8 @@ const Cuadrilla_Asignar: React.FC = () => {
                 <tr style={{ background: '#f1f5f9' }}>
                   <th style={{ padding: 8, border: '1px solid #e5e7eb' }}>id_cuadrilla</th>
                   <th style={{ padding: 8, border: '1px solid #e5e7eb', minWidth: 160 }}>Empleado</th>
-                  <th style={{ padding: 8, border: '1px solid #e5e7eb' }}>idsite</th>
-                  <th style={{ padding: 8, border: '1px solid #e5e7eb' }}>correlativo</th>
                   <th style={{ padding: 8, border: '1px solid #e5e7eb' }}>Asignacion</th>
                   <th style={{ padding: 8, border: '1px solid #e5e7eb', minWidth: 110 }}>Fecha</th>
-                  <th style={{ padding: 8, border: '1px solid #e5e7eb', minWidth: 110 }}>Tipo Trabajo</th>
                   <th style={{ padding: 8, border: '1px solid #e5e7eb', minWidth: 80 }}>Acción</th>
                 </tr>
               </thead>
@@ -738,11 +742,8 @@ const Cuadrilla_Asignar: React.FC = () => {
                   <tr key={row.id_cuadrilla + '-' + row.NroInterno + '-' + idx}>
                     <td style={{ padding: 8, border: '1px solid #e5e7eb' }}>{row.id_cuadrilla}</td>
                     <td style={{ padding: 8, border: '1px solid #e5e7eb' }}>{row.Empleado}</td>
-                    <td style={{ padding: 8, border: '1px solid #e5e7eb' }}>{row.idsite ?? ''}</td>
-                    <td style={{ padding: 8, border: '1px solid #e5e7eb' }}>{row.correlativo ?? ''}</td>
                     <td style={{ padding: 8, border: '1px solid #e5e7eb' }}>{row.Concatenado}</td>
                     <td style={{ padding: 8, border: '1px solid #e5e7eb' }}>{row.fecha ?? ''}</td>
-                    <td style={{ padding: 8, border: '1px solid #e5e7eb' }}>{row.TipoTrabajo ?? ''}</td>
                     <td style={{ padding: 8, border: '1px solid #e5e7eb', textAlign: 'center' }}>
                       <button type="button" onClick={() => handleDeleteRow(idx)} style={{ background: '#dc2626', color: 'white', border: 'none', borderRadius: 4, padding: '4px 10px', fontWeight: 600, cursor: 'pointer' }}>
                         Eliminar
