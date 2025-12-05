@@ -1,3 +1,5 @@
+// Por favor, muestra el contenido completo de este archivo para revisión.
+// Revisión: Buscar referencias a 'Cuadrillas' o menús hardcodeados en este archivo.
 import type { Metadata } from 'next'
 import { AuthProvider } from './context/AuthContext'
 import AppContent from './components/AppContent'
