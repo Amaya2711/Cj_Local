@@ -74,14 +74,6 @@ export default function AppContent({ children }: AppContentProps) {
           <span style={{ marginLeft: '15px', color: '#94a3b8' }}>
             Usuario: {usuarioActual}
           </span>
-          <span style={{ marginLeft: '15px', color: '#94a3b8' }}>
-            {new Date().toLocaleDateString('es-ES', {
-              weekday: 'long',
-              year: 'numeric',
-              month: 'long',
-              day: 'numeric'
-            })}
-          </span>
         </div>
         {logout && (
           <button

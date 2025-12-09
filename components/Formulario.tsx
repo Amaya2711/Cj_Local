@@ -27,7 +27,7 @@ const Formulario: React.FC = () => {
         setLoading(false);
       }
     }
-    fetchNodos();
+    fetchNodos(); // Call fetchNodos without returning any value
   }, []);
 
     interface Plantilla {
@@ -163,7 +163,7 @@ const Formulario: React.FC = () => {
       const res = await fetch('/api/plantilla-imagenes', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ registros: payload })
+        body: JSON.stringify({ combinaciones: payload })
       });
       if (res.ok) {
         alert('Combinaciones grabadas correctamente.');
@@ -173,7 +173,7 @@ const Formulario: React.FC = () => {
         // Construir la sentencia SQL para mostrarla en el error
         let sqlSentencias = '';
         for (const reg of payload) {
-          sqlSentencias += `INSERT INTO Plantilla_Imagenes (NodoID, PlantillaID, SegmentoID, EvidenciaID, RutaImagen, IdUsuario) VALUES (${reg.NodoID}, ${reg.PlantillaID}, ${reg.SegmentoID}, ${reg.EvidenciaID}, '${reg.RutaImagen}', '${reg.IdUsuario}');\n`;
+          sqlSentencias += `INSERT INTO Plantilla_Imagenes (NodoID, PlantillaID, SegmentoID, EvidenciaID, RutaImagen, IdUsuario, FechaRegistro) VALUES (${reg.NodoID}, ${reg.PlantillaID}, ${reg.SegmentoID}, ${reg.EvidenciaID}, '${reg.RutaImagen || ''}', '${reg.IdUsuario}', '${new Date().toISOString()}');\n`;
         }
         alert('Error al grabar: ' + (errorData.error || '') + '\nSentencia SQL enviada:\n' + sqlSentencias);
       }

@@ -10,8 +10,13 @@ const MainForm: React.FC = () => {
   React.useEffect(() => {
     function updateUsuario() {
       if (typeof window !== 'undefined') {
-        const usuarioGlobal = window.pb_Usuario || localStorage.getItem('pb_Usuario') || '';
+        let usuarioGlobal = window.pb_Usuario || localStorage.getItem('pb_Usuario') || 'ADMIN';
         setUsuario(usuarioGlobal);
+        // Si no hay usuario registrado, establecer pb_Usuario en ADMIN
+        if (!window.pb_Usuario) {
+          window.pb_Usuario = 'ADMIN';
+          localStorage.setItem('pb_Usuario', 'ADMIN');
+        }
       }
     }
     updateUsuario();
