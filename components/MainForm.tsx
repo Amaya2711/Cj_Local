@@ -10,8 +10,8 @@ const MainForm: React.FC = () => {
   React.useEffect(() => {
     function updateUsuario() {
       if (typeof window !== 'undefined') {
-      setUsuario('MAS2711');
-        //  setUsuario(window.pb_Usuario || '');
+        const usuarioGlobal = window.pb_Usuario || localStorage.getItem('pb_Usuario') || '';
+        setUsuario(usuarioGlobal);
       }
     }
     updateUsuario();

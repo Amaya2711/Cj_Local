@@ -146,14 +146,20 @@ const Formulario: React.FC = () => {
         // Mostrar el valor global pb_Usuario al grabar
         const usuarioGlobal = (typeof window !== 'undefined' && window.pb_Usuario) ? window.pb_Usuario : (typeof window !== 'undefined' ? localStorage.getItem('pb_Usuario') : '');
         alert(`global: ${usuarioGlobal}`);
-      const payload = combinaciones.map(c => ({
-        NodoID: c.NodoID,
-        PlantillaID: c.PlantillaID,
-        SegmentoID: c.SegmentoID,
-        EvidenciaID: c.EvidenciaID,
-        RutaImagen: '',
-        IdUsuario: usuarioGlobal
-      }));
+        const payload = combinaciones.map(c => ({
+          NodoID: c.NodoID,
+          PlantillaID: c.PlantillaID,
+          SegmentoID: c.SegmentoID,
+          EvidenciaID: c.EvidenciaID,
+          RutaImagen: '',
+          IdUsuario: usuarioGlobal
+        }));
+        // Enviar usuarioGlobal como parte del body principal si el backend lo requiere
+        const body = {
+          combinaciones: payload,
+          usuario: usuarioGlobal
+        };
+        // ...fetch/axios POST usando body...
       const res = await fetch('/api/plantilla-imagenes', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
