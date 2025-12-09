@@ -1,6 +1,6 @@
 'use client';
 import { useAuth } from '../context/AuthContext';
-import TopNav from './TopNav';
+import TopNav from './TopNav'; // Verificar que este import apunte a app/components/TopNav.tsx
 
 interface AppContentProps {
   children: React.ReactNode;

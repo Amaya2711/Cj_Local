@@ -209,13 +209,15 @@ const Cuadrilla_Asignar: React.FC = () => {
     fecha?: string;
     TipoTrabajo?: string;
   }>>([]);
+  // Declarar el ref para el input de site
+  // Duplicate declaration removed. The ref is already declared above.
 
   // Add the rest of your component logic and return statement here
 
   useEffect(() => {
     async function fetchCuadrillas() {
       try {
-        const res = await fetch('/api/cuadrilla-empleado');
+        const res = await fetch('/api/cuadrilla-asignacion-cuadrillas');
         if (!res.ok) throw new Error('No se pudo cargar la lista de cuadrillas.');
         const data = await res.json();
         setCuadrillas(data);
@@ -226,6 +228,10 @@ const Cuadrilla_Asignar: React.FC = () => {
       }
     }
 
+    fetchCuadrillas();
+  }, []);
+
+  useEffect(() => {
     async function fetchSites() {
       try {
         const res = await fetch('/api/asignacion-sites');
@@ -239,9 +245,7 @@ const Cuadrilla_Asignar: React.FC = () => {
       }
     }
 
-    fetchCuadrillas();
     fetchSites();
-    // No return here; useEffect should not return JSX
   }, []);
 
     const filteredCuadrillas = Array.isArray(cuadrillas)
@@ -543,7 +547,7 @@ const Cuadrilla_Asignar: React.FC = () => {
           }}
         >
           <h2 style={{ textAlign: 'center', marginBottom: 32 }}>
-            Asignar Asignacion a Site
+            Asignar Cuadrilla a Site
           </h2>
           {/* ...existing code for cuadrilla and site inputs, buttons... */}
           <div style={{ marginBottom: 24, position: 'relative' }}>

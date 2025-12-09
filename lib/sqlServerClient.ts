@@ -1,11 +1,11 @@
 import sql from 'mssql';
 
 const config = {
-  user: process.env.SQLSERVER_USER,
-  password: process.env.SQLSERVER_PASSWORD,
-  server: process.env.SQLSERVER_HOST,
+  user: process.env.SQLSERVER_USER || 'usuario',
+  password: process.env.SQLSERVER_PASSWORD || 'password',
+  server: process.env.SQLSERVER_HOST || 'localhost',
   port: process.env.SQLSERVER_PORT ? parseInt(process.env.SQLSERVER_PORT) : 1433,
-  database: process.env.SQLSERVER_DB,
+  database: process.env.SQLSERVER_DB || 'nombre_bd',
   options: {
     encrypt: true,
     trustServerCertificate: true,
@@ -40,4 +40,19 @@ export async function querySqlServer(query: string, params: any[] = []) {
 }
 
 // Configuración de conexión a SQL Server
-// (Eliminado: declaración duplicada de 'config')
+export const MSSQL_CONFIG = {
+  user: process.env.DB_USER || process.env.SQLSERVER_USER || 'usuario',
+  password: process.env.DB_PASSWORD || process.env.SQLSERVER_PASSWORD || 'password',
+  server: process.env.DB_SERVER || process.env.SQLSERVER_HOST || 'localhost',
+  database: process.env.DB_DATABASE || process.env.SQLSERVER_DB || 'nombre_bd',
+  port: process.env.DB_PORT ? parseInt(process.env.DB_PORT) : (process.env.SQLSERVER_PORT ? parseInt(process.env.SQLSERVER_PORT) : 1433),
+  options: {
+    encrypt: false,
+    trustServerCertificate: true,
+  },
+  pool: {
+    max: 10,
+    min: 0,
+    idleTimeoutMillis: 30000,
+  },
+};
