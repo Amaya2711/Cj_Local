@@ -8,10 +8,16 @@ const MainForm: React.FC = () => {
   // Obtener el usuario autenticado desde localStorage usando useEffect y useState
   const [usuario, setUsuario] = useState('');
   React.useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const usuarioGlobal = window.pb_Usuario || '';
-      setUsuario(usuarioGlobal);
+    function updateUsuario() {
+      if (typeof window !== 'undefined') {
+        setUsuario(window.pb_Usuario || '');
+      }
     }
+    updateUsuario();
+    window.addEventListener('pbUsuarioChange', updateUsuario);
+    return () => {
+      window.removeEventListener('pbUsuarioChange', updateUsuario);
+    };
   }, []);
   const fecha = new Date().toLocaleDateString('es-PE', {
     weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'

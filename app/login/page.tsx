@@ -28,10 +28,16 @@ export default function LoginPage() {
       });
       const data = await res.json();
       if (Array.isArray(data) && data.length > 0) {
-        setMensaje("¡Acceso exitoso! Redirigiendo...");
+        // Guardar usuario en variable global y disparar evento pbUsuarioChange
+        if (typeof window !== 'undefined') {
+          window.pb_Usuario = usuario;
+          localStorage.setItem('pb_Usuario', usuario);
+          window.dispatchEvent(new Event('pbUsuarioChange'));
+        }
+        setMensaje(`¡Acceso exitoso! pb_Usuario: ${window.pb_Usuario}`);
         setTimeout(() => {
           router.push("/");
-        }, 1000);
+        }, 2000);
       } else {
         setMensaje("Usuario o clave incorrectos.");
       }
