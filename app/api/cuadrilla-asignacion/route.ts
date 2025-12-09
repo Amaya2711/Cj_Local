@@ -6,7 +6,12 @@ export async function POST(req: Request) {
   try {
     let { asignaciones, usuario } = await req.json();
     if (!usuario) {
-      usuario = 'ADMIN_X';
+      // Intentar obtener el usuario global pb_Usuario si está disponible
+      if (typeof globalThis !== 'undefined' && (globalThis as any).pb_Usuario) {
+        usuario = (globalThis as any).pb_Usuario;
+      } else {
+        usuario = 'ADMIN_X';
+      }
     }
     if (!Array.isArray(asignaciones) || asignaciones.length === 0) {
       console.error('No hay datos para grabar:', asignaciones);

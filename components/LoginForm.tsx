@@ -1,3 +1,9 @@
+// Declarar pb_Usuario en la interfaz Window para TypeScript
+declare global {
+  interface Window {
+    pb_Usuario: string;
+  }
+}
 import React, { useState } from 'react';
 
 export default function LoginForm({ onLogin }: { onLogin: (user: any) => void }) {
@@ -15,7 +21,8 @@ export default function LoginForm({ onLogin }: { onLogin: (user: any) => void })
     });
     const data = await res.json();
     if (data.success) {
-      onLogin(data.usuario);
+        onLogin(data.usuario);
+        window.pb_Usuario = data.usuario; // Asignación a window.pb_Usuario
     } else {
       setError(data.error || 'Error de autenticación');
     }

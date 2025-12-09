@@ -5,7 +5,14 @@ import Formulario from './Formulario';
 const menuColor = '#2563eb';
 
 const MainForm: React.FC = () => {
-  const usuario = 'ADMIN_X1'; // Puedes reemplazarlo por el usuario autenticado si lo necesitas
+  // Obtener el usuario autenticado desde localStorage usando useEffect y useState
+  const [usuario, setUsuario] = useState('');
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const usuarioGlobal = window.pb_Usuario || '';
+      setUsuario(usuarioGlobal);
+    }
+  }, []);
   const fecha = new Date().toLocaleDateString('es-PE', {
     weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
   });
