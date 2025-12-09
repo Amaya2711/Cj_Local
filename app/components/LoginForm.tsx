@@ -99,7 +99,13 @@ export default function LoginForm() {
     const result = await login(formData.nombre_usuario, formData.clave_usuario);
     
     if (result.success) {
-      setMensaje(result.message);
+      // Guardar usuario en variable global y localStorage
+      if (typeof window !== 'undefined') {
+        window.pb_Usuario = formData.nombre_usuario;
+        localStorage.setItem('pb_Usuario', formData.nombre_usuario);
+        window.dispatchEvent(new Event('pbUsuarioChange'));
+      }
+      setMensaje(`Acceso exitoso. Usuario: ${formData.nombre_usuario}`);
       // El contexto manejará automáticamente la autenticación
       // No necesitamos redirigir manualmente
     } else {

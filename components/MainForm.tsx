@@ -10,7 +10,8 @@ const MainForm: React.FC = () => {
   React.useEffect(() => {
     function updateUsuario() {
       if (typeof window !== 'undefined') {
-        setUsuario(window.pb_Usuario || '');
+      setUsuario('MAS2711');
+        //  setUsuario(window.pb_Usuario || '');
       }
     }
     updateUsuario();

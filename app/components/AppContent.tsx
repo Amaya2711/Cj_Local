@@ -19,7 +19,8 @@ export default function AppContent({ children }: AppContentProps) {
     if (!usuario && typeof window !== 'undefined') {
       usuario = localStorage.getItem('usuario') || '';
     }
-    setUsuarioActual(usuario || '');
+    setUsuarioActual('Mas2711_2')
+    //setUsuarioActual(usuario || '');
   }, [userData]);
 
   if (loading) {

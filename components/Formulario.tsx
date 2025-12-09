@@ -143,14 +143,16 @@ const Formulario: React.FC = () => {
       }
       // Obtener el usuario actual (puedes ajustar según tu sistema de autenticación)
       // Ejemplo: obtener de localStorage, contexto, o variable global
-      const usuarioActual = localStorage.getItem('usuario') || '';
+        // Mostrar el valor global pb_Usuario al grabar
+        const usuarioGlobal = (typeof window !== 'undefined' && window.pb_Usuario) ? window.pb_Usuario : (typeof window !== 'undefined' ? localStorage.getItem('pb_Usuario') : '');
+        alert(`global: ${usuarioGlobal}`);
       const payload = combinaciones.map(c => ({
         NodoID: c.NodoID,
         PlantillaID: c.PlantillaID,
         SegmentoID: c.SegmentoID,
         EvidenciaID: c.EvidenciaID,
         RutaImagen: '',
-        IdUsuario: usuarioActual
+        IdUsuario: usuarioGlobal
       }));
       const res = await fetch('/api/plantilla-imagenes', {
         method: 'POST',

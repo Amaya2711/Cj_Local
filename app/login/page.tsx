@@ -34,7 +34,8 @@ export default function LoginPage() {
           localStorage.setItem('pb_Usuario', usuario);
           window.dispatchEvent(new Event('pbUsuarioChange'));
         }
-        setMensaje(`¡Acceso exitoso! pb_Usuario: ${window.pb_Usuario}`);
+        const usuarioFinal = (typeof window !== 'undefined' && window.pb_Usuario) ? window.pb_Usuario : (typeof window !== 'undefined' ? localStorage.getItem('pb_Usuario') : '');
+        setMensaje(`¡Acceso exitoso! pb_Usuario: ${usuarioFinal}`);
         setTimeout(() => {
           router.push("/");
         }, 2000);
