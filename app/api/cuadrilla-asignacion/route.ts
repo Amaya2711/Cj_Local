@@ -6,7 +6,7 @@ export async function POST(req: Request) {
   try {
     let { asignaciones, usuario } = await req.json();
     if (!usuario) {
-      usuario = 'ADMIN';
+      usuario = 'ADMIN_X';
     }
     if (!Array.isArray(asignaciones) || asignaciones.length === 0) {
       console.error('No hay datos para grabar:', asignaciones);

@@ -5,7 +5,7 @@ import Formulario from './Formulario';
 const menuColor = '#2563eb';
 
 const MainForm: React.FC = () => {
-  const usuario = 'ADMIN'; // Puedes reemplazarlo por el usuario autenticado si lo necesitas
+  const usuario = 'ADMIN_X1'; // Puedes reemplazarlo por el usuario autenticado si lo necesitas
   const fecha = new Date().toLocaleDateString('es-PE', {
     weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
   });
@@ -32,7 +32,7 @@ const MainForm: React.FC = () => {
       {/* Barra superior */}
       <div style={{ background: '#222c36', color: '#fff', padding: '10px 32px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div style={{ fontWeight: 700, fontSize: 18 }}>
-          Bienvenido, {usuario}
+         // Bienvenido, {usuario}
         </div>
         <div style={{ fontSize: 15 }}>
           Usuario: {usuario} &nbsp; | &nbsp; {fecha}

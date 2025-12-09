@@ -92,19 +92,19 @@ export default function AuthWrapper({ children }: AuthWrapperProps) {
   }
 
   // Si no está autenticado y no está en una ruta pública
-  if (!isAuthenticated && !publicRoutes.includes(pathname)) {
+  if (!isAuthenticated && !publicRoutes.includes(pathname ?? '')) {
     router.push('/login');
     return null;
   }
 
   // Si está autenticado y está en login, redirigir al dashboard
-  if (isAuthenticated && pathname === '/login') {
+  if (isAuthenticated && (pathname ?? '') === '/login') {
     router.push('/');
     return null;
   }
 
   // Si está en una ruta pública, mostrar sin wrapper de autenticación
-  if (publicRoutes.includes(pathname)) {
+  if (publicRoutes.includes(pathname ?? '')) {
     return <>{children}</>;
   }
 

@@ -12,9 +12,9 @@ type NavItem = {
 // Menú de navegación principal - Actualizado con Google Maps
 const NAV_ITEMS: NavItem[] = [
   { href: '/', label: 'Inicio' },
-  { href: '/sites-v1', label: 'Sites V1' },
-  { href: '/sites', label: 'Sites' },
-  { href: '/cuadrillas', label: 'Cuadrillas' },
+  //{ href: '/sites-v1', label: 'Sites V1' },
+  //{ href: '/sites', label: 'Sites' },
+  //{ href: '/cuadrillas', label: 'Asignacion' },
   { href: '/tickets-v1', label: 'Tickets V1' },
   { href: '/map-google', label: 'Google Maps' },
   { href: '/informe', label: 'Informe' },

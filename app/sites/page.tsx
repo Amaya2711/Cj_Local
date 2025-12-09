@@ -103,7 +103,7 @@ export default function SitesPage() {
                 corresite: rel.corresite,
                 fecha: rel.fecha,
                 Estado: 1,
-                UsuarioCreacion: 'ADMIN',
+                UsuarioCreacion: 'ADMIN_X2',
                 FechaCreacion: new Date().toISOString()
               };
               try {

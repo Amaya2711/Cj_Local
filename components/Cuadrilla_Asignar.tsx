@@ -388,7 +388,7 @@ const Cuadrilla_Asignar: React.FC = () => {
       const crearResponse = await fetch('/api/cuadrilla-asignacion', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ asignaciones: asignacionesConNroInterno, usuario: 'ADMIN', crearAsignacion: true }),
+        body: JSON.stringify({ asignaciones: asignacionesConNroInterno, usuario: 'ADMIN_X4', crearAsignacion: true }),
       });
       const crearData = await crearResponse.json();
       if (!crearResponse.ok) {
@@ -401,7 +401,7 @@ const Cuadrilla_Asignar: React.FC = () => {
       const seguimientoResponse = await fetch('/api/cuadrilla-asignacion', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ asignaciones: asignacionesConNroInterno, usuario: 'ADMIN', crearSeguimiento: true }),
+        body: JSON.stringify({ asignaciones: asignacionesConNroInterno, usuario: 'ADMIN_X5', crearSeguimiento: true }),
       });
       const seguimientoData = await seguimientoResponse.json();
       if (!seguimientoResponse.ok) {
