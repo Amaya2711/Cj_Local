@@ -1,4 +1,6 @@
+
 'use client';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import TopNav from './TopNav'; // Verificar que este import apunte a app/components/TopNav.tsx
 
@@ -9,7 +11,17 @@ interface AppContentProps {
 export default function AppContent({ children }: AppContentProps) {
   const { isAuthenticated, userData, USUARIO_ACTUAL, logout, loading } = useAuth();
 
-  // Mostrar loading mientras verifica autenticación
+  // Obtener usuario actual de contexto o localStorage, y actualizar si cambia
+  const [usuarioActual, setUsuarioActual] = useState('');
+  useEffect(() => {
+    // Priorizar nombre_usuario, luego nombre_empleado
+    let usuario = userData?.nombre_usuario || userData?.nombre_empleado;
+    if (!usuario && typeof window !== 'undefined') {
+      usuario = localStorage.getItem('usuario') || '';
+    }
+    setUsuarioActual(usuario || '');
+  }, [userData]);
+
   if (loading) {
     return (
       <div style={{
@@ -41,7 +53,6 @@ export default function AppContent({ children }: AppContentProps) {
     );
   }
 
-
   // Si está autenticado, mostrar la aplicación completa con navegación
   return (
     <div>
@@ -57,10 +68,10 @@ export default function AppContent({ children }: AppContentProps) {
       }}>
         <div>
           <span style={{ fontWeight: '500' }}>
-            Bienvenido, {userData?.nombre_empleado || USUARIO_ACTUAL}
+            Bienvenido, {usuarioActual}
           </span>
           <span style={{ marginLeft: '15px', color: '#94a3b8' }}>
-            Usuario: {USUARIO_ACTUAL}
+            Usuario: {usuarioActual}
           </span>
           <span style={{ marginLeft: '15px', color: '#94a3b8' }}>
             {new Date().toLocaleDateString('es-ES', {
@@ -71,23 +82,25 @@ export default function AppContent({ children }: AppContentProps) {
             })}
           </span>
         </div>
-        <button
-          onClick={logout}
-          style={{
-            backgroundColor: 'transparent',
-            border: '1px solid #475569',
-            color: 'white',
-            padding: '4px 12px',
-            borderRadius: '4px',
-            cursor: 'pointer',
-            fontSize: '12px',
-            transition: 'background-color 0.2s'
-          }}
-          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#475569'}
-          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-        >
-          Cerrar Sesión
-        </button>
+        {logout && (
+          <button
+            onClick={logout}
+            style={{
+              backgroundColor: 'transparent',
+              border: '1px solid #475569',
+              color: 'white',
+              padding: '4px 12px',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              fontSize: '12px',
+              transition: 'background-color 0.2s'
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#475569')}
+            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+          >
+            Cerrar Sesión
+          </button>
+        )}
       </div>
 
       {/* Navegación principal usando TopNav */}

@@ -26,6 +26,16 @@ export async function getPool() {
   return pool;
 }
 
+export async function sqlQuery(strings: TemplateStringsArray, ...values: any[]) {
+  const pool = await getPool();
+  let query = strings[0];
+  for (let i = 0; i < values.length; i++) {
+    query += (typeof values[i] === 'string' ? `'${values[i]}'` : values[i]) + strings[i + 1];
+  }
+  const result = await pool.request().query(query);
+  return result.recordset;
+}
+
 export { sql };
 
 // Función genérica para ejecutar consultas SQL
