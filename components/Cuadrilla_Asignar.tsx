@@ -1,4 +1,4 @@
-// import React, { useState, useEffect } from 'react';
+// import React, { useState, useEffect } from 'react};
 // (Removed duplicate import. Keep only one import for React and hooks below.)
 
 
@@ -212,6 +212,47 @@ const Cuadrilla_Asignar: React.FC = () => {
   // Declarar el ref para el input de site
   // Duplicate declaration removed. The ref is already declared above.
 
+  // Estado para plantillas (asegurar que solo exista una vez)
+  const [plantillas, setPlantillas] = useState<any[]>([]);
+  const [selectedPlantilla, setSelectedPlantilla] = useState('');
+
+  // Autocompletado para plantillas
+  const [plantillaInput, setPlantillaInput] = useState('');
+  const [showPlantillaSuggestions, setShowPlantillaSuggestions] = useState(false);
+  const [activePlantillaSuggestion, setActivePlantillaSuggestion] = useState(0);
+
+  const filteredPlantillas = Array.isArray(plantillas)
+    ? plantillas.filter(p => {
+        const nombre = (p.Nombre ?? p.name ?? '').toLowerCase();
+        return plantillaInput
+          .toLowerCase()
+          .split(' ')
+          .every(word => nombre.includes(word));
+      })
+    : [];
+
+  const handlePlantillaSuggestionClick = (p: any) => {
+    setPlantillaInput(p.Nombre ?? p.name ?? '');
+    setSelectedPlantilla(String(p.PlantillaID ?? p.id));
+    setShowPlantillaSuggestions(false);
+  };
+
+  // Fetch plantillas
+  useEffect(() => {
+    async function fetchPlantillas() {
+      try {
+        // Llama al endpoint con el parámetro tipo=1 para filtrar por @Tipo=1
+        const res = await fetch('/api/plantillas?tipo=1');
+        if (!res.ok) throw new Error('No se pudo cargar la lista de plantillas.');
+        const data = await res.json();
+        setPlantillas(data);
+      } catch (err) {
+        setPlantillas([]);
+      }
+    }
+    fetchPlantillas();
+  }, []);
+
   // Add the rest of your component logic and return statement here
 
   useEffect(() => {
@@ -331,7 +372,10 @@ const Cuadrilla_Asignar: React.FC = () => {
       setActiveSiteSuggestion(prev => Math.max(prev - 1, 0));
     } else if (e.key === 'Enter') {
       const s = filteredSites[activeSiteSuggestion];
-      if (s) handleSiteSuggestionClick(s);
+      if (s) {
+        handleSiteSuggestionClick(s);
+        setSelectedSiteObj(s); // Asegura que selectedSiteObj se setea correctamente
+      }
     }
   };
 
@@ -507,7 +551,8 @@ const Cuadrilla_Asignar: React.FC = () => {
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
   };
-  // Asegurarse de que no hay un cierre de bloque extra antes del return
+
+  // El return principal del componente debe estar aquí, no dentro de otra función
   return (
     <div>
       {/* Tabs secundarios */}
@@ -546,134 +591,204 @@ const Cuadrilla_Asignar: React.FC = () => {
             padding: 32,
           }}
         >
-          <h2 style={{ textAlign: 'center', marginBottom: 32 }}>
-            Asignar Cuadrilla a Site
-          </h2>
-          {/* ...existing code for cuadrilla and site inputs, buttons... */}
-          <div style={{ marginBottom: 24, position: 'relative' }}>
-            <label style={{ fontWeight: 600 }}>Asignacion</label>
-            <input
-              type="text"
-              value={cuadrillaInput}
-              onChange={handleCuadrillaInput}
-              onKeyDown={handleInputKeyDown}
-              onFocus={() => setShowSuggestions(true)}
-              placeholder="Buscar asignacion por nombre..."
-              style={{
-                width: '100%',
-                padding: 10,
-                borderRadius: 6,
-                border: '1px solid #cbd5e1',
-                marginTop: 6,
-                fontSize: 16,
-              }}
-              autoComplete="off"
-            />
-            {showSuggestions && cuadrillaInput && filteredCuadrillas.length > 0 && (
-              <ul
+          <h2 style={{ textAlign: 'center', marginBottom: 32 }}>Nueva asignación</h2>
+            {/* Campo Cuadrilla */}
+            <div style={{ marginBottom: 24, position: 'relative' }}>
+              <label style={{ fontWeight: 600 }}>Asignacion</label>
+              <input
+                type="text"
+                value={cuadrillaInput}
+                onChange={handleCuadrillaInput}
+                onKeyDown={handleInputKeyDown}
+                onFocus={() => setShowSuggestions(true)}
+                placeholder="Buscar asignacion por nombre..."
                 style={{
-                  position: 'absolute',
-                  zIndex: 10,
-                  background: '#fff',
-                  border: '1px solid #e2e8f0',
-                  borderRadius: 8,
                   width: '100%',
-                  maxHeight: 180,
-                  overflowY: 'auto',
-                  margin: 0,
-                  padding: 0,
-                  listStyle: 'none',
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+                  padding: 10,
+                  borderRadius: 6,
+                  border: '1px solid #cbd5e1',
+                  marginTop: 6,
+                  fontSize: 16,
                 }}
-              >
-                {filteredCuadrillas.map((c, idx) => (
-                  <li
-                    key={c.IdEmpleado ?? c.idempleado}
-                    style={{
-                      padding: '8px 12px',
-                      cursor: 'pointer',
-                      borderBottom: '1px solid #f1f5f9',
-                      background: idx === activeSuggestion ? '#e0e7ff' : 'transparent',
-                    }}
-                    onMouseEnter={() => setActiveSuggestion(idx)}
-                    onClick={() => handleSuggestionClick(c)}
-                  >
-                    {c.NombreEmpleado ?? c.nombreempleado}
-                  </li>
-                ))}
-              </ul>
-            )}
-            {errorCuadrillas && (
-              <div style={{ color: '#dc2626', marginTop: 8 }}>{errorCuadrillas}</div>
-            )}
-          </div>
-          <div style={{ marginBottom: 24, position: 'relative' }}>
-            <label style={{ fontWeight: 600 }}>Site</label>
-            <input
-              type="text"
-              value={siteInput}
-              onChange={handleSiteInput}
-              onKeyDown={handleSiteInputKeyDown}
-              onFocus={() => setShowSiteSuggestions(true)}
-              placeholder="Buscar site por NroInterno o Concatenado..."
-              style={{ width: '100%', padding: 10, borderRadius: 6, border: '1px solid #cbd5e1', marginTop: 6, fontSize: 16 }}
-              autoComplete="off"
-              ref={siteInputRef}
-            />
+                autoComplete="off"
+              />
+              {showSuggestions && cuadrillaInput && filteredCuadrillas.length > 0 && (
+                <ul
+                  style={{
+                    position: 'absolute',
+                    zIndex: 10,
+                    background: '#fff',
+                    border: '1px solid #e2e8f0',
+                    borderRadius: 8,
+                    width: '100%',
+                    maxHeight: 180,
+                    overflowY: 'auto',
+                    margin: 0,
+                    padding: 0,
+                    listStyle: 'none',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+                  }}
+                >
+                  {filteredCuadrillas.map((c, idx) => (
+                    <li
+                      key={c.IdEmpleado ?? c.idempleado}
+                      style={{
+                        padding: '8px 12px',
+                        cursor: 'pointer',
+                        borderBottom: '1px solid #f1f5f9',
+                        background: idx === activeSuggestion ? '#e0e7ff' : 'transparent',
+                      }}
+                      onMouseEnter={() => setActiveSuggestion(idx)}
+                      onClick={() => handleSuggestionClick(c)}
+                    >
+                      {c.NombreEmpleado ?? c.nombreempleado}
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {errorCuadrillas && (
+                <div style={{ color: '#dc2626', marginTop: 8 }}>{errorCuadrillas}</div>
+              )}
+            </div>
+            {/* Campo Site */}
+            <div style={{ marginBottom: 24, position: 'relative' }}>
+              <label style={{ fontWeight: 600 }}>Site</label>
+              <input
+                type="text"
+                value={siteInput}
+                onChange={handleSiteInput}
+                onKeyDown={handleSiteInputKeyDown}
+                onFocus={() => setShowSiteSuggestions(true)}
+                placeholder="Buscar site por NroInterno o Concatenado..."
+                style={{ width: '100%', padding: 10, borderRadius: 6, border: '1px solid #cbd5e1', marginTop: 6, fontSize: 16 }}
+                autoComplete="off"
+                ref={siteInputRef}
+              />
+              {showSiteSuggestions && siteInput && filteredSites.length > 0 && (
+                <ul
+                  style={{
+                    position: 'absolute',
+                    zIndex: 10,
+                    background: '#fff',
+                    border: '1px solid #e2e8f0',
+                    borderRadius: 8,
+                    width: '100%',
+                    maxHeight: 180,
+                    overflowY: 'auto',
+                    margin: 0,
+                    padding: 0,
+                    listStyle: 'none',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+                  }}
+                >
+                  {filteredSites.map((s, idx) => (
+                    <li
+                      key={String(s.NroInterno) + '-' + s.Concatenado + '-' + idx}
+                      style={{
+                        padding: '8px 12px',
+                        cursor: 'pointer',
+                        borderBottom: '1px solid #f1f5f9',
+                        background: idx === activeSiteSuggestion ? '#e0e7ff' : 'transparent',
+                      }}
+                      onMouseEnter={() => setActiveSiteSuggestion(idx)}
+                      onClick={() => handleSiteSuggestionClick(s)}
+                    >
+                      {(s.NroInterno ? s.NroInterno + ' - ' : '') + s.Concatenado}
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {errorSites && (
+                <div style={{ color: '#dc2626', marginTop: 8 }}>{errorSites}</div>
+              )}
+            </div>
+            {/* Campo Plantilla */}
+            <div style={{ marginBottom: 24, position: 'relative' }}>
+              <label style={{ fontWeight: 600 }}>Plantilla</label>
+              <input
+                type="text"
+                value={selectedPlantilla ? (plantillas.find(p => String(p.PlantillaID ?? p.id) === selectedPlantilla)?.Nombre ?? plantillas.find(p => String(p.PlantillaID ?? p.id) === selectedPlantilla)?.name ?? selectedPlantilla) : plantillaInput}
+                onChange={e => {
+                  setPlantillaInput(e.target.value);
+                  setShowPlantillaSuggestions(true);
+                  setSelectedPlantilla('');
+                  setActivePlantillaSuggestion(0);
+                }}
+                onKeyDown={e => {
+                  if (!showPlantillaSuggestions || filteredPlantillas.length === 0) return;
+                  if (e.key === 'ArrowDown') {
+                    setActivePlantillaSuggestion(prev => Math.min(prev + 1, filteredPlantillas.length - 1));
+                  } else if (e.key === 'ArrowUp') {
+                    setActivePlantillaSuggestion(prev => Math.max(prev - 1, 0));
+                  } else if (e.key === 'Enter') {
+                    const p = filteredPlantillas[activePlantillaSuggestion];
+                    if (p) handlePlantillaSuggestionClick(p);
+                  }
+                }}
+                onFocus={() => setShowPlantillaSuggestions(true)}
+                placeholder="Buscar plantilla por nombre..."
+                style={{
+                  width: '100%',
+                  padding: 10,
+                  borderRadius: 6,
+                  border: '1px solid #cbd5e1',
+                  marginTop: 6,
+                  fontSize: 16,
+                }}
+                autoComplete="off"
+              />
+              {showPlantillaSuggestions && plantillaInput && filteredPlantillas.length > 0 && (
+                <ul
+                  style={{
+                    position: 'absolute',
+                    zIndex: 10,
+                    background: '#fff',
+                    border: '1px solid #e2e8f0',
+                    borderRadius: 8,
+                    width: '100%',
+                    maxHeight: 180,
+                    overflowY: 'auto',
+                    margin: 0,
+                    padding: 0,
+                    listStyle: 'none',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+                  }}
+                >
+                  {filteredPlantillas.map((p, idx) => (
+                    <li
+                      key={p.PlantillaID ?? p.id}
+                      style={{
+                        padding: '8px 12px',
+                        cursor: 'pointer',
+                        borderBottom: '1px solid #f1f5f9',
+                        background: idx === activePlantillaSuggestion ? '#e0e7ff' : 'transparent',
+                      }}
+                      onMouseEnter={() => setActivePlantillaSuggestion(idx)}
+                      onClick={() => handlePlantillaSuggestionClick(p)}
+                    >
+                      {p.Nombre ?? p.name}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+            {/* Mostrar botones solo si los tres campos tienen valor */}
             <div style={{ display: 'flex', gap: '10px', marginTop: 10 }}>
               <button
                 type="button"
-                style={{ flex: 1, height: 40, fontSize: 16 }}
+                style={{ flex: 1, height: 40, fontSize: 16, backgroundColor: '#059669', color: 'white', border: 'none', borderRadius: '4px', fontWeight: 'bold', cursor: 'pointer' }}
                 onClick={handleBuscarAsignaciones}
               >
                 Buscar
               </button>
               <button
                 type="button"
-                style={{ flex: 1, height: 40, fontSize: 16, backgroundColor: '#2563eb', color: 'white', border: 'none', borderRadius: '4px', fontWeight: 'bold' }}
+                style={{ flex: 1, height: 40, fontSize: 16, backgroundColor: '#2563eb', color: 'white', border: 'none', borderRadius: '4px', fontWeight: 'bold', cursor: 'pointer' }}
                 onClick={handleAsignar}
               >
                 Asignar
               </button>
             </div>
-            {showSiteSuggestions && siteInput && filteredSites.length > 0 && (
-              <ul
-                style={{
-                  position: 'absolute',
-                  zIndex: 10,
-                  background: '#fff',
-                  border: '1px solid #e2e8f0',
-                  borderRadius: 8,
-                  width: '100%',
-                  maxHeight: 180,
-                  overflowY: 'auto',
-                  margin: 0,
-                  padding: 0,
-                  listStyle: 'none',
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-                }}
-              >
-                {filteredSites.map((s, idx) => (
-                  <li
-                    key={String(s.NroInterno) + '-' + s.Concatenado + '-' + idx}
-                    style={{
-                      padding: '8px 12px',
-                      cursor: 'pointer',
-                      borderBottom: '1px solid #f1f5f9',
-                      background: idx === activeSiteSuggestion ? '#e0e7ff' : 'transparent',
-                    }}
-                    onMouseEnter={() => setActiveSiteSuggestion(idx)}
-                    onClick={() => handleSiteSuggestionClick(s)}
-                  >
-                    {(s.NroInterno ? s.NroInterno + ' - ' : '') + s.Concatenado}
-                  </li>
-                ))}
-              </ul>
-            )}
-            {errorSites && (
-              <div style={{ color: '#dc2626', marginTop: 8 }}>{errorSites}</div>
-            )}
-          </div>
           {/* Botón Asignar eliminado, solo queda el de la línea con Buscar */}
         </form>
       )}
@@ -701,7 +816,7 @@ const Cuadrilla_Asignar: React.FC = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {asignacionesDia.map((row, idx) => (
+                    {asignacionesDia.map((row: any, idx: number) => (
                       <tr key={
                         (row.ID_CUADRILLA ?? row.id_cuadrilla ?? row.idempleado ?? row.IdEmpleado ?? idx) +
                         '-' + (row.IDSITE ?? row.idsite ?? row.IdSite ?? idx)
