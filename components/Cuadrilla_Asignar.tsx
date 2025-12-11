@@ -1,3 +1,5 @@
+// (Leyendo las primeras 60 líneas para identificar la estructura y los componentes relevantes)
+// (Leyendo el inicio del archivo para identificar imports y estructura general)
 // import React, { useState, useEffect } from 'react};
 // (Removed duplicate import. Keep only one import for React and hooks below.)
 
@@ -159,6 +161,13 @@ const Cuadrilla_Asignar: React.FC = () => {
       }
 
       // Crear el registro en el grid
+      // Agregar también los campos ocultos de la plantilla seleccionada
+      // Validar que segmentoid no sea null ni vacío
+      const segmentoid = selectedPlantillaObj?.segmentoid ?? selectedPlantillaObj?.SegmentoID ?? '';
+      if (!segmentoid || segmentoid === '' || segmentoid === null) {
+        alert('La plantilla seleccionada no tiene SegmentoID. No se puede agregar el registro.');
+        return;
+      }
       const nuevoRegistro = {
         id_cuadrilla,
         Empleado: cuadrilla.NombreEmpleado ?? cuadrilla.nombreempleado ?? '',
@@ -167,7 +176,14 @@ const Cuadrilla_Asignar: React.FC = () => {
         idsite: String(site.IDSite ?? site.idsite ?? site.IdSite ?? ''),
         correlativo: String(site.Correlativo ?? site.correlativo ?? site.Correlativo ?? ''),
         fecha,
-        TipoTrabajo: site.TipoTrabajo ?? ''
+        TipoTrabajo: site.TipoTrabajo ?? '',
+        // Campos ocultos de la plantilla
+        Nodo: selectedPlantillaObj?.Nodo ?? selectedPlantillaObj?.nodo ?? '',
+        Plantilla: selectedPlantillaObj?.Plantilla ?? selectedPlantillaObj?.Nombre ?? selectedPlantillaObj?.name ?? '',
+        nodoid: selectedPlantillaObj?.nodoid ?? selectedPlantillaObj?.NodoID ?? '',
+        plantillaid: selectedPlantillaObj?.plantillaid ?? selectedPlantillaObj?.PlantillaID ?? '',
+        segmentoid: String(segmentoid),
+        Segmento: selectedPlantillaObj?.Segmento ?? selectedPlantillaObj?.segmento ?? '',
       };
       setGridData(prev => [...prev, nuevoRegistro]);
 
@@ -186,6 +202,7 @@ const Cuadrilla_Asignar: React.FC = () => {
   const [cuadrillas, setCuadrillas] = useState<EmpleadoCuadrilla[]>([]);
   const [sites, setSites] = useState<SiteAsignacion[]>([]);
   const [selectedCuadrilla, setSelectedCuadrilla] = useState('');
+    // (Leyendo 60 líneas adicionales para encontrar el gridcontrol y el combobox Plantilla)
   const [cuadrillaInput, setCuadrillaInput] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [activeSuggestion, setActiveSuggestion] = useState(0);
@@ -193,6 +210,7 @@ const Cuadrilla_Asignar: React.FC = () => {
   const [siteInput, setSiteInput] = useState('');
   // Nuevo estado para guardar el objeto completo del site seleccionado
   const [selectedSiteObj, setSelectedSiteObj] = useState<SiteAsignacion | null>(null);
+  // (Leyendo 60 líneas más para encontrar el render del gridcontrol y la columna de Plantilla)
   const [showSiteSuggestions, setShowSiteSuggestions] = useState(false);
   const [activeSiteSuggestion, setActiveSiteSuggestion] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -208,6 +226,9 @@ const Cuadrilla_Asignar: React.FC = () => {
     correlativo?: string;
     fecha?: string;
     TipoTrabajo?: string;
+    Segmento?: string;
+    segmentoid?: string;
+    // ...existing code...
   }>>([]);
   // Declarar el ref para el input de site
   // Duplicate declaration removed. The ref is already declared above.
@@ -215,15 +236,17 @@ const Cuadrilla_Asignar: React.FC = () => {
   // Estado para plantillas (asegurar que solo exista una vez)
   const [plantillas, setPlantillas] = useState<any[]>([]);
   const [selectedPlantilla, setSelectedPlantilla] = useState('');
+  const [selectedPlantillaObj, setSelectedPlantillaObj] = useState<any | null>(null);
 
   // Autocompletado para plantillas
   const [plantillaInput, setPlantillaInput] = useState('');
   const [showPlantillaSuggestions, setShowPlantillaSuggestions] = useState(false);
   const [activePlantillaSuggestion, setActivePlantillaSuggestion] = useState(0);
 
+  // Filtrar plantillas usando los nombres correctos del backend
   const filteredPlantillas = Array.isArray(plantillas)
     ? plantillas.filter(p => {
-        const nombre = (p.Nombre ?? p.name ?? '').toLowerCase();
+        const nombre = (p.Plantilla ?? p.Nombre ?? p.name ?? '').toLowerCase();
         return plantillaInput
           .toLowerCase()
           .split(' ')
@@ -231,13 +254,16 @@ const Cuadrilla_Asignar: React.FC = () => {
       })
     : [];
 
+  // Al seleccionar una sugerencia, usar los nombres correctos
+  // Al seleccionar una sugerencia, guardar el objeto completo si es necesario
   const handlePlantillaSuggestionClick = (p: any) => {
-    setPlantillaInput(p.Nombre ?? p.name ?? '');
-    setSelectedPlantilla(String(p.PlantillaID ?? p.id));
+    setPlantillaInput(p.Plantilla ?? p.Nombre ?? p.name ?? '');
+    setSelectedPlantilla(String(p.plantillaid ?? p.PlantillaID ?? p.id));
+    setSelectedPlantillaObj(p);
     setShowPlantillaSuggestions(false);
   };
 
-  // Fetch plantillas
+  // Fetch plantillas (asegura que se cargan todos los campos del store)
   useEffect(() => {
     async function fetchPlantillas() {
       try {
@@ -245,7 +271,17 @@ const Cuadrilla_Asignar: React.FC = () => {
         const res = await fetch('/api/plantillas?tipo=1');
         if (!res.ok) throw new Error('No se pudo cargar la lista de plantillas.');
         const data = await res.json();
-        setPlantillas(data);
+        // Si el backend retorna menos de 6 campos, puedes mapear aquí para asegurar los 6 campos
+        // Ejemplo: PlantillaID, Plantilla, Nodo, Segmento, Campo5, Campo6
+        setPlantillas(Array.isArray(data) ? data.map(p => ({
+          PlantillaID: p.PlantillaID ?? p.plantillaid ?? p.id,
+          Plantilla: p.Plantilla ?? p.Nombre ?? p.name,
+          Nodo: p.Nodo ?? p.nodo,
+          Segmento: p.Segmento ?? p.segmento,
+          Campo5: p.Campo5 ?? p.campo5,
+          Campo6: p.Campo6 ?? p.campo6,
+          ...p
+        })) : []);
       } catch (err) {
         setPlantillas([]);
       }
@@ -253,7 +289,7 @@ const Cuadrilla_Asignar: React.FC = () => {
     fetchPlantillas();
   }, []);
 
-  // Add the rest of your component logic and return statement here
+  // ...existing code...
 
   useEffect(() => {
     async function fetchCuadrillas() {
@@ -276,7 +312,20 @@ const Cuadrilla_Asignar: React.FC = () => {
     async function fetchSites() {
       try {
         const res = await fetch('/api/asignacion-sites');
-        if (!res.ok) throw new Error('No se pudo cargar la lista de sites.');
+        if (!res.ok) {
+          let errorMsg = 'Error al cargar sites.';
+          try {
+            const errorData = await res.json();
+            if (errorData?.error) {
+              errorMsg += '\n' + errorData.error;
+            } else {
+              errorMsg += '\n' + JSON.stringify(errorData);
+            }
+          } catch {}
+          setSites([]);
+          setErrorSites(errorMsg);
+          return;
+        }
         const data = await res.json();
         setSites(data);
         setErrorSites('');
@@ -425,7 +474,8 @@ const Cuadrilla_Asignar: React.FC = () => {
       const asignacionesConNroInterno = gridData.map(row => ({
         ...row,
         NroInterno: row.NroInterno ?? '',
-        ptipotrabajo: row.TipoTrabajo ?? '' // Enviar como @ptipotrabajo
+        ptipotrabajo: row.TipoTrabajo ?? '', // Enviar como @ptipotrabajo
+        SegmentoID: row.segmentoid ?? '' // Enviar como @SegmentoID
       }));
 
       // 1. Ejecutar el store sp_CrearAsignacion
@@ -435,30 +485,48 @@ const Cuadrilla_Asignar: React.FC = () => {
         body: JSON.stringify({ asignaciones: asignacionesConNroInterno, usuario: 'ADMIN_X4', crearAsignacion: true }),
       });
       const crearData = await crearResponse.json();
-      if (!crearResponse.ok) {
-        alert('Error al crear asignación: ' + (crearData.error || 'Error desconocido'));
-        setLoading(false);
-        return;
+      if (crearResponse.ok) {
+        // 2. Ejecutar el store sp_CrearSeguimiento
+        const seguimientoResponse = await fetch('/api/cuadrilla-asignacion', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ asignaciones: asignacionesConNroInterno, usuario: 'ADMIN_X5', crearSeguimiento: true }),
+        });
+        // No detener el flujo si el segundo POST falla, solo mostrar advertencia
+        if (!seguimientoResponse.ok) {
+          alert('DATOS REGISTRADOS (seguimiento no creado)');
+          setGridData([]);
+          fetchAsignacionesDia();
+          setLoading(false);
+          return;
+        }
+        alert('DATOS REGISTRADOS');
+        setGridData([]);
+        fetchAsignacionesDia();
+      } else {
+        // Mostrar el error detallado si existe
+        let errorMsg = 'Datos NO GRABADOS';
+        try {
+          if (crearResponse.headers.get('content-type')?.includes('application/json')) {
+            const errorData = await crearResponse.json();
+            if (errorData?.error) {
+              errorMsg += '\n' + errorData.error;
+            } else if (errorData?.details) {
+              errorMsg += '\n' + errorData.details;
+            } else {
+              errorMsg += '\n' + JSON.stringify(errorData);
+            }
+          } else {
+            const text = await crearResponse.text();
+            if (text) errorMsg += '\n' + text;
+          }
+        } catch (e) {
+          // Si ocurre un error al parsear la respuesta, mostrar el error genérico
+        }
+        alert(errorMsg);
       }
-
-      // 2. Ejecutar el store sp_CrearSeguimiento
-      const seguimientoResponse = await fetch('/api/cuadrilla-asignacion', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ asignaciones: asignacionesConNroInterno, usuario: 'ADMIN_X5', crearSeguimiento: true }),
-      });
-      const seguimientoData = await seguimientoResponse.json();
-      if (!seguimientoResponse.ok) {
-        alert('Error al crear seguimiento: ' + (seguimientoData.error || 'Error desconocido'));
-        setLoading(false);
-        return;
-      }
-
-      alert('Grabado exitoso.');
-      setGridData([]);
-      fetchAsignacionesDia();
     } catch (err) {
-      alert('Error al grabar: ' + (err instanceof Error ? err.message : 'Error desconocido'));
+      alert('Datos NO GRABADOS');
     } finally {
       setLoading(false);
     }
@@ -497,8 +565,16 @@ const Cuadrilla_Asignar: React.FC = () => {
 
   // Obtener asignaciones del día
   const fetchAsignacionesDia = async () => {
+    // Validar que selectedCuadrilla tenga valor antes de llamar
+    if (!selectedCuadrilla) {
+      setAsignacionesDia([]);
+      return;
+    }
+    // Obtener fecha local en formato YYYY-MM-DD
+    const now = new Date();
+    const pFecha = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
     try {
-      const res = await fetch('/api/cuadrilla-asignacion-dia');
+      const res = await fetch(`/api/cuadrilla-asignacion-dia?idCuadrilla=${selectedCuadrilla}&pFecha=${pFecha}`);
       if (!res.ok) throw new Error('No se pudo cargar asignaciones del día');
       const data = await res.json();
       setAsignacionesDia(data);
@@ -707,11 +783,17 @@ const Cuadrilla_Asignar: React.FC = () => {
               <label style={{ fontWeight: 600 }}>Plantilla</label>
               <input
                 type="text"
-                value={selectedPlantilla ? (plantillas.find(p => String(p.PlantillaID ?? p.id) === selectedPlantilla)?.Nombre ?? plantillas.find(p => String(p.PlantillaID ?? p.id) === selectedPlantilla)?.name ?? selectedPlantilla) : plantillaInput}
+                value={selectedPlantilla
+                  ? (plantillas.find(p => String(p.plantillaid ?? p.PlantillaID ?? p.id) === selectedPlantilla)?.Plantilla
+                    ?? plantillas.find(p => String(p.plantillaid ?? p.PlantillaID ?? p.id) === selectedPlantilla)?.Nombre
+                    ?? plantillas.find(p => String(p.plantillaid ?? p.PlantillaID ?? p.id) === selectedPlantilla)?.name
+                    ?? selectedPlantilla)
+                  : plantillaInput}
                 onChange={e => {
                   setPlantillaInput(e.target.value);
                   setShowPlantillaSuggestions(true);
                   setSelectedPlantilla('');
+                  setSelectedPlantillaObj(null);
                   setActivePlantillaSuggestion(0);
                 }}
                 onKeyDown={e => {
@@ -737,6 +819,12 @@ const Cuadrilla_Asignar: React.FC = () => {
                 }}
                 autoComplete="off"
               />
+              {/* Mostrar el campo Segmento si hay una plantilla seleccionada */}
+              {selectedPlantillaObj && (
+                <div style={{ marginTop: 8, color: '#2563eb', fontWeight: 600 }}>
+                  Segmento: {selectedPlantillaObj.Segmento ?? selectedPlantillaObj.segmento ?? ''}
+                </div>
+              )}
               {showPlantillaSuggestions && plantillaInput && filteredPlantillas.length > 0 && (
                 <ul
                   style={{
@@ -756,7 +844,7 @@ const Cuadrilla_Asignar: React.FC = () => {
                 >
                   {filteredPlantillas.map((p, idx) => (
                     <li
-                      key={p.PlantillaID ?? p.id}
+                      key={String(p.plantillaid ?? p.PlantillaID ?? p.id) + '-' + idx}
                       style={{
                         padding: '8px 12px',
                         cursor: 'pointer',
@@ -766,7 +854,12 @@ const Cuadrilla_Asignar: React.FC = () => {
                       onMouseEnter={() => setActivePlantillaSuggestion(idx)}
                       onClick={() => handlePlantillaSuggestionClick(p)}
                     >
-                      {p.Nombre ?? p.name}
+                      {/* Mostrar solo Nodo, Plantilla y Segmento */}
+                      <span style={{ fontWeight: 600 }}>{p.Nodo ?? ''}</span>
+                      {' - '}
+                      <span>{p.Plantilla ?? ''}</span>
+                      {' - '}
+                      <span style={{ color: '#2563eb' }}>{p.Segmento ?? ''}</span>
                     </li>
                   ))}
                 </ul>
@@ -851,6 +944,8 @@ const Cuadrilla_Asignar: React.FC = () => {
                   <th style={{ padding: 8, border: '1px solid #e5e7eb', minWidth: 160 }}>Empleado</th>
                   <th style={{ padding: 8, border: '1px solid #e5e7eb' }}>Asignacion</th>
                   <th style={{ padding: 8, border: '1px solid #e5e7eb', minWidth: 110 }}>Fecha</th>
+                  <th style={{ padding: 8, border: '1px solid #e5e7eb' }}>Segmento</th>
+                  <th style={{ padding: 8, border: '1px solid #e5e7eb' }}>SegmentoID</th>
                   <th style={{ padding: 8, border: '1px solid #e5e7eb', minWidth: 80 }}>Acción</th>
                 </tr>
               </thead>
@@ -861,6 +956,8 @@ const Cuadrilla_Asignar: React.FC = () => {
                     <td style={{ padding: 8, border: '1px solid #e5e7eb' }}>{row.Empleado}</td>
                     <td style={{ padding: 8, border: '1px solid #e5e7eb' }}>{row.Concatenado}</td>
                     <td style={{ padding: 8, border: '1px solid #e5e7eb' }}>{row.fecha ?? ''}</td>
+                    <td style={{ padding: 8, border: '1px solid #e5e7eb' }}>{row.Segmento ?? ''}</td>
+                    <td style={{ padding: 8, border: '1px solid #e5e7eb' }}>{row.segmentoid ?? ''}</td>
                     <td style={{ padding: 8, border: '1px solid #e5e7eb', textAlign: 'center' }}>
                       <button type="button" onClick={() => handleDeleteRow(idx)} style={{ background: '#dc2626', color: 'white', border: 'none', borderRadius: 4, padding: '4px 10px', fontWeight: 600, cursor: 'pointer' }}>
                         Eliminar

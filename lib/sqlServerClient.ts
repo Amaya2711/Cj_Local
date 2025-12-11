@@ -1,5 +1,3 @@
-
-
 import sql from 'mssql';
 export { sql };
 
@@ -17,19 +15,27 @@ export const MSSQL_CONFIG = {
 };
 
 
-const config = MSSQL_CONFIG;
-let pool: any;
 
-export async function getPool() {
-  if (!pool) {
+const config = MSSQL_CONFIG;
+let poolPromise: Promise<InstanceType<typeof sql.ConnectionPool>> | null = null;
+
+export function getPool(): Promise<InstanceType<typeof sql.ConnectionPool>> {
+  if (!poolPromise) {
     console.log('Conexión SQL Server - Parámetros:');
     console.log('user:', config.user);
     console.log('password:', config.password ? '***' : undefined);
     console.log('server:', config.server);
     console.log('database:', config.database);
-    pool = await sql.connect(config);
+    poolPromise = new sql.ConnectionPool(config)
+      .connect()
+      .then((pool: InstanceType<typeof sql.ConnectionPool>) => {
+        pool.on('close', () => {
+          poolPromise = null;
+        });
+        return pool;
+      });
   }
-  return pool;
+  return poolPromise!;
 }
 
 export async function sqlQuery(strings: TemplateStringsArray, ...values: any[]) {
@@ -38,7 +44,6 @@ export async function sqlQuery(strings: TemplateStringsArray, ...values: any[]) 
   for (let i = 0; i < values.length; i++) {
     query += (typeof values[i] === 'string' ? `'${values[i]}'` : values[i]) + strings[i + 1];
   }
-  const result = await pool.request().query(query);
+  const result = await (await pool).request().query(query);
   return result.recordset;
 }
-// (removed duplicate config)

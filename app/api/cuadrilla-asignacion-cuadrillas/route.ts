@@ -10,11 +10,17 @@ export async function GET() {
     console.log('Conexión exitosa. Ejecutando store EmpleadoCuadrilla...');
     const result = await sql.query('EXEC EmpleadoCuadrilla');
     console.log('Resultado del store:', result.recordset);
-    // Devolver los datos
     return NextResponse.json(result.recordset);
   } catch (err) {
-    console.error('Error en API EmpleadoCuadrilla:', err);
-    return NextResponse.json({ error: err.message || String(err) }, { status: 500 });
+    let errorMsg = 'Error al consultar cuadrillas.';
+    if (err instanceof Error) {
+      errorMsg += ' ' + err.message;
+      if ((err as any).stack) errorMsg += '\n' + (err as any).stack;
+    } else {
+      errorMsg += ' ' + JSON.stringify(err);
+    }
+    console.error('Error en API EmpleadoCuadrilla:', errorMsg);
+    return NextResponse.json({ error: errorMsg }, { status: 500 });
   } finally {
     try { await sql.close(); } catch {}
   }

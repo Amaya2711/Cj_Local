@@ -1,19 +1,20 @@
-const { sqlServerClient, querySqlServer } = require('../../lib/sqlServerClient');
+const { sqlServerClient, sqlQuery } = require('../../lib/sqlServerClient');
 import type { NextApiRequest, NextApiResponse } from 'next';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Método no permitido' });
   }
-    const { idCuadrilla } = req.query;
-    if (!idCuadrilla || isNaN(Number(idCuadrilla))) {
-      console.error('Parámetro idCuadrilla inválido:', idCuadrilla);
-      return res.status(400).json({ error: 'Parámetro idCuadrilla inválido', value: idCuadrilla });
+    // Obtener parámetros desde la query
+    const { idCuadrilla, pFecha } = req.query;
+    if (!idCuadrilla || !pFecha) {
+      res.status(400).json({ error: 'Faltan parámetros: idCuadrilla y pFecha son requeridos.' });
+      return;
     }
 
     try {
-      const sql = `EXEC sp_ObtenerCuadrillaAsignacion @idCuadrilla = ${Number(idCuadrilla)}`;
-      const result = await querySqlServer(sql);
+      // Ejecutar el procedimiento con ambos parámetros
+      const result = await sqlQuery`EXEC sp_ObtenerCuadrillaAsignacion @idCuadrilla = ${idCuadrilla}, @pFecha = ${pFecha}`;
       res.status(200).json(result);
     } catch (err: any) {
       console.error('Error en sp_ObtenerCuadrillaAsignacion:', err);
