@@ -21,8 +21,22 @@ export default function LoginForm({ onLogin }: { onLogin: (user: any) => void })
     });
     const data = await res.json();
     if (data.success) {
-        onLogin(data.usuario);
-        window.pb_Usuario = data.usuario; // Asignación a window.pb_Usuario
+      onLogin(data.usuario);
+      window.pb_Usuario = data.usuario; // Asignación a window.pb_Usuario
+      // Obtener coordenadas y registrar en cuadrilla_coordenadas
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(async (position) => {
+          const latitud = position.coords.latitude;
+          const altitud = position.coords.longitude;
+          await fetch('/api/cuadrilla-coordenada', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ usuario: data.usuario, latitud, altitud })
+          });
+        }, (geoError) => {
+          // Si falla la geolocalización, continuar sin registrar coordenadas
+        });
+      }
     } else {
       setError(data.error || 'Error de autenticación');
     }
