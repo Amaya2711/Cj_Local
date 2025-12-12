@@ -1,12 +1,16 @@
 import React, { useState } from 'react';
 
 // Puedes personalizar los combos según tus necesidades
-const GoogleMapsForm: React.FC = () => {
+const GoogleMapsForm: React.FC<{ debug?: boolean }> = ({ debug }) => {
+  if (debug) {
+    console.log('GoogleMapsForm montado');
+  }
   const [combo1, setCombo1] = useState('');
   const [combo2, setCombo2] = useState('');
 
   return (
     <div style={{ maxWidth: 900, margin: '0 auto' }}>
+      <div style={{ color: 'red', fontSize: 24 }}>PRUEBA: GoogleMapsForm está montado</div>
       <h2 style={{ marginBottom: 16 }}>Formulario de Google Maps</h2>
       <form style={{ display: 'flex', flexDirection: 'column', gap: 16, marginBottom: 24 }}>
         <div>
