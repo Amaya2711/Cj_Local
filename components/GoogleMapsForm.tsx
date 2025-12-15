@@ -11,7 +11,8 @@ const GoogleMapsForm: React.FC<{ debug?: boolean }> = ({ debug }) => {
   return (
     <div style={{ maxWidth: 900, margin: '0 auto' }}>
       <div style={{ color: 'red', fontSize: 24 }}>PRUEBA: GoogleMapsForm está montado</div>
-      <h2 style={{ marginBottom: 16 }}>Formulario de Google Maps</h2>
+        <h2 style={{ color: '#2563eb', marginBottom: 16 }}>Funcionalidad: Google Maps</h2>
+        <p>En esta sección podrás visualizar el mapa del Perú y realizar operaciones relacionadas con geolocalización y cuadrillas.</p>
       <form style={{ display: 'flex', flexDirection: 'column', gap: 16, marginBottom: 24 }}>
         <div>
           <label>Combo 1:&nbsp;</label>

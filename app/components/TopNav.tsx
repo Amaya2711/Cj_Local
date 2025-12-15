@@ -12,12 +12,10 @@ type NavItem = {
 // Menú de navegación principal - Actualizado con Google Maps
 const NAV_ITEMS: NavItem[] = [
   { href: '/', label: 'Inicio' },
-  //{ href: '/sites-v1', label: 'Sites V1' },
-  //{ href: '/sites', label: 'Sites' },
-  //{ href: '/cuadrillas', label: 'Asignacion' },
-  { href: '/tickets-v1', label: 'Tickets V1' },
-  { href: '/map-google', label: 'Google Maps' },
-  { href: '/informe', label: 'Informe' },
+  { href: '/sites', label: 'Sites' },
+  { href: '/asignacion', label: 'Asignacion' },
+  { href: '/googlemaps', label: 'Google Maps' },
+  { href: '/formulario', label: 'Formulariossss' },
 ];
 
 export default function TopNav() {
@@ -32,6 +30,7 @@ export default function TopNav() {
         background: '#fff',
       }}
     >
+      <span style={{ color: 'red', fontWeight: 700, marginRight: 16 }}>[TOPNAV-ACTIVO]</span>
       <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', alignItems: 'center' }}>
         {NAV_ITEMS.filter((i) => !i.disabled).map((item) => {
           const active = pathname === item.href;
