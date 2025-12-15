@@ -5,7 +5,7 @@
 const menuItems = [
   { label: 'Sites', path: '/sites' },
   { label: 'Asignacion', path: '/asignacion' },
-  { label: 'Formulario', path: '/formulario' },
+  { label: 'Formulario', path: '/formulario_x1' },
   { label: 'Google Maps', path: '/map-google' },
 ];
 
