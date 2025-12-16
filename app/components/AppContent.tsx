@@ -1,8 +1,7 @@
-
 'use client';
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import TopNav from './TopNav'; // Verificar que este import apunte a app/components/TopNav.tsx
+// import TopNav from './TopNav'; // Verificar que este import apunte a app/components/TopNav.tsx
 
 interface AppContentProps {
   children: React.ReactNode;
@@ -97,9 +96,9 @@ export default function AppContent({ children }: AppContentProps) {
       </div>
 
       {/* Navegación principal usando TopNav */}
-      <header>
+      {/* <header>
         <TopNav />
-      </header>
+      </header> */}
 
       {/* Contenido principal */}
       <main style={{ padding: '16px', maxWidth: 1300, margin: '0 auto' }}>

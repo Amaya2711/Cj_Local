@@ -1,7 +1,29 @@
+// --- INICIO: DEBUG ---
+// Este comentario es temporal para indicar que se está revisando el código de este archivo
+// para explicar qué elementos se muestran en el mapa y la funcionalidad del círculo rojo con número.
+// --- FIN: DEBUG ---
 // [EXTRACT-FULL] Necesito el contenido real del archivo para analizar el problema de datos y autocompletado en GoogleMapsForm.
 // [READ-FULL] Solicitud de lectura completa para análisis de store EmpleadoCuadrilla y autocompletado en GoogleMapsForm
 // [READ-FULL] Solicitud de lectura completa para análisis de store EmpleadoCuadrilla y autocompletado en GoogleMapsForm
+// --- DEBUG de variables de entorno Google Maps (replicado de GoogleMap.tsx) ---
+console.log('🔍 INIT: Verificando variables de entorno al cargar GoogleMapsForm');
+console.log('🌐 Entorno:', typeof window !== 'undefined' ? window.location.hostname : 'server');
+console.log('API Key presente:', !!process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY);
+console.log('API Key valor:', process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY?.substring(0, 15) + '...' || 'undefined');
+console.log('Supabase URL presente:', !!process.env.NEXT_PUBLIC_SUPABASE_URL);
+console.log('🔍 TODAS las variables NEXT_PUBLIC:', Object.keys(process.env).filter(key => key.startsWith('NEXT_PUBLIC')));
+
+const isProduction = typeof window !== 'undefined' && (
+  window.location.hostname.includes('vercel.app') || 
+  window.location.hostname.includes('netlify.app') ||
+  window.location.hostname !== 'localhost'
+);
+
+if (isProduction && !process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY) {
+  console.warn('⚠️ PRODUCCIÓN: Variables de entorno no configuradas en plataforma de despliegue');
+}
 import React, { useState, useEffect, useRef } from 'react';
+import GoogleMap from '../map-google/GoogleMap';
 
 // Puedes personalizar los combos según tus necesidades
 type Empleado = {
@@ -11,6 +33,29 @@ type Empleado = {
 };
 
 const GoogleMapsForm: React.FC<{ debug?: boolean }> = ({ debug }) => {
+  // useEffect para cargar Google Maps JS API dinámicamente (debe estar dentro del componente)
+  React.useEffect(() => {
+    const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || 'AIzaSyBmtiE0jWFGUFAZXoBgF3XyXmBmJit6m6U';
+    if (!apiKey || apiKey === 'undefined') {
+      console.error('❌ Google Maps API Key no encontrada en variables de entorno');
+      return;
+    }
+    if (!document.querySelector(`script[src*="maps.googleapis.com"]`)) {
+      const script = document.createElement('script');
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places,geometry,visualization&v=weekly`;
+      script.async = true;
+      script.defer = true;
+      script.onload = () => {
+        console.log('✅ Google Maps JS API cargado correctamente en GoogleMapsForm');
+      };
+      script.onerror = (error) => {
+        console.error('❌ Error cargando Google Maps script en GoogleMapsForm:', error);
+      };
+      document.head.appendChild(script);
+    } else {
+      console.log('ℹ️ Google Maps JS API ya estaba cargado en GoogleMapsForm');
+    }
+  }, []);
   if (debug) {
     console.log('GoogleMapsForm montado');
   }
@@ -33,13 +78,12 @@ const GoogleMapsForm: React.FC<{ debug?: boolean }> = ({ debug }) => {
     }
     setLoading(true);
     try {
-      // Llama al endpoint que ejecuta el store SP_ObtenerFechaRuta
       const res = await fetch(`/api/obtener-fecha-ruta?idEmpleado=${empleadoSeleccionado.id}&fecha=${fecha}`);
       let data = null;
       try {
         data = await res.json();
-      } catch (jsonErr: any) {
-        alert('Respuesta no es JSON. Error: ' + (jsonErr?.message || jsonErr));
+      } catch (jsonErr) {
+        alert('Respuesta no es JSON. Error: ' + ((jsonErr instanceof Error ? jsonErr.message : String(jsonErr))));
         setRutaPuntos([]);
         return;
       }
@@ -49,7 +93,6 @@ const GoogleMapsForm: React.FC<{ debug?: boolean }> = ({ debug }) => {
         return;
       }
       if (Array.isArray(data) && data.length > 0) {
-        // Asumimos que los campos son latitud y altitud (altitud = longitud)
         setRutaPuntos(
           data.map((p: any) => ({
             latitud: Number(p.latitud ?? p.Latitud ?? p.latitude ?? 0),
@@ -178,60 +221,65 @@ const GoogleMapsForm: React.FC<{ debug?: boolean }> = ({ debug }) => {
         </div>
         {/* Puedes agregar más combos aquí */}
       </form>
-      <div style={{ width: '100%', height: 500, borderRadius: 8, overflow: 'hidden', boxShadow: '0 2px 12px #0002', position: 'relative' }}>
-        {/* Si hay puntos de ruta, mostrar el mapa con marcadores usando Google Maps JS API */}
-        {rutaPuntos.length > 0 ? (
-          <GoogleMapWithMarkers puntos={rutaPuntos} />
-        ) : (
-          <iframe
-            title="Mapa de Perú"
-            width="100%"
-            height="100%"
-            frameBorder="0"
-            style={{ border: 0 }}
-            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d6339647.964024019!2d-81.410697!3d-9.189967!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x9105c8e573b5b7e1%3A0x1e6e7e7e7e7e7e7e!2sPer%C3%BA!5e0!3m2!1ses-419!2spe!4v1700000000000!5m2!1ses-419!2spe"
-            allowFullScreen
-          ></iframe>
-        )}
-      </div>
+      {/* Mapa Google Maps Platform mostrando todos los puntos del día */}
+      <GoogleMap coordenadas={rutaPuntos} />
+
+      {/* Cuadro de detalle de puntos visualizados */}
+      {rutaPuntos.length > 0 && (
+        <div style={{
+          marginTop: 24,
+          background: '#f9fafb',
+          border: '1px solid #e5e7eb',
+          borderRadius: 8,
+          boxShadow: '0 2px 8px #0001',
+          padding: 16,
+          maxWidth: 900,
+          marginLeft: 'auto',
+          marginRight: 'auto',
+        }}>
+          <h4 style={{ margin: '0 0 12px 0', color: '#222c36' }}>Detalle de puntos visualizados</h4>
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 15 }}>
+              <thead>
+                <tr style={{ background: '#f1f5f9' }}>
+                  <th style={{ padding: 8, border: '1px solid #e5e7eb' }}>#</th>
+                  <th style={{ padding: 8, border: '1px solid #e5e7eb' }}>Latitud</th>
+                  <th style={{ padding: 8, border: '1px solid #e5e7eb' }}>Longitud</th>
+                  <th style={{ padding: 8, border: '1px solid #e5e7eb' }}>Fecha</th>
+                  <th style={{ padding: 8, border: '1px solid #e5e7eb' }}>Hora</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rutaPuntos
+                  .map((p, idx) => ({ ...p, idx }))
+                  .sort((a, b) => {
+                    // Ordenar por fecha y hora si existen, si no, mantener orden original
+                    const fechaA = a.fecha || a.Fecha || a.timestamp || '';
+                    const fechaB = b.fecha || b.Fecha || b.timestamp || '';
+                    if (fechaA && fechaB) {
+                      return fechaA.localeCompare(fechaB);
+                    }
+                    return a.idx - b.idx;
+                  })
+                  .map((p, i) => (
+                    <tr key={i}>
+                      <td style={{ padding: 8, border: '1px solid #e5e7eb', textAlign: 'center' }}>{i + 1}</td>
+                      <td style={{ padding: 8, border: '1px solid #e5e7eb' }}>{p.latitud}</td>
+                      <td style={{ padding: 8, border: '1px solid #e5e7eb' }}>{p.altitud}</td>
+                      <td style={{ padding: 8, border: '1px solid #e5e7eb' }}>{p.fecha || p.Fecha || (p.timestamp ? String(p.timestamp).split('T')[0] : '') || '-'}</td>
+                      <td style={{ padding: 8, border: '1px solid #e5e7eb' }}>{p.hora || p.Hora || (p.timestamp ? (String(p.timestamp).split('T')[1] || '').substring(0,8) : '') || '-'}</td>
+                    </tr>
+                  ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
 
-// Componente para mostrar el mapa con marcadores usando Google Maps JS API
 
-type PuntoRuta = { latitud: number; altitud: number };
 
-const GoogleMapWithMarkers: React.FC<{ puntos: PuntoRuta[] }> = ({ puntos }) => {
-  const mapRef = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    if (!window.google || !window.google.maps || !mapRef.current) return;
-    // Centrar en el primer punto o en Perú si no hay
-    const center = puntos.length > 0 ? { lat: puntos[0].latitud, lng: puntos[0].altitud } : { lat: -9.189967, lng: -75.015152 };
-    const map = new window.google.maps.Map(mapRef.current, {
-      center,
-      zoom: 10,
-    });
-    // Marcar los puntos
-    puntos.forEach(p => {
-      new window.google.maps.Marker({
-        position: { lat: p.latitud, lng: p.altitud },
-        map,
-      });
-    });
-    // Dibujar la ruta si hay más de un punto
-    if (puntos.length > 1) {
-      new window.google.maps.Polyline({
-        path: puntos.map(p => ({ lat: p.latitud, lng: p.altitud })),
-        geodesic: true,
-        strokeColor: '#4285F4',
-        strokeOpacity: 0.8,
-        strokeWeight: 4,
-        map,
-      });
-    }
-  }, [puntos]);
-  return <div ref={mapRef} style={{ width: '100%', height: '100%' }} />;
-};
-
+              // El useEffect debe estar dentro del cuerpo del componente principal
 export default GoogleMapsForm;

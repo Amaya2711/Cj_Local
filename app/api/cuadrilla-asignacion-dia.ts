@@ -15,6 +15,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       .execute('sp_ObtenerCuadrillaAsignacion');
     return res.status(200).json(result.recordset);
   } catch (error) {
-    return res.status(500).json({ error: error.message });
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    return res.status(500).json({ error: errorMessage });
   }
 }

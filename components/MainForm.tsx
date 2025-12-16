@@ -9,6 +9,7 @@ import React, { useState } from 'react';
 import Cuadrilla_Asignar from './Cuadrilla_Asignar';
 import Formulario from './Formulario';
 import GoogleMapsForm from './GoogleMapsForm';
+// import GoogleMap from '../map-google/GoogleMap';
 
 const menuColor = '#2563eb';
 
