@@ -1,3 +1,6 @@
+// [SHOW-FILE] Por favor, muestra el contenido real del archivo para poder analizar la lógica de conexión y uso de datos de empleados en Asignacion.
+// [EXTRACT-FULL] Necesito el contenido real del archivo para analizar la lógica de conexión y uso de datos de empleados en Asignacion.
+// [READ-FULL] Solicitud de lectura completa para analizar la lógica de conexión y uso de datos de empleados en Asignacion.
 // (Leyendo las primeras 60 líneas para identificar la estructura y los componentes relevantes)
 // (Leyendo el inicio del archivo para identificar imports y estructura general)
 // import React, { useState, useEffect } from 'react};

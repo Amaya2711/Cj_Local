@@ -1,3 +1,4 @@
+// [READ-FULL] Solicitud de lectura completa para analizar la respuesta de la API de empleados.
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getConnection } from '../../lib/sqlServerClient';
 import sql from 'mssql';

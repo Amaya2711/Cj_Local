@@ -1,3 +1,7 @@
+// Compatibilidad para endpoints que esperan getConnection
+export async function getConnection() {
+  return getPool();
+}
 import sql from 'mssql';
 export { sql };
 

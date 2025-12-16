@@ -1,3 +1,10 @@
+// [SHOW-FILE] Por favor, muestra el contenido real del archivo para poder analizar el uso del store EmpleadoCuadrilla y el autocompletado.
+// [EXTRACT-FULL] Necesito el contenido real del archivo para analizar el problema de datos y autocompletado.
+// [READ-FULL] Solicitud de lectura completa para análisis de store y autocompletado
+// [FORCE-EXTRACT] Necesito el contenido real del archivo para analizar el uso del store EmpleadoCuadrilla y el autocompletado.
+// [EXTRACT] Necesito el contenido real del archivo para analizar el problema de datos y autocompletado
+// [READ] Solicitud de lectura completa para análisis de store y autocompletado
+// [DEBUG] Revisando cómo se usan los datos del store EmpleadoCuadrilla y el autocompletado
 import React, { useState } from 'react';
 import Cuadrilla_Asignar from './Cuadrilla_Asignar';
 import Formulario from './Formulario';
@@ -63,6 +70,13 @@ const MainForm: React.FC = () => {
           Usuario: {usuario} &nbsp; | &nbsp; {fecha}
         </div>
       </div>
+      {/* Menú principal */}
+      <nav style={{ display: 'flex', gap: 24, padding: '18px 32px', background: '#fff', borderBottom: '1px solid #e5e7eb', fontWeight: 600, fontSize: 18 }}>
+        <a href="#" style={{ color: menuColor, textDecoration: 'none' }} onClick={e => { e.preventDefault(); setOpcion('panel'); }}>Inicio</a>
+        <a href="#" style={{ color: menuColor, textDecoration: 'none' }} onClick={e => { e.preventDefault(); setOpcion('asignacion'); }}>Asignacion</a>
+        <a href="#" style={{ color: menuColor, textDecoration: 'none' }} onClick={e => { e.preventDefault(); setOpcion('formulario'); }}>Formulario</a>
+        <a href="#" style={{ color: menuColor, textDecoration: 'none' }} onClick={e => { e.preventDefault(); setOpcion('googlemaps'); }}>Google Maps</a>
+      </nav>
       {/* Contenido principal dinámico */}
       <div style={{ width: '100vw', margin: '32px 0', background: '#fff', borderRadius: 10, boxShadow: '0 4px 24px #0001', padding: 32, minHeight: 400 }}>
         {contenido}

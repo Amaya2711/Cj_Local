@@ -18,6 +18,12 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     <html lang="es">
       <head>
         <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+        {/* Google Maps JS API */}
+        <script
+          src={`https://maps.googleapis.com/maps/api/js?key=YOUR_GOOGLE_MAPS_API_KEY`}
+          async
+          defer
+        ></script>
       </head>
       <body>
         {children}
