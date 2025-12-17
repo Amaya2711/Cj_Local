@@ -6,12 +6,21 @@ import sql from 'mssql';
 export { sql };
 
 
+
+function requireEnv(name: string): string {
+  const value = process.env[name];
+  if (!value) {
+    throw new Error(`Falta la variable de entorno obligatoria: ${name}`);
+  }
+  return value;
+}
+
 export const MSSQL_CONFIG = {
-  user: process.env.SQLSERVER_USER || 'usuario',
-  password: process.env.SQLSERVER_PASSWORD || 'password',
-  server: process.env.SQLSERVER_HOST || 'localhost',
+  user: requireEnv('SQLSERVER_USER'),
+  password: requireEnv('SQLSERVER_PASSWORD'),
+  server: requireEnv('SQLSERVER_HOST'),
   port: process.env.SQLSERVER_PORT ? parseInt(process.env.SQLSERVER_PORT) : 1433,
-  database: process.env.SQLSERVER_DB || 'nombre_bd',
+  database: requireEnv('SQLSERVER_DB'),
   options: {
     encrypt: true,
     trustServerCertificate: true,
