@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 
-// type Row = {
+type Row = {
   id: number;
   nombre: string | null;
   supervisor: string | null;
@@ -18,6 +18,7 @@ import { supabase } from '@/lib/supabaseClient';
 
 export default function CuadrillasPage() {
   const [rows, setRows] = useState<Row[]>([]);
+  const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState(0);
   const TabNames = ['Nueva asignación', 'Buscar asignación'];
   return (
