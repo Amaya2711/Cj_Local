@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 import * as sql from 'mssql';
 import { getPool } from '../../../lib/sqlServerClient';
 import { NextResponse } from 'next/server';

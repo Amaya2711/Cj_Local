@@ -1642,7 +1642,7 @@ export default function GoogleMap() {
   };
 
   const searchParams = useSearchParams();
-  const ticketIdParam = searchParams.get('ticket');
+  const ticketIdParam = searchParams?.get('ticket');
 
   useEffect(() => {
     if (ticketIdParam) {

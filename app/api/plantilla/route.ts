@@ -1,7 +1,10 @@
+export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import { sql, getPool } from '@/lib/sqlServerClient';
 
-export async function GET(req) {
+import type { NextRequest } from 'next/server';
+
+export async function GET(req: NextRequest) {
   const nodoId = req.nextUrl.searchParams.get('nodoId');
   try {
     const pool = await getPool();
@@ -16,11 +19,12 @@ export async function GET(req) {
     const result = await request.query(query);
     return NextResponse.json(result.recordset);
   } catch (err) {
-    return NextResponse.json({ error: err.message || String(err) }, { status: 500 });
+    const errorMessage = err instanceof Error ? err.message : String(err);
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }
 
-export async function POST(req) {
+export async function POST(req: NextRequest) {
   try {
     const { nombre, descripcion, nodoId } = await req.json();
     const pool = await getPool();
@@ -31,6 +35,7 @@ export async function POST(req) {
       .query('INSERT INTO pla_Plantilla (Nombre, Descripcion, NodoID) VALUES (@Nombre, @Descripcion, @NodoID)');
     return NextResponse.json({ success: true });
   } catch (err) {
-    return NextResponse.json({ error: err.message || String(err) }, { status: 500 });
+    const errorMessage = err instanceof Error ? err.message : String(err);
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }
