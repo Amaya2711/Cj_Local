@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { sql } from '@/lib/sqlServerClient';
 
