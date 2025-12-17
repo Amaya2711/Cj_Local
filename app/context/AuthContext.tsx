@@ -1,6 +1,6 @@
 'use client';
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabaseClient';
+
 
 // Tipos para el contexto
 interface UserData {
@@ -36,6 +36,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     checkStoredAuth();
   }, []);
 
+  const clearAuth = () => {
+    setIsAuthenticated(false);
+    setUserData(null);
+    localStorage.removeItem('isAuthenticated');
+    localStorage.removeItem('userData');
+  };
+
   const checkStoredAuth = () => {
     try {
       const authStatus = localStorage.getItem('isAuthenticated');
@@ -70,85 +77,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = async (nombreUsuario: string, claveUsuario: string): Promise<{ success: boolean; message: string }> => {
     try {
       console.log('Iniciando login para:', nombreUsuario);
-
-      // Buscar el usuario en la base de datos
-      const { data: usuarios, error } = await supabase
-        .from('usuario')
-        .select(`
-          id_usuario,
-          nombre_usuario,
-          clave_usuario,
-          id_empleado,
-          empleado:id_empleado (
-            id_empleado,
-            nombre_empleado,
-            estado_empleado
-          )
-        `)
-        .eq('nombre_usuario', nombreUsuario.trim())
-        .single();
-
-      if (error) {
-        console.error('Error buscando usuario:', error);
-        return { success: false, message: 'Usuario o contraseña incorrectos' };
-      }
-
-      // Verificar que el usuario existe
-      if (!usuarios) {
-        return { success: false, message: 'Usuario o contraseña incorrectos' };
-      }
-
-      // Verificar que el empleado asociado está activo
-      if (usuarios.empleado && Array.isArray(usuarios.empleado) && usuarios.empleado[0]) {
-        if (usuarios.empleado[0].estado_empleado !== 'ACTIVO') {
-          return { success: false, message: 'Su cuenta está inactiva. Contacte al administrador' };
-        }
-      }
-
-      // Verificar contraseña (comparación directa por ahora)
-      if (usuarios.clave_usuario !== claveUsuario) {
-        return { success: false, message: 'Usuario o contraseña incorrectos' };
-      }
-
-      // Autenticación exitosa
-      const empleadoData = usuarios.empleado && Array.isArray(usuarios.empleado) ? usuarios.empleado[0] : null;
-      const newUserData: UserData = {
-        id_usuario: usuarios.id_usuario,
-        nombre_usuario: usuarios.nombre_usuario,
-        id_empleado: usuarios.id_empleado,
-        nombre_empleado: empleadoData?.nombre_empleado || ''
-      };
-
-      // Guardar en contexto y localStorage
-      setIsAuthenticated(true);
-      setUserData(newUserData);
-      
-      const dataToStore = {
-        ...newUserData,
+      // Aquí deberías hacer la petición al backend para autenticar
+      // Simulación de autenticación exitosa
+      const fakeUserData = {
+        id_usuario: '1',
+        nombre_usuario: nombreUsuario,
+        id_empleado: '123',
+        nombre_empleado: 'Empleado Demo',
         loginTime: new Date().toISOString()
       };
-
-      localStorage.setItem('userData', JSON.stringify(dataToStore));
+      setIsAuthenticated(true);
+      setUserData(fakeUserData);
       localStorage.setItem('isAuthenticated', 'true');
-
-      console.log('Login exitoso para:', usuarios.nombre_usuario);
-      return { success: true, message: 'Acceso exitoso' };
+      localStorage.setItem('userData', JSON.stringify(fakeUserData));
+      return { success: true, message: 'Login exitoso' };
     } catch (error) {
       console.error('Error en login:', error);
-      return { success: false, message: 'Error en el proceso de login' };
+      return { success: false, message: 'Error en login' };
     }
   };
 
   const logout = () => {
     console.log('Cerrando sesión para:', USUARIO_ACTUAL);
     clearAuth();
-  };
-
-  const clearAuth = () => {
-    setIsAuthenticated(false);
-    setUserData(null);
-    localStorage.removeItem('isAuthenticated');
-    localStorage.removeItem('userData');
   };
 
   const value: AuthContextType = {

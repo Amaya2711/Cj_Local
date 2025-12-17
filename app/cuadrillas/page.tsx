@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { supabase } from '@/lib/supabaseClient';
 
 type Row = { 
   id: number;
@@ -41,30 +40,13 @@ export default function CuadrillasPage() {
     setErr(null);
 
     try {
-      let query = supabase
-        .from('cuadrillas_v1')
-        .select(selectCols)
-        .order('nombre', { ascending: true });
-
-      const term = q.trim();
-      if (term) {
-        query = supabase
-          .from('cuadrillas_v1')
-          .select(selectCols)
-          .or(
-            [
-              `nombre.ilike.%${term}%`,
-              `supervisor.ilike.%${term}%`,
-              `zona.ilike.%${term}%`,
-            ].join(',')
-          )
-          .order('nombre', { ascending: true });
-      }
-
-      const { data, error } = await query;
-      if (error) throw error;
+      
+      // Replace this URL with your actual API endpoint
+      const response = await fetch('/api/cuadrillas?q=' + encodeURIComponent(q));
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || 'Error cargando cuadrillas');
       setRows(
-        (data || []).map((row: any) => ({
+        (result.data || []).map((row: any) => ({
           ...row,
           latitud: row.latitud ?? null,
           longitud: row.longitud ?? null,

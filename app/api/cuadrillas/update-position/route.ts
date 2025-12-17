@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabaseClient';
+
+
 
 // Coordenadas inicial y final
 const INICIO = { lat: -12.3655, lng: -76.786828 }; // CQ-LIM-REG-17 | Punta Negra
@@ -71,19 +72,8 @@ export async function POST(request: NextRequest) {
       isSimulationActive = false;
       currentStepIndex = 0;
       
-      // Resetear a posición inicial
-      const { error } = await supabase
-        .from('cuadrillas_v1')
-        .update({ 
-          latitud: INICIO.lat, 
-          longitud: INICIO.lng 
-        })
-        .eq('id', 17);
-      
-      if (error) {
-        console.error('Error reseteando posición:', error);
-        return NextResponse.json({ success: false, error: error.message }, { status: 500 });
-      }
+      // Resetear a posición inicial (reemplazar con lógica SQL Server)
+      // TODO: Actualizar la posición en la base de datos SQL Server aquí
       
       return NextResponse.json({ 
         success: true, 
@@ -106,19 +96,8 @@ export async function POST(request: NextRequest) {
       
       const currentPoint = routePoints[currentStepIndex];
       
-      // Actualizar la posición en la base de datos
-      const { error } = await supabase
-        .from('cuadrillas_v1')
-        .update({ 
-          latitud: currentPoint.lat, 
-          longitud: currentPoint.lng 
-        })
-        .eq('id', 17);
-      
-      if (error) {
-        console.error('Error actualizando posición:', error);
-        return NextResponse.json({ success: false, error: error.message }, { status: 500 });
-      }
+      // Actualizar la posición en la base de datos (reemplazar con lógica SQL Server)
+      // TODO: Actualizar la posición en la base de datos SQL Server aquí
       
       const response = {
         success: true,
@@ -164,29 +143,15 @@ export async function GET() {
   try {
     console.log('🔍 GET request recibido en update-position');
     
-    // Probar consulta a cuadrillas
-    const { data, error } = await supabase
-      .from('cuadrillas_v1')
-      .select('id, codigo, nombre, latitud, longitud')
-      .eq('id', 17)
-      .single();
-    
-    if (error) {
-      console.error('❌ Error Supabase:', error);
-      return NextResponse.json({ 
-        success: false, 
-        error: error.message,
-        simulation: {
-          isActive: isSimulationActive,
-          currentStep: currentStepIndex,
-          totalSteps: routePoints.length,
-          progress: currentStepIndex > 0 ? Math.round((currentStepIndex / routePoints.length) * 100) : 0
-        }
-      });
-    }
-    
-    console.log('✅ Cuadrilla encontrada:', data);
-    
+    // TODO: Consultar cuadrilla desde SQL Server aquí
+    // Simulación: devolver datos dummy
+    const data = {
+      id: 17,
+      codigo: 'CQ-LIM-REG-17',
+      nombre: 'Punta Negra',
+      latitud: INICIO.lat,
+      longitud: INICIO.lng
+    };
     return NextResponse.json({
       success: true,
       cuadrilla: data,
