@@ -13,9 +13,9 @@ type NavItem = {
 const NAV_ITEMS: NavItem[] = [
   { href: '/', label: 'Inicio' },
   { href: '/asignacion', label: 'Asignacion' },
-  { href: '/formulario', label: 'Formulario' },
-  { href: '/googlemaps', label: 'Google Mapsqqq' },
   { href: '/aprobar', label: 'Aprobar' },
+  { href: '/googlemaps', label: 'Google Maps' },
+  { href: '/formulario', label: 'Formulario' },
 ];
 
 // Renderizar el menú principal
