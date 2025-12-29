@@ -124,7 +124,7 @@ export default function AuthWrapper({ children }: AuthWrapperProps) {
         }}>
           <div>
             <span style={{ fontWeight: '500' }}>
-              Bienvenido, {userData.nombre_empleado || userData.nombre_usuario}
+              Bienvenidossss, {userData.nombre_empleado || userData.nombre_usuario}
             </span>
             <span style={{ marginLeft: '15px', color: '#94a3b8' }}>
               {new Date().toLocaleDateString('es-ES', {

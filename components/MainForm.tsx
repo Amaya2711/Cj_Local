@@ -22,13 +22,8 @@ const MainForm: React.FC = () => {
   React.useEffect(() => {
     function updateUsuario() {
       if (typeof window !== 'undefined') {
-        let usuarioGlobal = window.pb_Usuario || localStorage.getItem('pb_Usuario') || 'ADMIN';
+        let usuarioGlobal = window.pb_Usuario || localStorage.getItem('pb_Usuario') || '';
         setUsuario(usuarioGlobal);
-        // Si no hay usuario registrado, establecer pb_Usuario en ADMIN
-        if (!window.pb_Usuario) {
-          window.pb_Usuario = 'ADMIN';
-          localStorage.setItem('pb_Usuario', 'ADMIN');
-        }
       }
     }
     updateUsuario();
@@ -69,10 +64,10 @@ const MainForm: React.FC = () => {
       {/* Barra superior */}
       <div style={{ background: '#222c36', color: '#fff', padding: '10px 32px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div style={{ fontWeight: 700, fontSize: 18 }}>
-          Bienvenido, {usuario}
+          {usuario ? `Bienvenido, ${usuario}` : ''}
         </div>
         <div style={{ fontSize: 15 }}>
-          Usuario: {usuario} &nbsp; | &nbsp; {fecha}
+          {usuario ? `Usuario: ${usuario}  |  ${fecha}` : fecha}
         </div>
       </div>
       {/* Menú principal */}

@@ -85,17 +85,18 @@ const Aprobar: React.FC = () => {
   };
 
   const handleBuscar = async () => {
-    if (!selectedCuadrilla || !fechaIni || !fechaFin) return;
+    if (!fechaIni || !fechaFin) return;
     setBuscando(true);
     setResultados([]);
-    // Mostrar el store y parámetros ejecutados
-    const mensajeStore = `Store ejecutado: sp_ObtenerCuadrillaAprobar\nParámetros enviados:\n@idCuadrilla: ${selectedCuadrilla}\n@pFechaIni: ${fechaIni}\n@pFechaFin: ${fechaFin}`;
+    // Si no hay cuadrilla seleccionada, buscar para todos los usuarios
+    const idCuadrillaParam = selectedCuadrilla ? selectedCuadrilla : '';
+    const mensajeStore = `Store ejecutado: sp_ObtenerCuadrillaAprobar\nParámetros enviados:\n@idCuadrilla: ${idCuadrillaParam}\n@pFechaIni: ${fechaIni}\n@pFechaFin: ${fechaFin}`;
     alert(mensajeStore);
     const res = await fetch('/api/aprobar-busqueda', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        idCuadrilla: selectedCuadrilla,
+        idCuadrilla: idCuadrillaParam,
         pFechaIni: fechaIni,
         pFechaFin: fechaFin
       })
@@ -132,7 +133,7 @@ const Aprobar: React.FC = () => {
       };
     });
     // Usuario del sistema (ajustar para obtener el real)
-    const usuario = 'admin';
+    const usuario = 'ADMIN TTT';
     // Mostrar los parámetros y valores a enviar
     let mensaje = 'Parámetros a enviar a sp_CrearSeguimiento:';
     registros.forEach((r, i) => {
@@ -154,8 +155,8 @@ const Aprobar: React.FC = () => {
       const data = await res.json();
       if (data.ok) {
         alert('Aprobación exitosa');
-        // Ejecutar búsqueda nuevamente para refrescar la grilla
-        handleBuscar();
+        setSeleccionados([]); // Limpiar selección
+        handleBuscar(); // Refrescar la grilla
       } else {
         alert('Error al aprobar: ' + data.error);
       }
