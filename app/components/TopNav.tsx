@@ -14,7 +14,7 @@ const NAV_ITEMS: NavItem[] = [
   { href: '/', label: 'Inicio' },
   { href: '/asignacion', label: 'Asignacion' },
   { href: '/formulario', label: 'Formulario' },
-  { href: '/googlemaps', label: 'Google Maps' },
+  { href: '/googlemaps', label: 'Google Mapsqqq' },
   { href: '/aprobar', label: 'Aprobar' },
 ];
 
