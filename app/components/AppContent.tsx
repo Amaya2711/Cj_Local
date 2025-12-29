@@ -40,9 +40,7 @@ export default function AppContent({ children }: AppContentProps) {
       </div>
 
       {/* Navegación principal usando TopNav */}
-      {/* <header>
-        <TopNav />
-      </header> */}
+      {/* El menú principal se debe renderizar solo una vez desde el layout o componente principal */}
 
       {/* Contenido principal */}
       <main style={{ padding: '16px', maxWidth: 1300, margin: '0 auto' }}>
