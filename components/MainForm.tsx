@@ -6,6 +6,7 @@
 // [READ] Solicitud de lectura completa para análisis de store y autocompletado
 // [DEBUG] Revisando cómo se usan los datos del store EmpleadoCuadrilla y el autocompletado
 import React, { useState } from 'react';
+import PanelKPI from './PanelKPI';
 import Cuadrilla_Asignar from './Cuadrilla_Asignar';
 import Formulario from './Formulario';
 import GoogleMapsForm from './GoogleMapsForm';
@@ -55,14 +56,7 @@ const MainForm: React.FC = () => {
   } else if (opcion === 'copiaformulario') {
     contenido = <CopiaFormulario />;
   } else {
-    contenido = (
-      <>
-        <h3 style={{ color: '#222c36', marginBottom: 24 }}>Panel principal</h3>
-        <p style={{ color: '#64748b' }}>
-          Selecciona una opción del menú para comenzar a gestionar el sistema.
-        </p>
-      </>
-    );
+    contenido = <PanelKPI />;
   }
 
   return (
