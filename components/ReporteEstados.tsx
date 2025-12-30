@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import * as XLSX from 'xlsx';
 
 interface EmpleadoCuadrilla {
   IdEmpleado?: number;
@@ -10,7 +11,9 @@ interface EmpleadoCuadrilla {
 interface ResultadoAprobar {
   id: number;
   estado: string;
+  RutaPDf?: string; // Agregado para evitar el error de tipo
   // Agrega aquí otras propiedades según tu modelo de datos
+  [key: string]: any;
 }
 
 const ReporteEstados: React.FC = () => {
@@ -30,6 +33,31 @@ const ReporteEstados: React.FC = () => {
   const [estados, setEstados] = useState<{ id: string; nombre: string }[]>([]);
   const [estadoSeleccionado, setEstadoSeleccionado] = useState('');
   const [mostrarEstados, setMostrarEstados] = useState(false);
+
+  // Exportar resultados a Excel
+  const exportarExcel = () => {
+    if (!resultados.length) return;
+    // Filtrar columnas ocultas
+    const columnasOcultas = ['idsite', 'correlativo', 'Site', 'NroInterno', 'Id_Auto', 'Estado', 'tipotrabajo'];
+    const datosExportar = resultados.map(row => {
+      const obj: Record<string, any> = {};
+      Object.keys(row)
+        .filter(col => !columnasOcultas.includes(col))
+        .forEach(col => {
+          // Para RutaPDf, exportar la URL si existe, si no dejar vacío
+          if (col.toLowerCase() === 'rutapdf') {
+            obj['RutaPDf'] = row[col] && typeof row[col] === 'string' && row[col].trim() !== '' ? row[col] : '';
+          } else {
+            obj[col] = row[col];
+          }
+        });
+      return obj;
+    });
+    const ws = XLSX.utils.json_to_sheet(datosExportar);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Reporte');
+    XLSX.writeFile(wb, 'reporte_estados.xlsx');
+  };
 
   useEffect(() => {
     async function fetchCuadrillas() {
@@ -94,12 +122,29 @@ const ReporteEstados: React.FC = () => {
     if (filtroFechaActivo && (!fechaIni || !fechaFin)) return;
     setBuscando(true);
     setResultados([]);
-    const idCuadrillaParam = filtroCuadrillaActivo && selectedCuadrilla ? selectedCuadrilla : '';
-    const fechaIniParam = filtroFechaActivo ? fechaIni : '';
-    const fechaFinParam = filtroFechaActivo ? fechaFin : '';
-    const estadoParam = filtroEstadoActivo && estadoSeleccionado ? estadoSeleccionado : '';
-    // Aquí deberías llamar a tu API de búsqueda real
-    setBuscando(false);
+    const params = {
+      cuadrilla: filtroCuadrillaActivo && selectedCuadrilla ? selectedCuadrilla : '',
+      fechaIni: filtroFechaActivo ? fechaIni : '',
+      fechaFin: filtroFechaActivo ? fechaFin : '',
+      estado: filtroEstadoActivo && estadoSeleccionado ? estadoSeleccionado : ''
+    };
+    try {
+      const query = new URLSearchParams(params).toString();
+      const res = await fetch(`/api/obtener-cuadrilla-reporte?${query}`);
+      if (!res.ok) throw new Error('No existe coincidencia');
+      const data = await res.json();
+      if (Array.isArray(data) && data.length > 0) {
+        setResultados(data);
+      } else {
+        setResultados([]);
+        alert('No existe coincidencia');
+      }
+    } catch (err) {
+      setResultados([]);
+      alert('No existe coincidencia');
+    } finally {
+      setBuscando(false);
+    }
   };
 
   const handleCheck = (idx: number) => {
@@ -164,8 +209,34 @@ const ReporteEstados: React.FC = () => {
           <input type="date" value={fechaFin} onChange={e => setFechaFin(e.target.value)} style={{ padding: 8, borderRadius: 4, border: '1px solid #ccc' }} disabled={!filtroFechaActivo} />
         </div>
       </div>
-      {/* Botón Buscar debajo de Fechas */}
-      <div style={{ marginBottom: 32, marginTop: 0 }}>
+      {/* Checkbox y combobox de estados */}
+      <div style={{ marginTop: 24, marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
+        <input
+          type="checkbox"
+          id="filtroEstado"
+          checked={filtroEstadoActivo}
+          onChange={e => {
+            setFiltroEstadoActivo(e.target.checked);
+            if (!e.target.checked) setEstadoSeleccionado('');
+          }}
+        />
+        <label htmlFor="filtroEstado" style={{ fontWeight: 500, color: '#334155', marginRight: 8 }}>Estado:</label>
+        <select
+          id="estadoCombo"
+          value={estadoSeleccionado}
+          onChange={e => setEstadoSeleccionado(e.target.value)}
+          style={{ padding: 8, borderRadius: 4, border: '1px solid #ccc', minWidth: 180 }}
+          disabled={!filtroEstadoActivo}
+        >
+          <option value="">Seleccione un estado...</option>
+          {estados.map(e => (
+            <option key={e.id} value={e.id}>{e.nombre}</option>
+          ))}
+        </select>
+      </div>
+
+      {/* Botón Buscar debajo de todos los filtros */}
+      <div style={{ marginBottom: 32, marginTop: 16 }}>
         <button
           onClick={handleBuscar}
           disabled={buscando || (filtroCuadrillaActivo && !selectedCuadrilla) || (filtroFechaActivo && (!fechaIni || !fechaFin)) || (filtroEstadoActivo && !estadoSeleccionado)}
@@ -174,56 +245,59 @@ const ReporteEstados: React.FC = () => {
           {buscando ? 'Buscando...' : 'Buscar'}
         </button>
       </div>
-      {/* Combobox de estados */}
-      <div style={{ marginTop: 24, marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
-        <label htmlFor="estadoCombo" style={{ fontWeight: 500, color: '#334155' }}>Estado:</label>
-        <select
-          id="estadoCombo"
-          value={estadoSeleccionado}
-          onChange={e => setEstadoSeleccionado(e.target.value)}
-          style={{ padding: 8, borderRadius: 4, border: '1px solid #ccc', minWidth: 180 }}
-        >
-          <option value="">Seleccione un estado...</option>
-          {estados.map(e => (
-            <option key={e.id} value={e.id}>{e.nombre}</option>
-          ))}
-        </select>
-      </div>
-      {/* El botón 'Estados' ha sido removido por requerimiento */}
-      {mostrarEstados && (
-        <div style={{ marginTop: 8 }}>
-          <div style={{ marginBottom: 8, color: '#64748b', fontWeight: 600 }}>
-            Store ejecutado: <span style={{ color: '#2563eb' }}>[sp_EstadosWeb]</span>
+      {/* Grilla de resultados */}
+      <div style={{ marginTop: 32 }}>
+        {resultados.length > 0 && (
+          <div style={{ marginBottom: 12, display: 'flex', alignItems: 'center', gap: 24 }}>
+            <span style={{ color: '#334155', fontWeight: 500 }}>
+              Registros encontrados: {resultados.length}
+            </span>
+            <button
+              onClick={exportarExcel}
+              style={{ padding: '8px 18px', background: '#059669', color: '#fff', border: 'none', borderRadius: 4, fontWeight: 600, cursor: 'pointer' }}
+            >
+              Exportar a Excel
+            </button>
           </div>
-          <h4>Estados disponibles:</h4>
+        )}
+        {resultados.length > 0 ? (
           <div style={{ overflowX: 'auto' }}>
-            {estados.length > 0 ? (
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 15 }}>
-                <thead>
-                  <tr style={{ background: '#f1f5f9' }}>
-                    {Object.keys(estados[0]).map(col => (
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 15 }}>
+              <thead>
+                <tr style={{ background: '#f1f5f9' }}>
+                  {Object.keys(resultados[0])
+                    .filter(col => !['idsite', 'correlativo', 'Site', 'NroInterno', 'Id_Auto', 'Estado', 'tipotrabajo'].includes(col))
+                    .map(col => (
                       <th key={col} style={{ padding: 8, border: '1px solid #e5e7eb' }}>{col}</th>
                     ))}
+                </tr>
+              </thead>
+              <tbody>
+                {resultados.map((row, idx) => (
+                  <tr key={idx}>
+                    {Object.keys(row)
+                      .filter(col => !['idsite', 'correlativo', 'Site', 'NroInterno', 'Id_Auto', 'Estado', 'tipotrabajo'].includes(col))
+                      .map(col => {
+                        if (col.toLowerCase() === 'rutapdf') {
+                          return (
+                            <td key={col} style={{ padding: 8, border: '1px solid #e5e7eb' }}>
+                              {row[col] && typeof row[col] === 'string' && row[col].trim() !== '' ? (
+                                <a href={row[col]} target="_blank" rel="noopener noreferrer" style={{ color: '#2563eb', textDecoration: 'underline' }}>Ver PDF</a>
+                              ) : null}
+                            </td>
+                          );
+                        }
+                        return (
+                          <td key={col} style={{ padding: 8, border: '1px solid #e5e7eb' }}>{col.toLowerCase() === 'rutapdf' ? '' : row[col]}</td>
+                        );
+                      })}
                   </tr>
-                </thead>
-                <tbody>
-                  {estados.map((row, idx) => (
-                    <tr key={row.id + '-' + idx}>
-                      {Object.keys(row).map(col => (
-                        <td key={col} style={{ padding: 8, border: '1px solid #e5e7eb' }}>
-                          {(row as Record<string, any>)[col]}
-                        </td>
-                      ))}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            ) : (
-              <p>No hay estados para mostrar.</p>
-            )}
+                ))}
+              </tbody>
+            </table>
           </div>
-        </div>
-      )}
+        ) : null}
+      </div>
     </div>
   );
 };
