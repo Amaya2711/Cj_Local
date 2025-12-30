@@ -96,6 +96,12 @@ const CopiaFormulario: React.FC = () => {
     }
   }, [segmentoSeleccionado]);
 
+  // Estado para mostrar formularios de alta
+  const [mostrarNuevoNodo, setMostrarNuevoNodo] = useState(false);
+  const [mostrarNuevaPlantilla, setMostrarNuevaPlantilla] = useState(false);
+  const [mostrarNuevoSegmento, setMostrarNuevoSegmento] = useState(false);
+  const [mostrarNuevaEvidencia, setMostrarNuevaEvidencia] = useState(false);
+
   // Paso 1: Selección de nodo principal
   const PasoNodo = () => (
     <div style={{ marginBottom: 32 }}>
@@ -105,16 +111,57 @@ const CopiaFormulario: React.FC = () => {
       ) : errorNodos ? (
         <div style={{ margin: '16px 0', color: '#ef4444' }}>{errorNodos}</div>
       ) : (
-        <select
-          value={nodoSeleccionado ?? ''}
-          onChange={e => setNodoSeleccionado(Number(e.target.value))}
-          style={{ width: '100%', padding: 12, borderRadius: 6, border: '1px solid #cbd5e1', marginTop: 12 }}
-        >
-          <option value="">Seleccione un nodo...</option>
-          {nodos.map(n => (
-            <option key={n.NodoID} value={n.NodoID}>{n.Nombre}</option>
-          ))}
-        </select>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <select
+            value={nodoSeleccionado ?? ''}
+            onChange={e => setNodoSeleccionado(Number(e.target.value))}
+            style={{ width: '100%', padding: 12, borderRadius: 6, border: '1px solid #cbd5e1', marginTop: 12 }}
+          >
+            <option value="">Seleccione un nodo...</option>
+            {nodos.map(n => (
+              <option key={n.NodoID} value={n.NodoID}>{n.Nombre}</option>
+            ))}
+          </select>
+          <button onClick={() => setMostrarNuevoNodo(true)} style={{ marginTop: 12, background: '#059669', color: '#fff', border: 'none', borderRadius: 6, padding: '8px 14px', fontWeight: 600, minWidth: 120 }}>
+            Registrar Nodo
+          </button>
+        </div>
+      )}
+      {mostrarNuevoNodo && (
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(0,0,0,0.2)', zIndex: 1000 }}>
+          <div style={{ maxWidth: 350, margin: '80px auto', background: 'white', borderRadius: 12, boxShadow: '0 8px 32px rgba(0,0,0,0.12)', padding: 24 }}>
+            <h4 style={{ marginBottom: 12 }}>Registrar Nuevo Nodo Principal</h4>
+            <form onSubmit={async (e) => {
+              e.preventDefault();
+              const formData = new FormData(e.target as HTMLFormElement);
+              const nombre = formData.get('nombre');
+              if (!nombre) return;
+              const res = await fetch('/api/nodo-principal', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ nombre })
+              });
+              if (res.ok) {
+                setMostrarNuevoNodo(false);
+                // Recargar nodos
+                fetch('/api/nodo-principal')
+                  .then(res => res.json())
+                  .then(data => setNodos(data));
+              } else {
+                alert('Error al registrar nodo principal');
+              }
+            }}>
+              <div style={{ marginBottom: 10 }}>
+                <label>Nombre del nodo:</label><br />
+                <input name="nombre" type="text" required style={{ width: '100%', padding: 8, borderRadius: 4, border: '1px solid #cbd5e1' }} />
+              </div>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button type="submit" style={{ background: '#059669', color: '#fff', padding: '8px 18px', border: 'none', borderRadius: 6, fontWeight: 600 }}>Guardar Nodo</button>
+                <button type="button" onClick={() => setMostrarNuevoNodo(false)} style={{ background: '#ef4444', color: '#fff', padding: '8px 18px', border: 'none', borderRadius: 6, fontWeight: 600 }}>Cancelar</button>
+              </div>
+            </form>
+          </div>
+        </div>
       )}
       <div style={{ textAlign: 'right', marginTop: 24 }}>
         <button
@@ -132,17 +179,63 @@ const CopiaFormulario: React.FC = () => {
   const PasoPlantilla = () => (
     <div style={{ marginBottom: 32 }}>
       <h3 style={{ color: '#1e293b', fontWeight: 600 }}>2. Selecciona la Plantilla</h3>
-      <select
-        value={plantillaSeleccionada ?? ''}
-        onChange={e => setPlantillaSeleccionada(Number(e.target.value))}
-        style={{ width: '100%', padding: 12, borderRadius: 6, border: '1px solid #cbd5e1', marginTop: 12 }}
-        disabled={!nodoSeleccionado || plantillas.length === 0}
-      >
-        <option value="">{plantillas.length === 0 ? 'No hay plantillas' : 'Seleccione una plantilla...'}</option>
-        {plantillas.map(p => (
-          <option key={p.PlantillaID} value={p.PlantillaID}>{p.Nombre}</option>
-        ))}
-      </select>
+      <div style={{ display: 'flex', gap: 8 }}>
+        <select
+          value={plantillaSeleccionada ?? ''}
+          onChange={e => setPlantillaSeleccionada(Number(e.target.value))}
+          style={{ width: '100%', padding: 12, borderRadius: 6, border: '1px solid #cbd5e1', marginTop: 12 }}
+          disabled={!nodoSeleccionado || plantillas.length === 0}
+        >
+          <option value="">{plantillas.length === 0 ? 'No hay plantillas' : 'Seleccione una plantilla...'}</option>
+          {plantillas.map(p => (
+            <option key={p.PlantillaID} value={p.PlantillaID}>{p.Nombre}</option>
+          ))}
+        </select>
+        <button onClick={() => setMostrarNuevaPlantilla(true)} style={{ marginTop: 12, background: '#2563eb', color: '#fff', border: 'none', borderRadius: 6, padding: '8px 14px', fontWeight: 600, minWidth: 120 }}>
+          Registrar Plantilla
+        </button>
+      </div>
+      {mostrarNuevaPlantilla && (
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(0,0,0,0.2)', zIndex: 1000 }}>
+          <div style={{ maxWidth: 350, margin: '80px auto', background: 'white', borderRadius: 12, boxShadow: '0 8px 32px rgba(0,0,0,0.12)', padding: 24 }}>
+            <h4 style={{ marginBottom: 12 }}>Registrar Nueva Plantilla</h4>
+            <form onSubmit={async (e) => {
+              e.preventDefault();
+              const formData = new FormData(e.target as HTMLFormElement);
+              const nombre = formData.get('nombre');
+              const descripcion = formData.get('descripcion');
+              const nodoId = nodoSeleccionado;
+              const res = await fetch('/api/plantilla', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ nombre, descripcion, nodoId })
+              });
+              if (res.ok) {
+                setMostrarNuevaPlantilla(false);
+                // Recargar plantillas
+                fetch(`/api/plantilla?nodoId=${nodoSeleccionado}`)
+                  .then(res => res.json())
+                  .then(data => setPlantillas(data));
+              } else {
+                alert('Error al registrar plantilla');
+              }
+            }}>
+              <div style={{ marginBottom: 10 }}>
+                <label>Nombre:</label><br />
+                <input name="nombre" type="text" required style={{ width: '100%', padding: 8, borderRadius: 4, border: '1px solid #cbd5e1' }} />
+              </div>
+              <div style={{ marginBottom: 10 }}>
+                <label>Descripción:</label><br />
+                <textarea name="descripcion" required style={{ width: '100%', padding: 8, borderRadius: 4, border: '1px solid #cbd5e1' }} />
+              </div>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button type="submit" style={{ background: '#2563eb', color: '#fff', padding: '8px 18px', border: 'none', borderRadius: 6, fontWeight: 600 }}>Guardar Plantilla</button>
+                <button type="button" onClick={() => setMostrarNuevaPlantilla(false)} style={{ background: '#ef4444', color: '#fff', padding: '8px 18px', border: 'none', borderRadius: 6, fontWeight: 600 }}>Cancelar</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
       <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 24 }}>
         <button
           onClick={() => setPaso(1)}
@@ -165,17 +258,67 @@ const CopiaFormulario: React.FC = () => {
   const PasoSegmento = () => (
     <div style={{ marginBottom: 32 }}>
       <h3 style={{ color: '#1e293b', fontWeight: 600 }}>3. Selecciona el Segmento</h3>
-      <select
-        value={segmentoSeleccionado ?? ''}
-        onChange={e => setSegmentoSeleccionado(Number(e.target.value))}
-        style={{ width: '100%', padding: 12, borderRadius: 6, border: '1px solid #cbd5e1', marginTop: 12 }}
-        disabled={!plantillaSeleccionada || segmentos.length === 0}
-      >
-        <option value="">{segmentos.length === 0 ? 'No hay segmentos' : 'Seleccione un segmento...'}</option>
-        {segmentos.map(s => (
-          <option key={s.SegmentoID} value={s.SegmentoID}>{s.Nombre}</option>
-        ))}
-      </select>
+      <div style={{ display: 'flex', gap: 8 }}>
+        <select
+          value={segmentoSeleccionado ?? ''}
+          onChange={e => setSegmentoSeleccionado(Number(e.target.value))}
+          style={{ width: '100%', padding: 12, borderRadius: 6, border: '1px solid #cbd5e1', marginTop: 12 }}
+          disabled={!plantillaSeleccionada || segmentos.length === 0}
+        >
+          <option value="">{segmentos.length === 0 ? 'No hay segmentos' : 'Seleccione un segmento...'}</option>
+          {segmentos.map(s => (
+            <option key={s.SegmentoID} value={s.SegmentoID}>{s.Nombre}</option>
+          ))}
+        </select>
+        <button onClick={() => setMostrarNuevoSegmento(true)} style={{ marginTop: 12, background: '#2563eb', color: '#fff', border: 'none', borderRadius: 6, padding: '8px 14px', fontWeight: 600, minWidth: 120 }}>
+          Registrar Segmento
+        </button>
+      </div>
+      {mostrarNuevoSegmento && (
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(0,0,0,0.2)', zIndex: 1000 }}>
+          <div style={{ maxWidth: 350, margin: '80px auto', background: 'white', borderRadius: 12, boxShadow: '0 8px 32px rgba(0,0,0,0.12)', padding: 24 }}>
+            <h4 style={{ marginBottom: 12 }}>Registrar Nuevo Segmento</h4>
+            <form onSubmit={async (e) => {
+              e.preventDefault();
+              const formData = new FormData(e.target as HTMLFormElement);
+              const nombre = formData.get('nombre');
+              const orden = formData.get('orden');
+              const plantillaId = plantillaSeleccionada;
+              if (!plantillaId) {
+                alert('Seleccione una plantilla antes de registrar un segmento');
+                return;
+              }
+              const res = await fetch('/api/segmento', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ nombre, orden, plantillaId })
+              });
+              if (res.ok) {
+                setMostrarNuevoSegmento(false);
+                // Recargar segmentos
+                fetch(`/api/segmento?plantillaId=${plantillaId}`)
+                  .then(res => res.json())
+                  .then(data => setSegmentos(data));
+              } else {
+                alert('Error al registrar segmento');
+              }
+            }}>
+              <div style={{ marginBottom: 10 }}>
+                <label>Nombre:</label><br />
+                <input name="nombre" type="text" required style={{ width: '100%', padding: 8, borderRadius: 4, border: '1px solid #cbd5e1' }} />
+              </div>
+              <div style={{ marginBottom: 10 }}>
+                <label>Orden:</label><br />
+                <input name="orden" type="number" min="1" required style={{ width: '100%', padding: 8, borderRadius: 4, border: '1px solid #cbd5e1' }} />
+              </div>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button type="submit" style={{ background: '#2563eb', color: '#fff', padding: '8px 18px', border: 'none', borderRadius: 6, fontWeight: 600 }}>Guardar Segmento</button>
+                <button type="button" onClick={() => setMostrarNuevoSegmento(false)} style={{ background: '#ef4444', color: '#fff', padding: '8px 18px', border: 'none', borderRadius: 6, fontWeight: 600 }}>Cancelar</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
       <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 24 }}>
         <button
           onClick={() => setPaso(2)}
@@ -198,7 +341,7 @@ const CopiaFormulario: React.FC = () => {
   const PasoEvidencias = () => (
     <div style={{ marginBottom: 32 }}>
       <h3 style={{ color: '#1e293b', fontWeight: 600 }}>4. Agrega Evidencias</h3>
-      <div style={{ display: 'flex', gap: 12, marginBottom: 12 }}>
+      <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
         <select
           value={evidenciaSeleccionada ?? ''}
           onChange={e => setEvidenciaSeleccionada(Number(e.target.value))}
@@ -210,6 +353,9 @@ const CopiaFormulario: React.FC = () => {
             <option key={e.EvidenciaID} value={e.EvidenciaID}>{e.Nombre}</option>
           ))}
         </select>
+        <button onClick={() => setMostrarNuevaEvidencia(true)} style={{ marginTop: 0, background: '#059669', color: '#fff', border: 'none', borderRadius: 6, padding: '8px 14px', fontWeight: 600, minWidth: 120 }}>
+          Registrar evidencia
+        </button>
         <button
           onClick={() => {
             if (evidenciaSeleccionada && !evidenciasAgregadas.includes(evidenciaSeleccionada)) {
@@ -218,11 +364,61 @@ const CopiaFormulario: React.FC = () => {
             }
           }}
           disabled={!evidenciaSeleccionada || evidenciasAgregadas.includes(evidenciaSeleccionada)}
-          style={{ padding: '10px 18px', background: '#059669', color: '#fff', border: 'none', borderRadius: 6, fontWeight: 600, cursor: (!evidenciaSeleccionada || evidenciasAgregadas.includes(evidenciaSeleccionada)) ? 'not-allowed' : 'pointer' }}
+          style={{ padding: '10px 18px', background: '#2563eb', color: '#fff', border: 'none', borderRadius: 6, fontWeight: 600, cursor: (!evidenciaSeleccionada || evidenciasAgregadas.includes(evidenciaSeleccionada)) ? 'not-allowed' : 'pointer' }}
         >
           Agregar
         </button>
       </div>
+      {mostrarNuevaEvidencia && (
+        <div style={{ marginTop: 16, padding: 16, border: '1px solid #e5e7eb', borderRadius: 8, background: '#f9fafb' }}>
+          <h4 style={{ marginBottom: 12 }}>Registrar Nueva Evidencia</h4>
+          <form onSubmit={async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target as HTMLFormElement);
+            const nombre = formData.get('nombre');
+            const segmentoId = segmentoSeleccionado;
+            const esObligatoria = formData.get('esObligatoria') === 'on' ? 1 : 0;
+            // Calcular el orden automáticamente (correlativo)
+            let orden = 1;
+            if (Array.isArray(evidencias) && evidencias.length > 0) {
+              orden = Math.max(...evidencias.map(ev => (ev as any).Orden || 1)) + 1;
+            }
+            if (!segmentoId) {
+              alert('Seleccione un segmento antes de registrar evidencia');
+              return;
+            }
+            const res = await fetch('/api/evidencia', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ nombre, segmentoId, esObligatoria, orden })
+            });
+            if (res.ok) {
+              setMostrarNuevaEvidencia(false);
+              alert('Evidencia registrada correctamente');
+              // Recargar evidencias
+              fetch(`/api/evidencia?segmentoId=${segmentoId}`)
+                .then(res => res.json())
+                .then(data => setEvidencias(data));
+            } else {
+              const errorData = await res.json();
+              alert('Error al registrar evidencia: ' + (errorData.error || ''));
+            }
+          }}>
+            <div style={{ marginBottom: 10 }}>
+              <label>Nombre:</label><br />
+              <input name="nombre" type="text" required style={{ width: '100%', padding: 8, borderRadius: 4, border: '1px solid #cbd5e1' }} />
+            </div>
+            <div style={{ marginBottom: 10 }}>
+              <label>
+                <input name="esObligatoria" type="checkbox" style={{ marginRight: 8 }} />
+                ¿Es obligatoria?
+              </label>
+            </div>
+            <button type="submit" style={{ background: '#2563eb', color: '#fff', padding: '8px 18px', border: 'none', borderRadius: 6, fontWeight: 600 }}>Guardar Evidencia</button>
+            <button type="button" onClick={() => setMostrarNuevaEvidencia(false)} style={{ background: '#ef4444', color: '#fff', padding: '8px 18px', border: 'none', borderRadius: 6, fontWeight: 600, marginLeft: 8 }}>Cancelar</button>
+          </form>
+        </div>
+      )}
       <ul style={{ margin: 0, padding: 0, listStyle: 'none' }}>
         {evidenciasAgregadas.map(id => {
           const ev = evidencias.find(e => e.EvidenciaID === id);
