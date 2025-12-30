@@ -1,34 +1,18 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 
 interface EmpleadoCuadrilla {
-  IdEmpleado?: number;
-  NombreEmpleado?: string;
-  idempleado?: number;
-  nombreempleado?: string;
+  id: number;
+  nombre: string;
+  // Agrega aquí otras propiedades según tu modelo de datos
 }
 
 interface ResultadoAprobar {
-  // Define aquí los campos que retorna el SP sp_ObtenerCuadrillaAprobar
-  id_cuadrilla?: string;
-  id?: string;
-  nombre?: string;
-  NroInterno?: string;
-  nrointerno?: string;
-  fecha?: string;
-  Fecha?: string;
-  TipoTrabajo?: string;
-  tipotrabajo?: string;
-  Concatenado?: string;
-  RutaPDF?: string;
-  idAuto?: string;
-  // ...otros campos
+  id: number;
+  estado: string;
+  // Agrega aquí otras propiedades según tu modelo de datos
 }
 
-interface AprobarProps {
-  titulo?: string;
-}
-
-const Aprobar: React.FC<AprobarProps> = ({ titulo = 'Aprobar cuadrilla' }) => {
+const ReporteEstados: React.FC = () => {
   const [cuadrillas, setCuadrillas] = useState<EmpleadoCuadrilla[]>([]);
   const [cuadrillaInput, setCuadrillaInput] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -39,7 +23,6 @@ const Aprobar: React.FC<AprobarProps> = ({ titulo = 'Aprobar cuadrilla' }) => {
   const [resultados, setResultados] = useState<ResultadoAprobar[]>([]);
   const [buscando, setBuscando] = useState(false);
   const [seleccionados, setSeleccionados] = useState<number[]>([]);
-  // Filtros activos
   const [filtroCuadrillaActivo, setFiltroCuadrillaActivo] = useState(true);
   const [filtroFechaActivo, setFiltroFechaActivo] = useState(true);
   const [filtroEstadoActivo, setFiltroEstadoActivo] = useState(false);
@@ -59,7 +42,7 @@ const Aprobar: React.FC<AprobarProps> = ({ titulo = 'Aprobar cuadrilla' }) => {
     }
     async function fetchEstados() {
       try {
-        const res = await fetch('/api/estados-web');
+        const res = await fetch('/api/estadosWeb'); // Corregido: debe coincidir con el nombre del archivo de la API
         if (!res.ok) throw new Error('No se pudo cargar la lista de estados.');
         const data = await res.json();
         setEstados(Array.isArray(data) ? data : []);
@@ -73,7 +56,7 @@ const Aprobar: React.FC<AprobarProps> = ({ titulo = 'Aprobar cuadrilla' }) => {
 
   const filteredCuadrillas = Array.isArray(cuadrillas)
     ? cuadrillas.filter(c => {
-        const nombre = (c.NombreEmpleado ?? c.nombreempleado ?? '').toLowerCase();
+        const nombre = (c.nombre ?? '').toLowerCase();
         return cuadrillaInput
           .toLowerCase()
           .split(' ')
@@ -88,8 +71,8 @@ const Aprobar: React.FC<AprobarProps> = ({ titulo = 'Aprobar cuadrilla' }) => {
   };
 
   const handleSuggestionClick = (c: EmpleadoCuadrilla) => {
-    setCuadrillaInput(c.NombreEmpleado ?? c.nombreempleado ?? '');
-    setSelectedCuadrilla(String(c.IdEmpleado ?? c.idempleado));
+    setCuadrillaInput(c.nombre ?? '');
+    setSelectedCuadrilla(String(c.id));
     setShowSuggestions(false);
   };
 
@@ -106,99 +89,35 @@ const Aprobar: React.FC<AprobarProps> = ({ titulo = 'Aprobar cuadrilla' }) => {
   };
 
   const handleBuscar = async () => {
-    // Validar filtros activos
     if (filtroFechaActivo && (!fechaIni || !fechaFin)) return;
     setBuscando(true);
     setResultados([]);
-    // Solo enviar parámetros de filtros activos
     const idCuadrillaParam = filtroCuadrillaActivo && selectedCuadrilla ? selectedCuadrilla : '';
     const fechaIniParam = filtroFechaActivo ? fechaIni : '';
     const fechaFinParam = filtroFechaActivo ? fechaFin : '';
     const estadoParam = filtroEstadoActivo && estadoSeleccionado ? estadoSeleccionado : '';
-    const mensajeStore = `Store ejecutado: sp_ObtenerCuadrillaAprobar\nParámetros enviados:\n@idCuadrilla: ${idCuadrillaParam}\n@pFechaIni: ${fechaIniParam}\n@pFechaFin: ${fechaFinParam}\n@estado: ${estadoParam}`;
-    alert(mensajeStore);
-    const res = await fetch('/api/aprobar-busqueda', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        idCuadrilla: idCuadrillaParam,
-        pFechaIni: fechaIniParam,
-        pFechaFin: fechaFinParam,
-        estado: estadoParam
-      })
-    });
-    const data = await res.json();
-    if (!Array.isArray(data) || data.length === 0) {
-      alert('No existe coincidencia');
-      setResultados([]);
-    } else {
-      setResultados(data);
-    }
+    // Aquí deberías llamar a tu API de búsqueda real
     setBuscando(false);
   };
 
-  // Manejar selección de filas
   const handleCheck = (idx: number) => {
     setSeleccionados(prev =>
       prev.includes(idx) ? prev.filter(i => i !== idx) : [...prev, idx]
     );
   };
 
-  // Acciones de aprobar/rechazar (placeholder)
   const handleAprobar = async () => {
-    // Obtener los registros seleccionados
-    const registros = seleccionados.map(idx => {
-      const row = resultados[idx];
-      return {
-        pidCuadrilla: row.id_cuadrilla ?? '',
-        pNroInterno: row.NroInterno !== undefined && row.NroInterno !== null
-          ? String(row.NroInterno)
-          : (row.nrointerno !== undefined && row.nrointerno !== null ? String(row.nrointerno) : ''),
-        pFecha: row.fecha ?? row.Fecha ?? '',
-        ptipotrabajo: row.TipoTrabajo ?? row.tipotrabajo ?? '',
-      };
-    });
-    // Usuario del sistema (ajustar para obtener el real)
-    const usuario = 'ADMIN TTT';
-    // Mostrar los parámetros y valores a enviar
-    let mensaje = 'Parámetros a enviar a sp_CrearSeguimiento:';
-    registros.forEach((r, i) => {
-      mensaje += `\n\nRegistro ${i + 1}:\n`;
-      mensaje += `  pidCuadrilla: ${r.pidCuadrilla}\n`;
-      mensaje += `  pNroInterno: ${r.pNroInterno}\n`;
-      mensaje += `  pFecha: ${r.pFecha}\n`;
-      mensaje += `  pEstado: 8\n`;
-      mensaje += `  pUsuario: ${usuario}\n`;
-      mensaje += `  ptipotrabajo: ${r.ptipotrabajo}\n`;
-    });
-    alert(mensaje);
-    try {
-      const res = await fetch('/api/aprobar-crear-seguimiento', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ registros, usuario })
-      });
-      const data = await res.json();
-      if (data.ok) {
-        alert('Aprobación exitosa');
-        setSeleccionados([]); // Limpiar selección
-        handleBuscar(); // Refrescar la grilla
-      } else {
-        alert('Error al aprobar: ' + data.error);
-      }
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : String(err);
-      alert('Error de red: ' + errorMessage);
-    }
+    // Lógica de aprobación
+    alert('Aprobado');
   };
 
   const handleRechazar = () => {
     alert(`Rechazar filas: ${seleccionados.map(i => i + 1).join(', ')}`);
-  }
+  };
 
   return (
     <div style={{ maxWidth: 600, margin: '0 auto' }}>
-      <h3 style={{ marginBottom: 16 }}>{titulo}</h3>
+      <h3 style={{ marginBottom: 16 }}>Reporte de Estados</h3>
       <div style={{ marginBottom: 16, position: 'relative', display: 'flex', alignItems: 'center', gap: 8 }}>
         <input type="checkbox" id="filtroCuadrilla" checked={filtroCuadrillaActivo} onChange={e => setFiltroCuadrillaActivo(e.target.checked)} />
         <label htmlFor="filtroCuadrilla" style={{ marginRight: 8 }}>Cuadrilla:</label>
@@ -218,12 +137,12 @@ const Aprobar: React.FC<AprobarProps> = ({ titulo = 'Aprobar cuadrilla' }) => {
             <ul style={{ background: '#fff', border: '1px solid #ccc', borderRadius: 4, margin: 0, padding: 0, listStyle: 'none', maxHeight: 150, overflowY: 'auto', position: 'absolute', zIndex: 10, width: '100%' }}>
               {filteredCuadrillas.map((c, idx) => (
                 <li
-                  key={c.IdEmpleado ?? c.idempleado}
+                  key={c.id}
                   style={{ padding: 8, cursor: 'pointer', background: idx === activeSuggestion ? '#e0e7ff' : 'transparent' }}
                   onMouseEnter={() => setActiveSuggestion(idx)}
                   onClick={() => handleSuggestionClick(c)}
                 >
-                  {c.NombreEmpleado ?? c.nombreempleado}
+                  {c.nombre}
                 </li>
               ))}
             </ul>
@@ -264,62 +183,45 @@ const Aprobar: React.FC<AprobarProps> = ({ titulo = 'Aprobar cuadrilla' }) => {
         {resultados.length > 0 && (
           <div>
             <h4>Resultados:</h4>
-            <div style={{ marginTop: 32 }}>
-              {resultados.length > 0 && (
-                <div>
-                  <h4>Resultados:</h4>
-                  <div style={{ overflowX: 'auto' }}>
-                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 15 }}>
-                      <thead>
-                        <tr style={{ background: '#f1f5f9' }}>
-                          <th style={{ padding: 8, border: '1px solid #e5e7eb' }}></th>
-                          <th style={{ padding: 8, border: '1px solid #e5e7eb' }}>id_cuadrilla</th>
-                          <th style={{ padding: 8, border: '1px solid #e5e7eb' }}>Concatenado</th>
-                          <th style={{ padding: 8, border: '1px solid #e5e7eb' }}>Fecha</th>
-                          <th style={{ padding: 8, border: '1px solid #e5e7eb' }}>RutaPDF</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {resultados.map((row: any, idx: number) => (
-                          <tr key={row.idAuto + '-' + idx}>
-                            <td style={{ padding: 8, border: '1px solid #e5e7eb', textAlign: 'center' }}>
-                              <input
-                                type="checkbox"
-                                checked={seleccionados.includes(idx)}
-                                onChange={() => handleCheck(idx)}
-                              />
-                            </td>
-                            <td style={{ padding: 8, border: '1px solid #e5e7eb' }}>{row.id_cuadrilla ?? ''}</td>
-                            <td style={{ padding: 8, border: '1px solid #e5e7eb' }}>{row.Concatenado ?? ''}</td>
-                            <td style={{ padding: 8, border: '1px solid #e5e7eb' }}>{row.fecha ?? ''}</td>
-                            <td style={{ padding: 8, border: '1px solid #e5e7eb' }}>
-                              {row.RutaPDF ? (
-                                <a href={row.RutaPDF} target="_blank" rel="noopener noreferrer" style={{ color: '#2563eb', textDecoration: 'underline' }}>
-                                  Ver PDF
-                                </a>
-                              ) : ''}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                  <div style={{ display: 'flex', gap: 16, marginTop: 24, justifyContent: 'center' }}>
-                    <button onClick={handleAprobar} style={{ padding: '10px 32px', background: '#059669', color: 'white', border: 'none', borderRadius: 6, fontWeight: 600, fontSize: 16, cursor: 'pointer' }}>
-                      Aprobar
-                    </button>
-                    <button onClick={handleRechazar} style={{ padding: '10px 32px', background: '#dc2626', color: 'white', border: 'none', borderRadius: 6, fontWeight: 600, fontSize: 16, cursor: 'pointer' }}>
-                      Rechazar
-                    </button>
-                  </div>
-                </div>
-              )}
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 15 }}>
+                <thead>
+                  <tr style={{ background: '#f1f5f9' }}>
+                    <th style={{ padding: 8, border: '1px solid #e5e7eb' }}></th>
+                    <th style={{ padding: 8, border: '1px solid #e5e7eb' }}>id</th>
+                    <th style={{ padding: 8, border: '1px solid #e5e7eb' }}>estado</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {resultados.map((row: any, idx: number) => (
+                    <tr key={row.id + '-' + idx}>
+                      <td style={{ padding: 8, border: '1px solid #e5e7eb', textAlign: 'center' }}>
+                        <input
+                          type="checkbox"
+                          checked={seleccionados.includes(idx)}
+                          onChange={() => handleCheck(idx)}
+                        />
+                      </td>
+                      <td style={{ padding: 8, border: '1px solid #e5e7eb' }}>{row.id ?? ''}</td>
+                      <td style={{ padding: 8, border: '1px solid #e5e7eb' }}>{row.estado ?? ''}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
+            <div style={{ display: 'flex', gap: 16, marginTop: 24, justifyContent: 'center' }}>
+              <button onClick={handleAprobar} style={{ padding: '10px 32px', background: '#059669', color: 'white', border: 'none', borderRadius: 6, fontWeight: 600, fontSize: 16, cursor: 'pointer' }}>
+                Aprobar
+              </button>
+              <button onClick={handleRechazar} style={{ padding: '10px 32px', background: '#dc2626', color: 'white', border: 'none', borderRadius: 6, fontWeight: 600, fontSize: 16, cursor: 'pointer' }}>
+                Rechazar
+              </button>
             </div>
+          </div>
         )}
       </div>
     </div>
   );
 };
 
-export default Aprobar;
+export default ReporteEstados;
