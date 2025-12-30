@@ -46,9 +46,12 @@ const CopiaFormulario: React.FC = () => {
   const [plantillaSeleccionada, setPlantillaSeleccionada] = useState<number | null>(null);
   const [segmentos, setSegmentos] = useState<Segmento[]>([]);
   const [segmentoSeleccionado, setSegmentoSeleccionado] = useState<number | null>(null);
+  const [segmentosAgregados, setSegmentosAgregados] = useState<number[]>([]);
+  const [evidenciasPorSegmento, setEvidenciasPorSegmento] = useState<{ [segmentoId: number]: Evidencia[] }>({});
   const [evidencias, setEvidencias] = useState<Evidencia[]>([]);
   const [evidenciaSeleccionada, setEvidenciaSeleccionada] = useState<number | null>(null);
-  const [evidenciasAgregadas, setEvidenciasAgregadas] = useState<number[]>([]);
+  const [segmentoEvidenciaSeleccionado, setSegmentoEvidenciaSeleccionado] = useState<number | null>(null);
+  const [evidenciasAgregadasPorSegmento, setEvidenciasAgregadasPorSegmento] = useState<{ [segmentoId: number]: number[] }>({});
   const [guardado, setGuardado] = useState(false);
 
   // Cargar plantillas al seleccionar nodo
@@ -64,7 +67,6 @@ const CopiaFormulario: React.FC = () => {
       setSegmentoSeleccionado(null);
       setEvidencias([]);
       setEvidenciaSeleccionada(null);
-      setEvidenciasAgregadas([]);
     }
   }, [nodoSeleccionado]);
 
@@ -79,22 +81,30 @@ const CopiaFormulario: React.FC = () => {
       setSegmentoSeleccionado(null);
       setEvidencias([]);
       setEvidenciaSeleccionada(null);
-      setEvidenciasAgregadas([]);
+      setEvidenciasAgregadasPorSegmento({});
     }
   }, [plantillaSeleccionada]);
 
-  // Cargar evidencias al seleccionar segmento
+  // Cargar evidencias dinámicamente para cada segmento agregado
   useEffect(() => {
-    if (segmentoSeleccionado) {
-      fetch(`/api/evidencia?segmentoId=${segmentoSeleccionado}`)
-        .then(res => res.json())
-        .then(data => setEvidencias(data));
-    } else {
-      setEvidencias([]);
-      setEvidenciaSeleccionada(null);
-      setEvidenciasAgregadas([]);
+    async function cargarEvidenciasParaSegmentos() {
+      const evidenciasMap: { [segmentoId: number]: Evidencia[] } = {};
+      for (const segmentoId of segmentosAgregados) {
+        const res = await fetch(`/api/evidencia?segmentoId=${segmentoId}`);
+        const data = await res.json();
+        evidenciasMap[segmentoId] = data;
+      }
+      setEvidenciasPorSegmento(evidenciasMap);
     }
-  }, [segmentoSeleccionado]);
+    if (segmentosAgregados.length > 0) {
+      cargarEvidenciasParaSegmentos();
+    } else {
+      setEvidenciasPorSegmento({});
+      setEvidenciasAgregadasPorSegmento({});
+      setSegmentoEvidenciaSeleccionado(null);
+      setEvidenciaSeleccionada(null);
+    }
+  }, [segmentosAgregados]);
 
   // Estado para mostrar formularios de alta
   const [mostrarNuevoNodo, setMostrarNuevoNodo] = useState(false);
@@ -254,15 +264,15 @@ const CopiaFormulario: React.FC = () => {
     </div>
   );
 
-  // Paso 3: Selección de segmento
+  // Paso 3: Agregar múltiples segmentos
   const PasoSegmento = () => (
     <div style={{ marginBottom: 32 }}>
-      <h3 style={{ color: '#1e293b', fontWeight: 600 }}>3. Selecciona el Segmento</h3>
-      <div style={{ display: 'flex', gap: 8 }}>
+      <h3 style={{ color: '#1e293b', fontWeight: 600 }}>3. Agrega Segmentos</h3>
+      <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
         <select
           value={segmentoSeleccionado ?? ''}
           onChange={e => setSegmentoSeleccionado(Number(e.target.value))}
-          style={{ width: '100%', padding: 12, borderRadius: 6, border: '1px solid #cbd5e1', marginTop: 12 }}
+          style={{ flex: 1, padding: 12, borderRadius: 6, border: '1px solid #cbd5e1' }}
           disabled={!plantillaSeleccionada || segmentos.length === 0}
         >
           <option value="">{segmentos.length === 0 ? 'No hay segmentos' : 'Seleccione un segmento...'}</option>
@@ -270,8 +280,20 @@ const CopiaFormulario: React.FC = () => {
             <option key={s.SegmentoID} value={s.SegmentoID}>{s.Nombre}</option>
           ))}
         </select>
-        <button onClick={() => setMostrarNuevoSegmento(true)} style={{ marginTop: 12, background: '#2563eb', color: '#fff', border: 'none', borderRadius: 6, padding: '8px 14px', fontWeight: 600, minWidth: 120 }}>
+        <button onClick={() => setMostrarNuevoSegmento(true)} style={{ marginTop: 0, background: '#2563eb', color: '#fff', border: 'none', borderRadius: 6, padding: '8px 14px', fontWeight: 600, minWidth: 120 }}>
           Registrar Segmento
+        </button>
+        <button
+          onClick={() => {
+            if (segmentoSeleccionado && !segmentosAgregados.includes(segmentoSeleccionado)) {
+              setSegmentosAgregados([...segmentosAgregados, segmentoSeleccionado]);
+              setSegmentoSeleccionado(null);
+            }
+          }}
+          disabled={!segmentoSeleccionado || segmentosAgregados.includes(segmentoSeleccionado)}
+          style={{ padding: '10px 18px', background: '#059669', color: '#fff', border: 'none', borderRadius: 6, fontWeight: 600, cursor: (!segmentoSeleccionado || segmentosAgregados.includes(segmentoSeleccionado)) ? 'not-allowed' : 'pointer' }}
+        >
+          Agregar
         </button>
       </div>
       {mostrarNuevoSegmento && (
@@ -319,6 +341,17 @@ const CopiaFormulario: React.FC = () => {
           </div>
         </div>
       )}
+      <ul style={{ margin: 0, padding: 0, listStyle: 'none' }}>
+        {segmentosAgregados.map(id => {
+          const seg = segmentos.find(s => s.SegmentoID === id);
+          return seg ? (
+            <li key={id} style={{ background: '#f1f5f9', borderRadius: 4, padding: 8, marginBottom: 6, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              {seg.Nombre}
+              <button onClick={() => setSegmentosAgregados(segmentosAgregados.filter(sid => sid !== id))} style={{ background: 'none', border: 'none', color: '#ef4444', fontWeight: 700, cursor: 'pointer' }}>Eliminar</button>
+            </li>
+          ) : null;
+        })}
+      </ul>
       <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 24 }}>
         <button
           onClick={() => setPaso(2)}
@@ -328,8 +361,8 @@ const CopiaFormulario: React.FC = () => {
         </button>
         <button
           onClick={() => setPaso(4)}
-          disabled={!segmentoSeleccionado}
-          style={{ padding: '10px 32px', background: '#2563eb', color: '#fff', border: 'none', borderRadius: 6, fontWeight: 600, fontSize: 16, cursor: !segmentoSeleccionado ? 'not-allowed' : 'pointer' }}
+          disabled={segmentosAgregados.length === 0}
+          style={{ padding: '10px 32px', background: '#2563eb', color: '#fff', border: 'none', borderRadius: 6, fontWeight: 600, fontSize: 16, cursor: segmentosAgregados.length === 0 ? 'not-allowed' : 'pointer' }}
         >
           Siguiente
         </button>
@@ -337,19 +370,34 @@ const CopiaFormulario: React.FC = () => {
     </div>
   );
 
-  // Paso 4: Agregar evidencias
+  // Paso 4: Agregar evidencias por segmento
   const PasoEvidencias = () => (
     <div style={{ marginBottom: 32 }}>
-      <h3 style={{ color: '#1e293b', fontWeight: 600 }}>4. Agrega Evidencias</h3>
+      <h3 style={{ color: '#1e293b', fontWeight: 600 }}>4. Agrega Evidencias por Segmento</h3>
       <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
+        <select
+          value={segmentoEvidenciaSeleccionado ?? ''}
+          onChange={e => {
+            setSegmentoEvidenciaSeleccionado(Number(e.target.value));
+            setEvidenciaSeleccionada(null);
+          }}
+          style={{ flex: 1, padding: 12, borderRadius: 6, border: '1px solid #cbd5e1' }}
+          disabled={segmentosAgregados.length === 0}
+        >
+          <option value="">Seleccione un segmento...</option>
+          {segmentosAgregados.map(id => {
+            const seg = segmentos.find(s => s.SegmentoID === id);
+            return seg ? <option key={id} value={id}>{seg.Nombre}</option> : null;
+          })}
+        </select>
         <select
           value={evidenciaSeleccionada ?? ''}
           onChange={e => setEvidenciaSeleccionada(Number(e.target.value))}
           style={{ flex: 1, padding: 12, borderRadius: 6, border: '1px solid #cbd5e1' }}
-          disabled={!segmentoSeleccionado || evidencias.length === 0}
+          disabled={!segmentoEvidenciaSeleccionado || !evidenciasPorSegmento[segmentoEvidenciaSeleccionado] || evidenciasPorSegmento[segmentoEvidenciaSeleccionado].length === 0}
         >
-          <option value="">{evidencias.length === 0 ? 'No hay evidencias' : 'Seleccione una evidencia...'}</option>
-          {evidencias.map(e => (
+          <option value="">{!segmentoEvidenciaSeleccionado || !evidenciasPorSegmento[segmentoEvidenciaSeleccionado] ? 'Seleccione un segmento primero' : (evidenciasPorSegmento[segmentoEvidenciaSeleccionado].length === 0 ? 'No hay evidencias' : 'Seleccione una evidencia...')}</option>
+          {segmentoEvidenciaSeleccionado && evidenciasPorSegmento[segmentoEvidenciaSeleccionado] && evidenciasPorSegmento[segmentoEvidenciaSeleccionado].map(e => (
             <option key={e.EvidenciaID} value={e.EvidenciaID}>{e.Nombre}</option>
           ))}
         </select>
@@ -358,13 +406,27 @@ const CopiaFormulario: React.FC = () => {
         </button>
         <button
           onClick={() => {
-            if (evidenciaSeleccionada && !evidenciasAgregadas.includes(evidenciaSeleccionada)) {
-              setEvidenciasAgregadas([...evidenciasAgregadas, evidenciaSeleccionada]);
-              setEvidenciaSeleccionada(null);
+            if (segmentoEvidenciaSeleccionado && evidenciaSeleccionada) {
+              const actuales = evidenciasAgregadasPorSegmento[segmentoEvidenciaSeleccionado] || [];
+              if (!actuales.includes(evidenciaSeleccionada)) {
+                setEvidenciasAgregadasPorSegmento({
+                  ...evidenciasAgregadasPorSegmento,
+                  [segmentoEvidenciaSeleccionado]: [...actuales, evidenciaSeleccionada]
+                });
+                setEvidenciaSeleccionada(null);
+              }
             }
           }}
-          disabled={!evidenciaSeleccionada || evidenciasAgregadas.includes(evidenciaSeleccionada)}
-          style={{ padding: '10px 18px', background: '#2563eb', color: '#fff', border: 'none', borderRadius: 6, fontWeight: 600, cursor: (!evidenciaSeleccionada || evidenciasAgregadas.includes(evidenciaSeleccionada)) ? 'not-allowed' : 'pointer' }}
+          disabled={
+            !Boolean(segmentoEvidenciaSeleccionado) ||
+            !Boolean(evidenciaSeleccionada) ||
+            (
+              Boolean(segmentoEvidenciaSeleccionado) &&
+              Boolean(evidenciaSeleccionada) &&
+              (evidenciasAgregadasPorSegmento[Number(segmentoEvidenciaSeleccionado)] || []).includes(Number(evidenciaSeleccionada))
+            )
+          }
+          style={{ padding: '10px 18px', background: '#2563eb', color: '#fff', border: 'none', borderRadius: 6, fontWeight: 600, cursor: (!segmentoEvidenciaSeleccionado || !evidenciaSeleccionada || (segmentoEvidenciaSeleccionado && evidenciaSeleccionada && (evidenciasAgregadasPorSegmento[segmentoEvidenciaSeleccionado] || []).includes(evidenciaSeleccionada))) ? 'not-allowed' : 'pointer' }}
         >
           Agregar
         </button>
@@ -376,12 +438,13 @@ const CopiaFormulario: React.FC = () => {
             e.preventDefault();
             const formData = new FormData(e.target as HTMLFormElement);
             const nombre = formData.get('nombre');
-            const segmentoId = segmentoSeleccionado;
+            const segmentoId = segmentoEvidenciaSeleccionado;
             const esObligatoria = formData.get('esObligatoria') === 'on' ? 1 : 0;
             // Calcular el orden automáticamente (correlativo)
             let orden = 1;
-            if (Array.isArray(evidencias) && evidencias.length > 0) {
-              orden = Math.max(...evidencias.map(ev => (ev as any).Orden || 1)) + 1;
+            const evidenciasActuales = segmentoId ? evidenciasPorSegmento[segmentoId] || [] : [];
+            if (Array.isArray(evidenciasActuales) && evidenciasActuales.length > 0) {
+              orden = Math.max(...evidenciasActuales.map(ev => (ev as any).Orden || 1)) + 1;
             }
             if (!segmentoId) {
               alert('Seleccione un segmento antes de registrar evidencia');
@@ -395,10 +458,10 @@ const CopiaFormulario: React.FC = () => {
             if (res.ok) {
               setMostrarNuevaEvidencia(false);
               alert('Evidencia registrada correctamente');
-              // Recargar evidencias
+              // Recargar evidencias para el segmento
               fetch(`/api/evidencia?segmentoId=${segmentoId}`)
                 .then(res => res.json())
-                .then(data => setEvidencias(data));
+                .then(data => setEvidenciasPorSegmento(prev => ({ ...prev, [segmentoId]: data })));
             } else {
               const errorData = await res.json();
               alert('Error al registrar evidencia: ' + (errorData.error || ''));
@@ -419,17 +482,32 @@ const CopiaFormulario: React.FC = () => {
           </form>
         </div>
       )}
-      <ul style={{ margin: 0, padding: 0, listStyle: 'none' }}>
-        {evidenciasAgregadas.map(id => {
-          const ev = evidencias.find(e => e.EvidenciaID === id);
-          return ev ? (
-            <li key={id} style={{ background: '#f1f5f9', borderRadius: 4, padding: 8, marginBottom: 6, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              {ev.Nombre}
-              <button onClick={() => setEvidenciasAgregadas(evidenciasAgregadas.filter(eid => eid !== id))} style={{ background: 'none', border: 'none', color: '#ef4444', fontWeight: 700, cursor: 'pointer' }}>Eliminar</button>
-            </li>
-          ) : null;
-        })}
-      </ul>
+      {/* Listar evidencias agregadas por segmento */}
+      {Object.keys(evidenciasAgregadasPorSegmento).length > 0 && (
+        <div style={{ marginTop: 16 }}>
+          <h4>Evidencias agregadas por segmento:</h4>
+          {segmentosAgregados.map(segId => {
+            const seg = segmentos.find(s => s.SegmentoID === segId);
+            const evidIds = evidenciasAgregadasPorSegmento[segId] || [];
+            return (
+              <div key={segId} style={{ marginBottom: 10 }}>
+                <strong>{seg?.Nombre}</strong>
+                <ul style={{ margin: 0, padding: 0, listStyle: 'none' }}>
+                  {evidIds.map(eid => {
+                    const ev = evidenciasPorSegmento[segId]?.find(e => e.EvidenciaID === eid);
+                    return ev ? (
+                      <li key={eid} style={{ background: '#f1f5f9', borderRadius: 4, padding: 8, marginBottom: 6, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        {ev.Nombre}
+                        <button onClick={() => setEvidenciasAgregadasPorSegmento(prev => ({ ...prev, [segId]: prev[segId].filter(x => x !== eid) }))} style={{ background: 'none', border: 'none', color: '#ef4444', fontWeight: 700, cursor: 'pointer' }}>Eliminar</button>
+                      </li>
+                    ) : null;
+                  })}
+                </ul>
+              </div>
+            );
+          })}
+        </div>
+      )}
       <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 24 }}>
         <button
           onClick={() => setPaso(3)}
@@ -439,8 +517,8 @@ const CopiaFormulario: React.FC = () => {
         </button>
         <button
           onClick={() => setPaso(5)}
-          disabled={evidenciasAgregadas.length === 0}
-          style={{ padding: '10px 32px', background: '#2563eb', color: '#fff', border: 'none', borderRadius: 6, fontWeight: 600, fontSize: 16, cursor: evidenciasAgregadas.length === 0 ? 'not-allowed' : 'pointer' }}
+          disabled={Object.values(evidenciasAgregadasPorSegmento).every(arr => arr.length === 0)}
+          style={{ padding: '10px 32px', background: '#2563eb', color: '#fff', border: 'none', borderRadius: 6, fontWeight: 600, fontSize: 16, cursor: Object.values(evidenciasAgregadasPorSegmento).every(arr => arr.length === 0) ? 'not-allowed' : 'pointer' }}
         >
           Siguiente
         </button>
@@ -465,7 +543,12 @@ const CopiaFormulario: React.FC = () => {
         <div>
           <strong>Evidencias:</strong>
           <ul style={{ margin: 0, paddingLeft: 20 }}>
-            {evidenciasAgregadas.map(id => <li key={id}>{evidencias.find(e => e.EvidenciaID === id)?.Nombre}</li>)}
+            {Object.entries(evidenciasAgregadasPorSegmento).map(([segId, evidIds]) =>
+              evidIds.map(id => {
+                const ev = evidenciasPorSegmento[Number(segId)]?.find(e => e.EvidenciaID === id);
+                return ev ? <li key={id}>{ev.Nombre}</li> : null;
+              })
+            )}
           </ul>
         </div>
       </div>
