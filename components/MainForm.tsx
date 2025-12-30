@@ -11,6 +11,7 @@ import Formulario from './Formulario';
 import GoogleMapsForm from './GoogleMapsForm';
 import Aprobar from './Aprobar';
 import ReporteEstados from './ReporteEstados';
+import CopiaFormulario from './CopiaFormulario';
 // Puedes crear un componente Aprobar.tsx o mostrar un placeholder temporal
 // import GoogleMap from '../map-google/GoogleMap';
 
@@ -51,6 +52,8 @@ const MainForm: React.FC = () => {
     contenido = <Aprobar />;
   } else if (opcion === 'reporte') {
     contenido = <ReporteEstados />;
+  } else if (opcion === 'copiaformulario') {
+    contenido = <CopiaFormulario />;
   } else {
     contenido = (
       <>
@@ -80,6 +83,7 @@ const MainForm: React.FC = () => {
         <a href="#" style={{ color: menuColor, textDecoration: 'none' }} onClick={e => { e.preventDefault(); setOpcion('aprobar'); }}>Aprobar</a>
         <a href="#" style={{ color: menuColor, textDecoration: 'none' }} onClick={e => { e.preventDefault(); setOpcion('googlemaps'); }}>Google Maps</a>
         <a href="#" style={{ color: menuColor, textDecoration: 'none' }} onClick={e => { e.preventDefault(); setOpcion('formulario'); }}>Formulario</a>
+        <a href="#" style={{ color: menuColor, textDecoration: 'none' }} onClick={e => { e.preventDefault(); setOpcion('copiaformulario'); }}>CopiaFormulario</a>
         <a href="#" style={{ color: menuColor, textDecoration: 'none' }} onClick={e => { e.preventDefault(); setOpcion('reporte'); }}>Reporte</a>
       </nav>
       {/* Contenido principal dinámico */}

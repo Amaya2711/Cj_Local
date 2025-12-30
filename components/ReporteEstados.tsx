@@ -27,8 +27,8 @@ const ReporteEstados: React.FC = () => {
   const [resultados, setResultados] = useState<ResultadoAprobar[]>([]);
   const [buscando, setBuscando] = useState(false);
   const [seleccionados, setSeleccionados] = useState<number[]>([]);
-  const [filtroCuadrillaActivo, setFiltroCuadrillaActivo] = useState(true);
-  const [filtroFechaActivo, setFiltroFechaActivo] = useState(true);
+  const [filtroCuadrillaActivo, setFiltroCuadrillaActivo] = useState(false);
+  const [filtroFechaActivo, setFiltroFechaActivo] = useState(false);
   const [filtroEstadoActivo, setFiltroEstadoActivo] = useState(false);
   const [estados, setEstados] = useState<{ id: string; nombre: string }[]>([]);
   const [estadoSeleccionado, setEstadoSeleccionado] = useState('');
@@ -162,143 +162,195 @@ const ReporteEstados: React.FC = () => {
     alert(`Rechazar filas: ${seleccionados.map(i => i + 1).join(', ')}`);
   };
 
-  return (
-    <div style={{ maxWidth: 900, margin: '0 auto' }}>
-      <h3 style={{ marginBottom: 16 }}>Reporte de Estados</h3>
-      {/* Filtros y controles existentes */}
-      <div style={{ marginBottom: 16, position: 'relative', display: 'flex', alignItems: 'center', gap: 8 }}>
-        <input type="checkbox" id="filtroCuadrilla" checked={filtroCuadrillaActivo} onChange={e => setFiltroCuadrillaActivo(e.target.checked)} />
-        <label htmlFor="filtroCuadrilla" style={{ marginRight: 8 }}>Cuadrilla:</label>
-        <div style={{ flex: 1, position: 'relative' }}>
-          <input
-            type="text"
-            value={cuadrillaInput}
-            onChange={handleCuadrillaInput}
-            onKeyDown={handleInputKeyDown}
-            onFocus={() => setShowSuggestions(true)}
-            placeholder="Buscar cuadrilla..."
-            style={{ width: '100%', padding: 8, borderRadius: 4, border: '1px solid #ccc' }}
-            autoComplete="off"
-            disabled={!filtroCuadrillaActivo}
-          />
-          {showSuggestions && cuadrillaInput && filteredCuadrillas.length > 0 && filtroCuadrillaActivo && (
-            <ul style={{ background: '#fff', border: '1px solid #ccc', borderRadius: 4, margin: 0, padding: 0, listStyle: 'none', maxHeight: 150, overflowY: 'auto', position: 'absolute', zIndex: 10, width: '100%' }}>
-              {filteredCuadrillas.map((c, idx) => (
-                <li
-                  key={c.IdEmpleado ?? c.idempleado}
-                  style={{ padding: 8, cursor: 'pointer', background: idx === activeSuggestion ? '#e0e7ff' : 'transparent' }}
-                  onMouseEnter={() => setActiveSuggestion(idx)}
-                  onClick={() => handleSuggestionClick(c)}
-                >
-                  {c.NombreEmpleado ?? c.nombreempleado}
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-      </div>
-      <div style={{ marginBottom: 16, display: 'flex', gap: 16, alignItems: 'center' }}>
-        <input type="checkbox" id="filtroFecha" checked={filtroFechaActivo} onChange={e => setFiltroFechaActivo(e.target.checked)} />
-        <label htmlFor="filtroFecha" style={{ marginRight: 8 }}>Fechas:</label>
-        <div>
-          <label style={{ marginRight: 4 }}>Inicial:</label>
-          <input type="date" value={fechaIni} onChange={e => setFechaIni(e.target.value)} style={{ padding: 8, borderRadius: 4, border: '1px solid #ccc' }} disabled={!filtroFechaActivo} />
-        </div>
-        <div>
-          <label style={{ marginRight: 4 }}>Final:</label>
-          <input type="date" value={fechaFin} onChange={e => setFechaFin(e.target.value)} style={{ padding: 8, borderRadius: 4, border: '1px solid #ccc' }} disabled={!filtroFechaActivo} />
-        </div>
-      </div>
-      {/* Checkbox y combobox de estados */}
-      <div style={{ marginTop: 24, marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
-        <input
-          type="checkbox"
-          id="filtroEstado"
-          checked={filtroEstadoActivo}
-          onChange={e => {
-            setFiltroEstadoActivo(e.target.checked);
-            if (!e.target.checked) setEstadoSeleccionado('');
-          }}
-        />
-        <label htmlFor="filtroEstado" style={{ fontWeight: 500, color: '#334155', marginRight: 8 }}>Estado:</label>
-        <select
-          id="estadoCombo"
-          value={estadoSeleccionado}
-          onChange={e => setEstadoSeleccionado(e.target.value)}
-          style={{ padding: 8, borderRadius: 4, border: '1px solid #ccc', minWidth: 180 }}
-          disabled={!filtroEstadoActivo}
-        >
-          <option value="">Seleccione un estado...</option>
-          {estados.map(e => (
-            <option key={e.id} value={e.id}>{e.nombre}</option>
-          ))}
-        </select>
-      </div>
-
-      {/* Botón Buscar debajo de todos los filtros */}
-      <div style={{ marginBottom: 32, marginTop: 16 }}>
-        <button
-          onClick={handleBuscar}
-          disabled={buscando || (filtroCuadrillaActivo && !selectedCuadrilla) || (filtroFechaActivo && (!fechaIni || !fechaFin)) || (filtroEstadoActivo && !estadoSeleccionado)}
-          style={{ padding: '10px 24px', background: '#2563eb', color: '#fff', border: 'none', borderRadius: 4, fontWeight: 600, cursor: 'pointer', marginTop: 0 }}
-        >
-          {buscando ? 'Buscando...' : 'Buscar'}
-        </button>
-      </div>
-      {/* Grilla de resultados */}
-      <div style={{ marginTop: 32 }}>
-        {resultados.length > 0 && (
-          <div style={{ marginBottom: 12, display: 'flex', alignItems: 'center', gap: 24 }}>
-            <span style={{ color: '#334155', fontWeight: 500 }}>
-              Registros encontrados: {resultados.length}
-            </span>
-            <button
-              onClick={exportarExcel}
-              style={{ padding: '8px 18px', background: '#059669', color: '#fff', border: 'none', borderRadius: 4, fontWeight: 600, cursor: 'pointer' }}
+    return (
+      <div style={{
+        maxWidth: 900,
+        margin: '40px auto',
+        background: '#fff',
+        borderRadius: 12,
+        boxShadow: '0 4px 24px rgba(0,0,0,0.08)',
+        padding: 32
+      }}>
+        <h2 style={{
+          color: '#1e293b',
+          fontWeight: 700,
+          marginBottom: 8
+        }}>Reporte de Estados</h2>
+        <p style={{
+          color: '#64748b',
+          marginBottom: 24
+        }}>
+          Complete los filtros para consultar y exportar el reporte de estados de cuadrillas.
+        </p>
+        {/* Filtros agrupados */}
+        <div style={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          gap: 24,
+          marginBottom: 24
+        }}>
+          {/* Filtro Cuadrilla */}
+          <div style={{ flex: 1, minWidth: 220 }}>
+            <label style={{ fontWeight: 500, color: '#334155', marginBottom: 6, display: 'block' }}>
+              <input type="checkbox" id="filtroCuadrilla" checked={filtroCuadrillaActivo} onChange={e => setFiltroCuadrillaActivo(e.target.checked)} style={{ marginRight: 8 }} />
+              Cuadrilla
+            </label>
+            <div style={{ position: 'relative' }}>
+              <input
+                type="text"
+                value={cuadrillaInput}
+                onChange={handleCuadrillaInput}
+                onKeyDown={handleInputKeyDown}
+                onFocus={() => setShowSuggestions(true)}
+                placeholder="Buscar cuadrilla..."
+                style={{
+                  width: '100%',
+                  padding: 10,
+                  borderRadius: 6,
+                  border: '1px solid #cbd5e1',
+                  background: filtroCuadrillaActivo ? '#fff' : '#f1f5f9'
+                }}
+                autoComplete="off"
+                disabled={!filtroCuadrillaActivo}
+              />
+              {showSuggestions && cuadrillaInput && filteredCuadrillas.length > 0 && filtroCuadrillaActivo && (
+                <ul style={{ background: '#fff', border: '1px solid #ccc', borderRadius: 4, margin: 0, padding: 0, listStyle: 'none', maxHeight: 150, overflowY: 'auto', position: 'absolute', zIndex: 10, width: '100%' }}>
+                  {filteredCuadrillas.map((c, idx) => (
+                    <li
+                      key={c.IdEmpleado ?? c.idempleado}
+                      style={{ padding: 8, cursor: 'pointer', background: idx === activeSuggestion ? '#e0e7ff' : 'transparent' }}
+                      onMouseEnter={() => setActiveSuggestion(idx)}
+                      onClick={() => handleSuggestionClick(c)}
+                    >
+                      {c.NombreEmpleado ?? c.nombreempleado}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </div>
+          {/* Filtro Fechas */}
+          <div style={{ flex: 1, minWidth: 220 }}>
+            <label style={{ fontWeight: 500, color: '#334155', marginBottom: 6, display: 'block' }}>
+              <input type="checkbox" id="filtroFecha" checked={filtroFechaActivo} onChange={e => setFiltroFechaActivo(e.target.checked)} style={{ marginRight: 8 }} />
+              Fechas
+            </label>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <input type="date" value={fechaIni} onChange={e => setFechaIni(e.target.value)} disabled={!filtroFechaActivo} style={{ flex: 1, padding: 10, borderRadius: 6, border: '1px solid #cbd5e1', background: filtroFechaActivo ? '#fff' : '#f1f5f9' }} />
+              <input type="date" value={fechaFin} onChange={e => setFechaFin(e.target.value)} disabled={!filtroFechaActivo} style={{ flex: 1, padding: 10, borderRadius: 6, border: '1px solid #cbd5e1', background: filtroFechaActivo ? '#fff' : '#f1f5f9' }} />
+            </div>
+          </div>
+          {/* Filtro Estado */}
+          <div style={{ flex: 1, minWidth: 220 }}>
+            <label style={{ fontWeight: 500, color: '#334155', marginBottom: 6, display: 'block' }}>
+              <input type="checkbox" id="filtroEstado" checked={filtroEstadoActivo} onChange={e => {
+                setFiltroEstadoActivo(e.target.checked);
+                if (!e.target.checked) setEstadoSeleccionado('');
+              }} style={{ marginRight: 8 }} />
+              Estado
+            </label>
+            <select
+              id="estadoCombo"
+              value={estadoSeleccionado}
+              onChange={e => setEstadoSeleccionado(e.target.value)}
+              style={{
+                width: '100%',
+                padding: 10,
+                borderRadius: 6,
+                border: '1px solid #cbd5e1',
+                background: filtroEstadoActivo ? '#fff' : '#f1f5f9'
+              }}
+              disabled={!filtroEstadoActivo}
             >
-              Exportar a Excel
-            </button>
+              <option value="">Seleccione un estado...</option>
+              {estados.map(e => (
+                <option key={e.id} value={e.id}>{e.nombre}</option>
+              ))}
+            </select>
           </div>
-        )}
-        {resultados.length > 0 ? (
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 15 }}>
-              <thead>
-                <tr style={{ background: '#f1f5f9' }}>
-                  {Object.keys(resultados[0])
-                    .filter(col => !['idsite', 'correlativo', 'Site', 'NroInterno', 'Id_Auto', 'Estado', 'tipotrabajo'].includes(col))
-                    .map(col => (
-                      <th key={col} style={{ padding: 8, border: '1px solid #e5e7eb' }}>{col}</th>
-                    ))}
-                </tr>
-              </thead>
-              <tbody>
-                {resultados.map((row, idx) => (
-                  <tr key={idx}>
-                    {Object.keys(row)
+        </div>
+        {/* Botón Buscar */}
+        <div style={{ textAlign: 'right', marginBottom: 24 }}>
+          <button
+            onClick={handleBuscar}
+            disabled={buscando || (filtroCuadrillaActivo && !selectedCuadrilla) || (filtroFechaActivo && (!fechaIni || !fechaFin)) || (filtroEstadoActivo && !estadoSeleccionado)}
+            style={{
+              padding: '12px 32px',
+              background: '#2563eb',
+              color: '#fff',
+              border: 'none',
+              borderRadius: 6,
+              fontWeight: 600,
+              fontSize: 16,
+              boxShadow: '0 2px 8px rgba(37,99,235,0.08)',
+              cursor: 'pointer'
+            }}
+          >
+            {buscando ? 'Buscando...' : 'Buscar'}
+          </button>
+        </div>
+        {/* Resultados */}
+        <div style={{ marginTop: 32 }}>
+          {resultados.length > 0 && (
+            <div style={{ marginBottom: 12, display: 'flex', alignItems: 'center', gap: 24 }}>
+              <span style={{ color: '#334155', fontWeight: 500 }}>
+                Registros encontrados: {resultados.length}
+              </span>
+              <button
+                onClick={exportarExcel}
+                style={{ padding: '8px 18px', background: '#059669', color: '#fff', border: 'none', borderRadius: 4, fontWeight: 600, cursor: 'pointer' }}
+              >
+                Exportar a Excel
+              </button>
+            </div>
+          )}
+          {resultados.length > 0 ? (
+            <div style={{
+              maxHeight: '500px',
+              maxWidth: '100%',
+              overflowY: 'auto',
+              overflowX: 'auto',
+              border: '1px solid #e5e7eb',
+              borderRadius: 4,
+              boxShadow: '0 2px 8px rgba(0,0,0,0.04)'
+            }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 15 }}>
+                <thead>
+                  <tr style={{ background: '#f1f5f9' }}>
+                    {Object.keys(resultados[0])
                       .filter(col => !['idsite', 'correlativo', 'Site', 'NroInterno', 'Id_Auto', 'Estado', 'tipotrabajo'].includes(col))
-                      .map(col => {
-                        if (col.toLowerCase() === 'rutapdf') {
-                          return (
-                            <td key={col} style={{ padding: 8, border: '1px solid #e5e7eb' }}>
-                              {row[col] && typeof row[col] === 'string' && row[col].trim() !== '' ? (
-                                <a href={row[col]} target="_blank" rel="noopener noreferrer" style={{ color: '#2563eb', textDecoration: 'underline' }}>Ver PDF</a>
-                              ) : null}
-                            </td>
-                          );
-                        }
-                        return (
-                          <td key={col} style={{ padding: 8, border: '1px solid #e5e7eb' }}>{col.toLowerCase() === 'rutapdf' ? '' : row[col]}</td>
-                        );
-                      })}
+                      .map(col => (
+                        <th key={col} style={{ padding: 8, border: '1px solid #e5e7eb', position: 'sticky', top: 0, background: '#f1f5f9', zIndex: 1 }}>{col}</th>
+                      ))}
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        ) : null}
+                </thead>
+                <tbody>
+                  {resultados.map((row, idx) => (
+                    <tr key={idx}>
+                      {Object.keys(row)
+                        .filter(col => !['idsite', 'correlativo', 'Site', 'NroInterno', 'Id_Auto', 'Estado', 'tipotrabajo'].includes(col))
+                        .map(col => {
+                          if (col.toLowerCase() === 'rutapdf') {
+                            return (
+                              <td key={col} style={{ padding: 8, border: '1px solid #e5e7eb' }}>
+                                {row[col] && typeof row[col] === 'string' && row[col].trim() !== '' ? (
+                                  <a href={row[col]} target="_blank" rel="noopener noreferrer" style={{ color: '#2563eb', textDecoration: 'underline' }}>Ver PDF</a>
+                                ) : null}
+                              </td>
+                            );
+                          }
+                          return (
+                            <td key={col} style={{ padding: 8, border: '1px solid #e5e7eb' }}>{col.toLowerCase() === 'rutapdf' ? '' : row[col]}</td>
+                          );
+                        })}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : null}
+        </div>
       </div>
-    </div>
   );
 };
 
