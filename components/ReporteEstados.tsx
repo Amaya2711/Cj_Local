@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
 
 interface EmpleadoCuadrilla {
-  id: number;
-  nombre: string;
-  // Agrega aquí otras propiedades según tu modelo de datos
+  IdEmpleado?: number;
+  NombreEmpleado?: string;
+  idempleado?: number;
+  nombreempleado?: string;
 }
 
 interface ResultadoAprobar {
@@ -28,6 +29,7 @@ const ReporteEstados: React.FC = () => {
   const [filtroEstadoActivo, setFiltroEstadoActivo] = useState(false);
   const [estados, setEstados] = useState<{ id: string; nombre: string }[]>([]);
   const [estadoSeleccionado, setEstadoSeleccionado] = useState('');
+  const [mostrarEstados, setMostrarEstados] = useState(false);
 
   useEffect(() => {
     async function fetchCuadrillas() {
@@ -56,7 +58,7 @@ const ReporteEstados: React.FC = () => {
 
   const filteredCuadrillas = Array.isArray(cuadrillas)
     ? cuadrillas.filter(c => {
-        const nombre = (c.nombre ?? '').toLowerCase();
+        const nombre = (c.NombreEmpleado ?? c.nombreempleado ?? '').toLowerCase();
         return cuadrillaInput
           .toLowerCase()
           .split(' ')
@@ -71,8 +73,8 @@ const ReporteEstados: React.FC = () => {
   };
 
   const handleSuggestionClick = (c: EmpleadoCuadrilla) => {
-    setCuadrillaInput(c.nombre ?? '');
-    setSelectedCuadrilla(String(c.id));
+    setCuadrillaInput(c.NombreEmpleado ?? c.nombreempleado ?? '');
+    setSelectedCuadrilla(String(c.IdEmpleado ?? c.idempleado));
     setShowSuggestions(false);
   };
 
@@ -116,8 +118,9 @@ const ReporteEstados: React.FC = () => {
   };
 
   return (
-    <div style={{ maxWidth: 600, margin: '0 auto' }}>
+    <div style={{ maxWidth: 900, margin: '0 auto' }}>
       <h3 style={{ marginBottom: 16 }}>Reporte de Estados</h3>
+      {/* Filtros y controles existentes */}
       <div style={{ marginBottom: 16, position: 'relative', display: 'flex', alignItems: 'center', gap: 8 }}>
         <input type="checkbox" id="filtroCuadrilla" checked={filtroCuadrillaActivo} onChange={e => setFiltroCuadrillaActivo(e.target.checked)} />
         <label htmlFor="filtroCuadrilla" style={{ marginRight: 8 }}>Cuadrilla:</label>
@@ -137,12 +140,12 @@ const ReporteEstados: React.FC = () => {
             <ul style={{ background: '#fff', border: '1px solid #ccc', borderRadius: 4, margin: 0, padding: 0, listStyle: 'none', maxHeight: 150, overflowY: 'auto', position: 'absolute', zIndex: 10, width: '100%' }}>
               {filteredCuadrillas.map((c, idx) => (
                 <li
-                  key={c.id}
+                  key={c.IdEmpleado ?? c.idempleado}
                   style={{ padding: 8, cursor: 'pointer', background: idx === activeSuggestion ? '#e0e7ff' : 'transparent' }}
                   onMouseEnter={() => setActiveSuggestion(idx)}
                   onClick={() => handleSuggestionClick(c)}
                 >
-                  {c.nombre}
+                  {c.NombreEmpleado ?? c.nombreempleado}
                 </li>
               ))}
             </ul>
@@ -161,65 +164,66 @@ const ReporteEstados: React.FC = () => {
           <input type="date" value={fechaFin} onChange={e => setFechaFin(e.target.value)} style={{ padding: 8, borderRadius: 4, border: '1px solid #ccc' }} disabled={!filtroFechaActivo} />
         </div>
       </div>
-      <div style={{ marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
-        <input type="checkbox" id="filtroEstado" checked={filtroEstadoActivo} onChange={e => setFiltroEstadoActivo(e.target.checked)} />
-        <label htmlFor="filtroEstado" style={{ marginRight: 8 }}>Estado:</label>
+      {/* Botón Buscar debajo de Fechas */}
+      <div style={{ marginBottom: 32, marginTop: 0 }}>
+        <button
+          onClick={handleBuscar}
+          disabled={buscando || (filtroCuadrillaActivo && !selectedCuadrilla) || (filtroFechaActivo && (!fechaIni || !fechaFin)) || (filtroEstadoActivo && !estadoSeleccionado)}
+          style={{ padding: '10px 24px', background: '#2563eb', color: '#fff', border: 'none', borderRadius: 4, fontWeight: 600, cursor: 'pointer', marginTop: 0 }}
+        >
+          {buscando ? 'Buscando...' : 'Buscar'}
+        </button>
+      </div>
+      {/* Combobox de estados */}
+      <div style={{ marginTop: 24, marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
+        <label htmlFor="estadoCombo" style={{ fontWeight: 500, color: '#334155' }}>Estado:</label>
         <select
+          id="estadoCombo"
           value={estadoSeleccionado}
           onChange={e => setEstadoSeleccionado(e.target.value)}
-          disabled={!filtroEstadoActivo}
-          style={{ padding: 8, borderRadius: 4, border: '1px solid #ccc', minWidth: 120 }}
+          style={{ padding: 8, borderRadius: 4, border: '1px solid #ccc', minWidth: 180 }}
         >
-          <option value="">-- Seleccione --</option>
-          {estados.map(est => (
-            <option key={est.id} value={est.id}>{est.nombre}</option>
+          <option value="">Seleccione un estado...</option>
+          {estados.map(e => (
+            <option key={e.id} value={e.id}>{e.nombre}</option>
           ))}
         </select>
       </div>
-      <button onClick={handleBuscar} disabled={buscando || (filtroCuadrillaActivo && !selectedCuadrilla) || (filtroFechaActivo && (!fechaIni || !fechaFin)) || (filtroEstadoActivo && !estadoSeleccionado)} style={{ padding: '10px 24px', background: '#2563eb', color: '#fff', border: 'none', borderRadius: 4, fontWeight: 600, cursor: 'pointer' }}>
-        {buscando ? 'Buscando...' : 'Buscar'}
-      </button>
-      <div style={{ marginTop: 32 }}>
-        {resultados.length > 0 && (
-          <div>
-            <h4>Resultados:</h4>
-            <div style={{ overflowX: 'auto' }}>
+      {/* El botón 'Estados' ha sido removido por requerimiento */}
+      {mostrarEstados && (
+        <div style={{ marginTop: 8 }}>
+          <div style={{ marginBottom: 8, color: '#64748b', fontWeight: 600 }}>
+            Store ejecutado: <span style={{ color: '#2563eb' }}>[sp_EstadosWeb]</span>
+          </div>
+          <h4>Estados disponibles:</h4>
+          <div style={{ overflowX: 'auto' }}>
+            {estados.length > 0 ? (
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 15 }}>
                 <thead>
                   <tr style={{ background: '#f1f5f9' }}>
-                    <th style={{ padding: 8, border: '1px solid #e5e7eb' }}></th>
-                    <th style={{ padding: 8, border: '1px solid #e5e7eb' }}>id</th>
-                    <th style={{ padding: 8, border: '1px solid #e5e7eb' }}>estado</th>
+                    {Object.keys(estados[0]).map(col => (
+                      <th key={col} style={{ padding: 8, border: '1px solid #e5e7eb' }}>{col}</th>
+                    ))}
                   </tr>
                 </thead>
                 <tbody>
-                  {resultados.map((row: any, idx: number) => (
+                  {estados.map((row, idx) => (
                     <tr key={row.id + '-' + idx}>
-                      <td style={{ padding: 8, border: '1px solid #e5e7eb', textAlign: 'center' }}>
-                        <input
-                          type="checkbox"
-                          checked={seleccionados.includes(idx)}
-                          onChange={() => handleCheck(idx)}
-                        />
-                      </td>
-                      <td style={{ padding: 8, border: '1px solid #e5e7eb' }}>{row.id ?? ''}</td>
-                      <td style={{ padding: 8, border: '1px solid #e5e7eb' }}>{row.estado ?? ''}</td>
+                      {Object.keys(row).map(col => (
+                        <td key={col} style={{ padding: 8, border: '1px solid #e5e7eb' }}>
+                          {(row as Record<string, any>)[col]}
+                        </td>
+                      ))}
                     </tr>
                   ))}
                 </tbody>
               </table>
-            </div>
-            <div style={{ display: 'flex', gap: 16, marginTop: 24, justifyContent: 'center' }}>
-              <button onClick={handleAprobar} style={{ padding: '10px 32px', background: '#059669', color: 'white', border: 'none', borderRadius: 6, fontWeight: 600, fontSize: 16, cursor: 'pointer' }}>
-                Aprobar
-              </button>
-              <button onClick={handleRechazar} style={{ padding: '10px 32px', background: '#dc2626', color: 'white', border: 'none', borderRadius: 6, fontWeight: 600, fontSize: 16, cursor: 'pointer' }}>
-                Rechazar
-              </button>
-            </div>
+            ) : (
+              <p>No hay estados para mostrar.</p>
+            )}
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 };

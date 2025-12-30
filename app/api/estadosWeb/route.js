@@ -18,9 +18,10 @@ export async function GET() {
     await sql.connect(config);
     const result = await sql.query('EXEC sp_EstadosWeb');
     let estados = Array.isArray(result.recordset) ? result.recordset : [];
+    // Mapear los nombres reales del store: correlativo y valorini
     estados = estados.map(e => ({
-      id: e.id || e.Id || e.ID || e.codigo || e.cod || '',
-      nombre: e.nombre || e.Nombre || e.descripcion || e.desc || ''
+      id: e.correlativo,
+      nombre: e.valorini
     })).filter(e => e.id && e.nombre);
     if (estados.length === 0) {
       return NextResponse.json({ error: 'No se encontraron estados en la base de datos.' }, { status: 404 });

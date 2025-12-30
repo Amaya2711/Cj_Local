@@ -200,10 +200,10 @@ const Aprobar: React.FC<AprobarProps> = ({ titulo = 'Aprobar cuadrilla' }) => {
     <div style={{ maxWidth: 600, margin: '0 auto' }}>
       <h3 style={{ marginBottom: 16 }}>{titulo}</h3>
       <div style={{ marginBottom: 16, position: 'relative', display: 'flex', alignItems: 'center', gap: 8 }}>
-        <input type="checkbox" id="filtroCuadrilla" checked={filtroCuadrillaActivo} onChange={e => setFiltroCuadrillaActivo(e.target.checked)} />
-        <label htmlFor="filtroCuadrilla" style={{ marginRight: 8 }}>Cuadrilla:</label>
+        <label htmlFor="cuadrillaInput" style={{ marginRight: 8 }}>Cuadrilla:</label>
         <div style={{ flex: 1, position: 'relative' }}>
           <input
+            id="cuadrillaInput"
             type="text"
             value={cuadrillaInput}
             onChange={handleCuadrillaInput}
@@ -212,9 +212,8 @@ const Aprobar: React.FC<AprobarProps> = ({ titulo = 'Aprobar cuadrilla' }) => {
             placeholder="Buscar cuadrilla..."
             style={{ width: '100%', padding: 8, borderRadius: 4, border: '1px solid #ccc' }}
             autoComplete="off"
-            disabled={!filtroCuadrillaActivo}
           />
-          {showSuggestions && cuadrillaInput && filteredCuadrillas.length > 0 && filtroCuadrillaActivo && (
+          {showSuggestions && cuadrillaInput && filteredCuadrillas.length > 0 && (
             <ul style={{ background: '#fff', border: '1px solid #ccc', borderRadius: 4, margin: 0, padding: 0, listStyle: 'none', maxHeight: 150, overflowY: 'auto', position: 'absolute', zIndex: 10, width: '100%' }}>
               {filteredCuadrillas.map((c, idx) => (
                 <li
@@ -231,31 +230,15 @@ const Aprobar: React.FC<AprobarProps> = ({ titulo = 'Aprobar cuadrilla' }) => {
         </div>
       </div>
       <div style={{ marginBottom: 16, display: 'flex', gap: 16, alignItems: 'center' }}>
-        <input type="checkbox" id="filtroFecha" checked={filtroFechaActivo} onChange={e => setFiltroFechaActivo(e.target.checked)} />
-        <label htmlFor="filtroFecha" style={{ marginRight: 8 }}>Fechas:</label>
+        <label htmlFor="fechaIni" style={{ marginRight: 8 }}>Fechas:</label>
         <div>
           <label style={{ marginRight: 4 }}>Inicial:</label>
-          <input type="date" value={fechaIni} onChange={e => setFechaIni(e.target.value)} style={{ padding: 8, borderRadius: 4, border: '1px solid #ccc' }} disabled={!filtroFechaActivo} />
+          <input id="fechaIni" type="date" value={fechaIni} onChange={e => setFechaIni(e.target.value)} style={{ padding: 8, borderRadius: 4, border: '1px solid #ccc' }} />
         </div>
         <div>
           <label style={{ marginRight: 4 }}>Final:</label>
-          <input type="date" value={fechaFin} onChange={e => setFechaFin(e.target.value)} style={{ padding: 8, borderRadius: 4, border: '1px solid #ccc' }} disabled={!filtroFechaActivo} />
+          <input id="fechaFin" type="date" value={fechaFin} onChange={e => setFechaFin(e.target.value)} style={{ padding: 8, borderRadius: 4, border: '1px solid #ccc' }} />
         </div>
-      </div>
-      <div style={{ marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
-        <input type="checkbox" id="filtroEstado" checked={filtroEstadoActivo} onChange={e => setFiltroEstadoActivo(e.target.checked)} />
-        <label htmlFor="filtroEstado" style={{ marginRight: 8 }}>Estado:</label>
-        <select
-          value={estadoSeleccionado}
-          onChange={e => setEstadoSeleccionado(e.target.value)}
-          disabled={!filtroEstadoActivo}
-          style={{ padding: 8, borderRadius: 4, border: '1px solid #ccc', minWidth: 120 }}
-        >
-          <option value="">-- Seleccione --</option>
-          {estados.map(est => (
-            <option key={est.id} value={est.id}>{est.nombre}</option>
-          ))}
-        </select>
       </div>
       <button onClick={handleBuscar} disabled={buscando || (filtroCuadrillaActivo && !selectedCuadrilla) || (filtroFechaActivo && (!fechaIni || !fechaFin)) || (filtroEstadoActivo && !estadoSeleccionado)} style={{ padding: '10px 24px', background: '#2563eb', color: '#fff', border: 'none', borderRadius: 4, fontWeight: 600, cursor: 'pointer' }}>
         {buscando ? 'Buscando...' : 'Buscar'}
