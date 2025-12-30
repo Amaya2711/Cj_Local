@@ -107,25 +107,28 @@ const PanelKPI: React.FC = () => {
       <h2 style={{ color: '#222c36', marginBottom: 16 }}>KPI's</h2>
       {loading ? <div>Cargando...</div> : error ? <div style={{ color: 'red' }}>{error}</div> : (
         <>
-          {/* Pie chart por ValorIni */}
-          <div style={{ maxWidth: 500, margin: '0 auto 32px auto', background: '#fff', borderRadius: 10, boxShadow: '0 2px 8px #0001', padding: 24 }}>
-            <h3 style={{ textAlign: 'center', marginBottom: 16 }}>Distribución por ValorIni</h3>
-            <Pie data={pieData} />
-          </div>
-          {/* Bar chart por Empleado y ValorIni */}
-          <div style={{ maxWidth: 900, margin: '0 auto 32px auto', background: '#fff', borderRadius: 10, boxShadow: '0 2px 8px #0001', padding: 24 }}>
-            <h3 style={{ textAlign: 'center', marginBottom: 16 }}>Detalle por Empleado y ValorIni</h3>
-            <Bar data={barData} options={{
-              responsive: true,
-              plugins: {
-                legend: { position: 'top' as const },
-                title: { display: false },
-              },
-              scales: {
-                x: { stacked: true },
-                y: { stacked: true, beginAtZero: true },
-              },
-            }} />
+          {/* Contenedor flex para alinear los gráficos */}
+          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'flex-start', columnGap: 48, rowGap: 0, marginBottom: 32 }}>
+            {/* Pie chart por ValorIni */}
+            <div style={{ width: 400, minWidth: 300, background: '#fff', borderRadius: 10, boxShadow: '0 2px 8px #0001', padding: 24, display: 'flex', flexDirection: 'column', alignItems: 'center', height: 400, boxSizing: 'border-box' }}>
+              <h3 style={{ textAlign: 'center', marginBottom: 16 }}>Distribución por ValorIni</h3>
+              <Pie data={pieData} />
+            </div>
+            {/* Bar chart por Empleado y ValorIni */}
+            <div style={{ width: 600, minWidth: 300, background: '#fff', borderRadius: 10, boxShadow: '0 2px 8px #0001', padding: 24, display: 'flex', flexDirection: 'column', alignItems: 'center', height: 400, boxSizing: 'border-box' }}>
+              <h3 style={{ textAlign: 'center', marginBottom: 16 }}>Detalle por Empleado y ValorIni</h3>
+              <Bar data={barData} options={{
+                responsive: true,
+                plugins: {
+                  legend: { position: 'top' as const },
+                  title: { display: false },
+                },
+                scales: {
+                  x: { stacked: true },
+                  y: { stacked: true, beginAtZero: true },
+                },
+              }} />
+            </div>
           </div>
           {/* Tabla de KPIs */}
           <div style={{ marginBottom: 32 }}>
