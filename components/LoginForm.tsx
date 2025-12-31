@@ -24,6 +24,7 @@ export default function LoginForm({ onLogin }: { onLogin: (user: any) => void })
       onLogin(data.usuario);
       window.pb_Usuario = usuario; // Asignar el valor del input usuario
       localStorage.setItem('pb_Usuario', usuario); // Guardar también en localStorage
+      console.log('pb_Usuario en localStorage después de login:', localStorage.getItem('pb_Usuario'));
       // Obtener coordenadas y registrar en cuadrilla_coordenadas
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(async (position) => {
