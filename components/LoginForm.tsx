@@ -22,7 +22,8 @@ export default function LoginForm({ onLogin }: { onLogin: (user: any) => void })
     const data = await res.json();
     if (data.success) {
       onLogin(data.usuario);
-      window.pb_Usuario = data.usuario; // Asignación a window.pb_Usuario
+      window.pb_Usuario = usuario; // Asignar el valor del input usuario
+      localStorage.setItem('pb_Usuario', usuario); // Guardar también en localStorage
       // Obtener coordenadas y registrar en cuadrilla_coordenadas
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(async (position) => {
@@ -31,7 +32,7 @@ export default function LoginForm({ onLogin }: { onLogin: (user: any) => void })
           await fetch('/api/cuadrilla-coordenada', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ usuario: data.usuario, latitud, altitud })
+            body: JSON.stringify({ usuario, latitud, altitud })
           });
         }, (geoError) => {
           // Si falla la geolocalización, continuar sin registrar coordenadas

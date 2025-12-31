@@ -22,11 +22,15 @@ const menuColor = '#2563eb';
 const MainForm: React.FC = () => {
   // Obtener el usuario autenticado desde localStorage usando useEffect y useState
   const [usuario, setUsuario] = useState('');
+  const [usuarioWindow, setUsuarioWindow] = useState('');
+  const [usuarioLocal, setUsuarioLocal] = useState('');
   React.useEffect(() => {
     function updateUsuario() {
       if (typeof window !== 'undefined') {
         let usuarioGlobal = window.pb_Usuario || localStorage.getItem('pb_Usuario') || '';
         setUsuario(usuarioGlobal);
+        setUsuarioWindow(window.pb_Usuario || '');
+        setUsuarioLocal(localStorage.getItem('pb_Usuario') || '');
       }
     }
     updateUsuario();
@@ -66,8 +70,11 @@ const MainForm: React.FC = () => {
         <div style={{ fontWeight: 700, fontSize: 18 }}>
           {usuario ? `Bienvenido, ${usuario}` : ''}
         </div>
-        <div style={{ fontSize: 15 }}>
+        <div style={{ fontSize: 15, display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
           {usuario ? `Usuario: ${usuario}  |  ${fecha}` : fecha}
+          <span style={{ fontSize: 12, color: '#eab308', marginTop: 2 }}>
+            window.pb_Usuario: <b>{usuarioWindow || '(vacío)'}</b> | localStorage pb_Usuario: <b>{usuarioLocal || '(vacío)'}</b>
+          </span>
         </div>
       </div>
       {/* Menú principal */}
