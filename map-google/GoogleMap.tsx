@@ -7,14 +7,22 @@ const GoogleMap: React.FC<{ coordenadas?: Array<{ latitud: number; altitud: numb
 
   useEffect(() => {
     if (!window.google || !window.google.maps || !mapRef.current) return;
-    const center = coordenadas.length > 0
-      ? { lat: coordenadas[0].latitud, lng: coordenadas[0].altitud }
-      : { lat: -9.189967, lng: -75.015152 };
+    const defaultCenter = { lat: -9.189967, lng: -75.015152 };
     const map = new window.google.maps.Map(mapRef.current, {
-      center,
-      zoom: coordenadas.length > 0 ? 13 : 6,
+      center: defaultCenter,
+      zoom: 6,
     });
-    // No mostrar marcadores, solo la ruta
+    if (coordenadas.length > 0) {
+      // Ajustar el mapa a los puntos visibles
+      const bounds = new window.google.maps.LatLngBounds();
+      coordenadas.forEach(p => bounds.extend({ lat: p.latitud, lng: p.altitud }));
+      map.fitBounds(bounds);
+      // Si todos los puntos son iguales, fitBounds no hace zoom, así que forzar un zoom adecuado
+      if (coordenadas.length === 1) {
+        map.setCenter({ lat: coordenadas[0].latitud, lng: coordenadas[0].altitud });
+        map.setZoom(16);
+      }
+    }
     // Dibujar la ruta si hay más de un punto
     if (coordenadas.length > 1) {
       new window.google.maps.Polyline({

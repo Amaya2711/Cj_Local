@@ -68,7 +68,45 @@ const GoogleMapsForm: React.FC<{ debug?: boolean }> = ({ debug }) => {
   const [empleadoInput, setEmpleadoInput] = useState('');
   const [empleadoSeleccionado, setEmpleadoSeleccionado] = useState<Empleado | null>(null);
   const [loading, setLoading] = useState(false);
-  const [rutaPuntos, setRutaPuntos] = useState<Array<{ latitud: number; altitud: number }>>([]);
+  const [rutaPuntos, setRutaPuntos] = useState<Array<{ latitud: number; altitud: number; fecha?: string; hora?: string }>>([]);
+  // Handler para el botón 'Buscar' (todas las ubicaciones del día)
+  const handleBuscarTodas = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/obtener-fecha-ruta?fecha=${fecha}`);
+      let data = null;
+      try {
+        data = await res.json();
+      } catch (jsonErr) {
+        alert('Respuesta no es JSON. Error: ' + ((jsonErr instanceof Error ? jsonErr.message : String(jsonErr))));
+        setRutaPuntos([]);
+        return;
+      }
+      if (!res.ok) {
+        alert((data?.error ? 'Backend: ' + data.error : '') || 'Error al consultar ubicaciones.');
+        setRutaPuntos([]);
+        return;
+      }
+      if (Array.isArray(data) && data.length > 0) {
+        setRutaPuntos(
+          data.map((p: any) => ({
+            latitud: Number(p.latitud ?? p.Latitud ?? p.latitude ?? 0),
+            altitud: Number(p.altitud ?? p.Altitud ?? p.longitud ?? p.Longitud ?? p.longitude ?? 0),
+            fecha: p.fecha || p.Fecha || (p.timestamp ? String(p.timestamp).split('T')[0] : ''),
+            hora: p.hora || p.Hora || (p.timestamp ? (String(p.timestamp).split('T')[1] || '').substring(0,8) : ''),
+          })).filter(p => p.latitud && p.altitud)
+        );
+      } else {
+        alert('No existen ubicaciones para el día seleccionado');
+        setRutaPuntos([]);
+      }
+    } catch (err) {
+      alert('Error inesperado al consultar ubicaciones. Detalle: ' + (err instanceof Error ? err.message : String(err)));
+      setRutaPuntos([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Handler para el botón 'Mostrar ruta'
   const handleMostrarRuta = async () => {
@@ -208,7 +246,7 @@ const GoogleMapsForm: React.FC<{ debug?: boolean }> = ({ debug }) => {
             </div>
           )}
         </div>
-        {/* Botón Mostrar ruta */}
+        {/* Botones de acción */}
         <div>
           <button
             type="button"
@@ -224,57 +262,7 @@ const GoogleMapsForm: React.FC<{ debug?: boolean }> = ({ debug }) => {
       {/* Mapa Google Maps Platform mostrando todos los puntos del día */}
       <GoogleMap coordenadas={rutaPuntos} />
 
-      {/* Cuadro de detalle de puntos visualizados */}
-      {rutaPuntos.length > 0 && (
-        <div style={{
-          marginTop: 24,
-          background: '#f9fafb',
-          border: '1px solid #e5e7eb',
-          borderRadius: 8,
-          boxShadow: '0 2px 8px #0001',
-          padding: 16,
-          maxWidth: 900,
-          marginLeft: 'auto',
-          marginRight: 'auto',
-        }}>
-          <h4 style={{ margin: '0 0 12px 0', color: '#222c36' }}>Detalle de puntos visualizados</h4>
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 15 }}>
-              <thead>
-                <tr style={{ background: '#f1f5f9' }}>
-                  <th style={{ padding: 8, border: '1px solid #e5e7eb' }}>#</th>
-                  <th style={{ padding: 8, border: '1px solid #e5e7eb' }}>Latitud</th>
-                  <th style={{ padding: 8, border: '1px solid #e5e7eb' }}>Longitud</th>
-                  <th style={{ padding: 8, border: '1px solid #e5e7eb' }}>Fecha</th>
-                  <th style={{ padding: 8, border: '1px solid #e5e7eb' }}>Hora</th>
-                </tr>
-              </thead>
-              <tbody>
-                {rutaPuntos
-                  .map((p, idx) => ({ ...p, idx }))
-                  .sort((a, b) => {
-                    // Ordenar por fecha y hora si existen, si no, mantener orden original
-                    const fechaA = a.fecha || a.Fecha || a.timestamp || '';
-                    const fechaB = b.fecha || b.Fecha || b.timestamp || '';
-                    if (fechaA && fechaB) {
-                      return fechaA.localeCompare(fechaB);
-                    }
-                    return a.idx - b.idx;
-                  })
-                  .map((p, i) => (
-                    <tr key={i}>
-                      <td style={{ padding: 8, border: '1px solid #e5e7eb', textAlign: 'center' }}>{i + 1}</td>
-                      <td style={{ padding: 8, border: '1px solid #e5e7eb' }}>{p.latitud}</td>
-                      <td style={{ padding: 8, border: '1px solid #e5e7eb' }}>{p.altitud}</td>
-                      <td style={{ padding: 8, border: '1px solid #e5e7eb' }}>{p.fecha || p.Fecha || (p.timestamp ? String(p.timestamp).split('T')[0] : '') || '-'}</td>
-                      <td style={{ padding: 8, border: '1px solid #e5e7eb' }}>{p.hora || p.Hora || (p.timestamp ? (String(p.timestamp).split('T')[1] || '').substring(0,8) : '') || '-'}</td>
-                    </tr>
-                  ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
+      {/* Cuadro de detalle de puntos visualizados oculto */}
     </div>
   );
 };

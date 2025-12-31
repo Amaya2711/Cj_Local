@@ -31,8 +31,29 @@ const PanelKPI: React.FC = () => {
   const [hoy, setHoy] = useState('');
 
   useEffect(() => {
-    const today = new Date();
-    setHoy(today.toISOString().slice(0, 10));
+    // Obtener la fecha actual en la zona horaria de Perú (America/Lima)
+    const getLimaDate = () => {
+      try {
+        // Obtener la fecha local de Lima como string yyyy-mm-dd
+        const limaString = new Date().toLocaleString('en-CA', { timeZone: 'America/Lima', year: 'numeric', month: '2-digit', day: '2-digit' });
+        // en-CA da formato yyyy-mm-dd
+        return limaString;
+      } catch {
+        // Fallback si Intl no está disponible
+        const now = new Date();
+        // Perú es UTC-5
+        const limaOffset = -5 * 60;
+        const localOffset = now.getTimezoneOffset();
+        const diff = (limaOffset - localOffset) * 60 * 1000;
+        const limaDate = new Date(now.getTime() + diff);
+        // Obtener yyyy-mm-dd local
+        const yyyy = limaDate.getFullYear();
+        const mm = String(limaDate.getMonth() + 1).padStart(2, '0');
+        const dd = String(limaDate.getDate()).padStart(2, '0');
+        return `${yyyy}-${mm}-${dd}`;
+      }
+    };
+    setHoy(getLimaDate());
     setLoading(true);
     fetch('/api/obtener-cuadrilla-reporte')
       .then(res => res.json())
@@ -63,15 +84,27 @@ const PanelKPI: React.FC = () => {
     const key = d.ValorIni ?? 'Sin ValorIni';
     valorIniCounts[key] = (valorIniCounts[key] || 0) + 1;
   });
+  // Definir colores fijos por estado
+  const estadoColor: Record<string, string> = {
+    'ASIGNADO': '#ef4444',
+    'CERRADO': '#6366f1',
+    'CERRAR': '#6366f1',
+    'CIERRE': '#f59e42',
+    'NEUTRALIZADO': '#059669',
+    'VALIDAR': '#2563eb',
+    'Sin ValorIni': '#a21caf',
+    // Puedes agregar más estados si es necesario
+  };
+  // Generar colores para las etiquetas del pie chart
+  const pieLabels = Object.keys(valorIniCounts);
+  const pieColors = pieLabels.map(label => estadoColor[label?.toUpperCase?.()] || '#eab308');
   const pieData = {
-    labels: Object.keys(valorIniCounts),
+    labels: pieLabels,
     datasets: [
       {
         label: 'Total',
         data: Object.values(valorIniCounts),
-        backgroundColor: [
-          '#2563eb', '#059669', '#f59e42', '#ef4444', '#a21caf', '#0ea5e9', '#eab308', '#10b981', '#f43f5e', '#6366f1'
-        ],
+        backgroundColor: pieColors,
         borderWidth: 1,
       },
     ],
@@ -88,14 +121,12 @@ const PanelKPI: React.FC = () => {
   const empleados = Array.from(empleadosSet).sort();
   const valorInis = Array.from(valorIniSet).sort();
   // Construir matriz de datos
-  const barDatasets = valorInis.map((valorIni, idx) => ({
+  const barDatasets = valorInis.map((valorIni) => ({
     label: valorIni,
     data: empleados.map(emp =>
       dataHoy.filter(d => (d.Empleado ?? 'Sin Empleado') === emp && (d.ValorIni ? String(d.ValorIni) : 'Sin ValorIni') === valorIni).length
     ),
-    backgroundColor: [
-      '#2563eb', '#059669', '#f59e42', '#ef4444', '#a21caf', '#0ea5e9', '#eab308', '#10b981', '#f43f5e', '#6366f1'
-    ][idx % 10],
+    backgroundColor: estadoColor[valorIni?.toUpperCase?.()] || '#eab308',
   }));
   const barData = {
     labels: empleados,
@@ -112,7 +143,9 @@ const PanelKPI: React.FC = () => {
             {/* Pie chart por ValorIni */}
             <div style={{ width: 400, minWidth: 300, background: '#fff', borderRadius: 10, boxShadow: '0 2px 8px #0001', padding: 24, display: 'flex', flexDirection: 'column', alignItems: 'center', height: 400, boxSizing: 'border-box' }}>
               <h3 style={{ textAlign: 'center', marginBottom: 16 }}>Distribución por ValorIni</h3>
-              <Pie data={pieData} />
+              <div style={{ width: '100%', height: '100%', maxHeight: 320, maxWidth: 320, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Pie data={pieData} options={{ maintainAspectRatio: false, responsive: true }} width={320} height={320} />
+              </div>
             </div>
             {/* Bar chart por Empleado y ValorIni */}
             <div style={{ width: 600, minWidth: 300, background: '#fff', borderRadius: 10, boxShadow: '0 2px 8px #0001', padding: 24, display: 'flex', flexDirection: 'column', alignItems: 'center', height: 400, boxSizing: 'border-box' }}>
