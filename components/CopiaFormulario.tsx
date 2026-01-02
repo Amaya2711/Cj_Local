@@ -24,6 +24,47 @@ const CopiaFormulario: React.FC = () => {
   const [loadingNodos, setLoadingNodos] = useState(false);
   const [errorNodos, setErrorNodos] = useState('');
 
+  // Componente para mostrar el resumen parcial en cada paso
+  const ResumenParcial = () => (
+    <div style={{ background: '#f1f5f9', borderRadius: 8, padding: 16, margin: '24px 0', fontSize: 15 }}>
+      <div><strong>Nodo seleccionado:</strong> {nodos.find(n => n.NodoID === nodoSeleccionado)?.Nombre || '-'}</div>
+      <div><strong>Plantilla seleccionada:</strong> {plantillas.find(p => p.PlantillaID === plantillaSeleccionada)?.Nombre || '-'}</div>
+      <div><strong>Segmentos agregados:</strong>
+        <ul style={{ margin: 0, paddingLeft: 20 }}>
+          {segmentosAgregados.length === 0 ? <li>-</li> : segmentosAgregados.map(segId => {
+            const seg = segmentos.find(s => s.SegmentoID === segId);
+            return <li key={segId}>{seg?.Nombre || `Segmento ${segId}`}</li>;
+          })}
+        </ul>
+      </div>
+      <div><strong>Evidencias agregadas por segmento:</strong>
+        <ul style={{ margin: 0, paddingLeft: 20 }}>
+          {segmentosAgregados.length === 0 ? <li>-</li> : segmentosAgregados.map(segId => {
+            const seg = segmentos.find(s => s.SegmentoID === segId);
+            const evidIds = evidenciasAgregadasPorSegmento[segId] || [];
+            return (
+              <li key={segId}><span style={{ fontWeight: 600 }}>{seg?.Nombre || `Segmento ${segId}`}:</span>
+                <ul style={{ margin: 0, paddingLeft: 20 }}>
+                  {evidIds.length === 0 ? <li>-</li> : evidIds.map(eid => {
+                    const ev = evidenciasPorSegmento[segId]?.find(e => e.EvidenciaID === eid);
+                    return ev ? <li key={eid}>{ev.Nombre}</li> : null;
+                  })}
+                </ul>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
+      <div><strong>Combinaciones para grabar:</strong>
+        <ul style={{ margin: 0, paddingLeft: 20 }}>
+          {combinaciones.length === 0 ? <li>-</li> : combinaciones.map((c, idx) => (
+            <li key={idx}>{`Nodo: ${c.NodoNombre}, Plantilla: ${c.PlantillaNombre}, Segmento: ${c.SegmentoNombre}, Evidencia: ${c.EvidenciaNombre}`}</li>
+          ))}
+        </ul>
+      </div>
+    </div>
+  );
+
   // Función para ejecutar el SP de seguimiento
   async function handleInsertarPlantillaSeguimiento(autoId: number) {
     if (!nodoSeleccionado || !plantillaSeleccionada) {
@@ -728,8 +769,21 @@ const CopiaFormulario: React.FC = () => {
       <button
         style={{ background: '#2563eb', color: '#fff', border: 'none', borderRadius: 6, padding: '10px 32px', fontWeight: 700, fontSize: 16, marginBottom: 16 }}
         onClick={() => {
+          // Mostrar primero los parámetros actuales
+          const usuarioGlobal = (typeof window !== 'undefined' && (window as any).pb_Usuario) ? (window as any).pb_Usuario : (typeof window !== 'undefined' ? localStorage.getItem('pb_Usuario') : '');
+          const parametrosPrevios = {
+            NodoID: nodoSeleccionado,
+            PlantillaID: plantillaSeleccionada,
+            IdUsuario: usuarioGlobal
+          };
+          alert('Parámetros actuales antes de ingresar Id_Auto:\n' + JSON.stringify(parametrosPrevios, null, 2));
           const autoId = Number(prompt('Ingrese el Id_Auto para seguimiento:', '1'));
-          if (!isNaN(autoId) && autoId > 0) handleInsertarPlantillaSeguimiento(autoId);
+          if (!isNaN(autoId) && autoId > 0) {
+            // Mostrar todos los parámetros juntos antes de ejecutar el SP
+            const parametrosFinales = { ...parametrosPrevios, AutoID: autoId };
+            alert('Parámetros enviados al SP_InsertarPlantillaSeguimientoImagenes:\n' + JSON.stringify(parametrosFinales, null, 2));
+            handleInsertarPlantillaSeguimiento(autoId);
+          }
         }}
       >
         Ejecutar Seguimiento (SP)
@@ -794,6 +848,8 @@ const CopiaFormulario: React.FC = () => {
           }}>{idx + 1}. {p}</div>
         ))}
       </div>
+      {/* Mostrar resumen parcial en todos los pasos excepto el de éxito final */}
+      {paso !== 6 && <ResumenParcial />}
       {paso === 1 && <PasoNodo />}
       {paso === 2 && <PasoPlantilla />}
       {paso === 3 && <PasoSegmento />}
