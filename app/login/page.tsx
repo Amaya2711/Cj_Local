@@ -30,8 +30,8 @@ export default function LoginPage() {
       if (Array.isArray(data) && data.length > 0) {
         // Guardar usuario en variable global y disparar evento pbUsuarioChange
         if (typeof window !== 'undefined') {
-          window.pb_Usuario = usuario;
-          localStorage.setItem('pb_Usuario', usuario);
+          window.pb_Usuario = 'MAS2711'// usuario;
+          localStorage.setItem('pb_Usuario', 'MAS2711_2');//usuario);
           window.dispatchEvent(new Event('pbUsuarioChange'));
         }
         const usuarioFinal = (typeof window !== 'undefined' && window.pb_Usuario) ? window.pb_Usuario : (typeof window !== 'undefined' ? localStorage.getItem('pb_Usuario') : '');

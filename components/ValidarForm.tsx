@@ -90,18 +90,7 @@ const ValidarForm: React.FC<ValidarFormProps> = ({ onSuccess }) => {
           {loading ? 'Validando...' : 'Ingresar'}
         </button>
       </form>
-      {sql && (
-        <div style={{ marginTop: 24, background: '#f1f5f9', borderRadius: 6, padding: 12, fontSize: 13, color: '#334155', fontFamily: 'monospace' }}>
-          <b>Consulta SQL utilizada:</b>
-          <div style={{ marginTop: 4, wordBreak: 'break-all' }}>{sql}</div>
-          <div style={{ marginTop: 12 }}>
-            <b>Datos de conexión:</b>
-            <div>Servidor: {DB_CONFIG.server}:{DB_CONFIG.port}</div>
-            <div>Base de datos: {DB_CONFIG.database}</div>
-            <div>Usuario: {DB_CONFIG.user}</div>
-          </div>
-        </div>
-      )}
+      {/* Visualización de consulta SQL y datos de conexión deshabilitada por seguridad */}
     </div>
   );
 };
