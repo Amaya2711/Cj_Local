@@ -27,16 +27,20 @@ const MainForm: React.FC = () => {
   React.useEffect(() => {
     function updateUsuario() {
       if (typeof window !== 'undefined') {
-        let usuarioGlobal = window.pb_Usuario || localStorage.getItem('pb_Usuario') || '';
-        setUsuario(usuarioGlobal);
+        // Leer SIEMPRE de localStorage para reflejar el último login
+        const usuarioLocal = localStorage.getItem('pb_Usuario') || '';
+        setUsuario(usuarioLocal);
         setUsuarioWindow(window.pb_Usuario || '');
-        setUsuarioLocal(localStorage.getItem('pb_Usuario') || '');
+        setUsuarioLocal(usuarioLocal);
       }
     }
     updateUsuario();
     window.addEventListener('pbUsuarioChange', updateUsuario);
+    // También escuchar cambios en localStorage (por si hay cambios en otras pestañas)
+    window.addEventListener('storage', updateUsuario);
     return () => {
       window.removeEventListener('pbUsuarioChange', updateUsuario);
+      window.removeEventListener('storage', updateUsuario);
     };
   }, []);
   const fecha = new Date().toLocaleDateString('es-PE', {
@@ -61,6 +65,15 @@ const MainForm: React.FC = () => {
     contenido = <CopiaFormulario />;
   } else {
     contenido = <PanelKPI />;
+  }
+
+  // Protección: si no hay usuario autenticado, mostrar mensaje de acceso denegado
+  if (!usuario) {
+    return (
+      <div style={{ padding: 40, textAlign: 'center', color: '#dc2626', fontWeight: 600 }}>
+        Acceso no autorizado. Por favor, inicie sesión.
+      </div>
+    );
   }
 
   return (
