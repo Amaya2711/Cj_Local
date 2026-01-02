@@ -24,6 +24,42 @@ const CopiaFormulario: React.FC = () => {
   const [loadingNodos, setLoadingNodos] = useState(false);
   const [errorNodos, setErrorNodos] = useState('');
 
+  // Función para ejecutar el SP de seguimiento
+  async function handleInsertarPlantillaSeguimiento(autoId: number) {
+    if (!nodoSeleccionado || !plantillaSeleccionada) {
+      alert('Debe seleccionar nodo y plantilla.');
+      return;
+    }
+    const usuarioGlobal = (typeof window !== 'undefined' && (window as any).pb_Usuario) ? (window as any).pb_Usuario : (typeof window !== 'undefined' ? localStorage.getItem('pb_Usuario') : '');
+    if (!usuarioGlobal) {
+      alert('No se encontró el usuario.');
+      return;
+    }
+    // Mostrar los parámetros antes de ejecutar el SP
+    const parametros = {
+      NodoID: nodoSeleccionado,
+      PlantillaID: plantillaSeleccionada,
+      AutoID: autoId,
+      IdUsuario: usuarioGlobal
+    };
+    alert('Parámetros enviados al SP_InsertarPlantillaSeguimientoImagenes:\n' + JSON.stringify(parametros, null, 2));
+    try {
+      const res = await fetch('/api/insertar-plantilla-seguimiento', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(parametros)
+      });
+      const data = await res.json();
+      if (res.ok) {
+        alert('Seguimiento insertado correctamente.\n' + JSON.stringify(data.result, null, 2));
+      } else {
+        alert('Error al insertar seguimiento: ' + (data.error || ''));
+      }
+    } catch (err) {
+      alert('Error inesperado al llamar al endpoint de seguimiento.');
+    }
+  }
+
   useEffect(() => {
     async function fetchNodos() {
       setLoadingNodos(true);
@@ -53,6 +89,97 @@ const CopiaFormulario: React.FC = () => {
   const [segmentoEvidenciaSeleccionado, setSegmentoEvidenciaSeleccionado] = useState<number | null>(null);
   const [evidenciasAgregadasPorSegmento, setEvidenciasAgregadasPorSegmento] = useState<{ [segmentoId: number]: number[] }>({});
   const [guardado, setGuardado] = useState(false);
+  // --- NUEVO: Para grid de combinaciones y grabado en plantilla_imagenes ---
+  const [combinaciones, setCombinaciones] = useState<any[]>([]);
+
+  // Agregar combinación Nodo-Plantilla-Segmento-Evidencia
+  function handleAgregarCombinacion() {
+    if (!nodoSeleccionado || !plantillaSeleccionada || !segmentoSeleccionado || !evidenciaSeleccionada) return;
+    const nodo = nodos.find(n => n.NodoID === nodoSeleccionado);
+    const plantilla = plantillas.find(p => p.PlantillaID === plantillaSeleccionada);
+    const segmento = segmentos.find(s => s.SegmentoID === segmentoSeleccionado);
+    const evidencia = evidencias.find(ev => ev.EvidenciaID === evidenciaSeleccionada);
+    if (!evidencia) return;
+    // Validar duplicados
+    const existe = combinaciones.some(c =>
+      c.NodoID === nodoSeleccionado &&
+      c.PlantillaID === plantillaSeleccionada &&
+      c.SegmentoID === segmentoSeleccionado &&
+      c.EvidenciaID === evidenciaSeleccionada
+    );
+    if (existe) {
+      alert('La combinación ya existe en el listado.');
+      return;
+    }
+    setCombinaciones(prev => [
+      ...prev,
+      {
+        NodoID: nodoSeleccionado,
+        NodoNombre: nodo?.Nombre || '',
+        PlantillaID: plantilla?.PlantillaID,
+        PlantillaNombre: plantilla?.Nombre,
+        SegmentoID: segmentoSeleccionado,
+        SegmentoNombre: segmento?.Nombre || '',
+        EvidenciaID: evidencia.EvidenciaID,
+        EvidenciaNombre: evidencia.Nombre
+      }
+    ]);
+  }
+
+  function handleEliminarCombinacion(idx: number) {
+    setCombinaciones(prev => prev.filter((_, i) => i !== idx));
+  }
+
+  // Grabar combinaciones en plantilla_imagenes
+  async function handleGrabarCombinaciones() {
+    if (combinaciones.length === 0) {
+      alert('No hay combinaciones para grabar.');
+      return;
+    }
+    const camposObligatorios = ['NodoID', 'PlantillaID', 'SegmentoID', 'EvidenciaID'];
+    for (const c of combinaciones) {
+      for (const campo of camposObligatorios) {
+        if (
+          c[campo] === undefined ||
+          c[campo] === null ||
+          c[campo] === '' ||
+          isNaN(Number(c[campo]))
+        ) {
+          alert('Error: Hay combinaciones con datos faltantes o inválidos. Verifique antes de grabar.');
+          return;
+        }
+      }
+    }
+    const usuarioGlobal = (typeof window !== 'undefined' && (window as any).pb_Usuario) ? (window as any).pb_Usuario : (typeof window !== 'undefined' ? localStorage.getItem('pb_Usuario') : '');
+    const payload = combinaciones.map(c => ({
+      NodoID: c.NodoID,
+      PlantillaID: c.PlantillaID,
+      SegmentoID: c.SegmentoID,
+      EvidenciaID: c.EvidenciaID,
+      RutaImagen: '',
+      IdUsuario: usuarioGlobal
+    }));
+    const res = await fetch('/api/plantilla-imagenes', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ combinaciones: payload })
+    });
+    const data = await res.json();
+    if (res.ok) {
+      alert(
+        'Combinaciones grabadas correctamente.\n' +
+        'Sentencias SQL ejecutadas:\n' + (data.sentenciasSQL?.join('\n') || '') +
+        '\n\nParámetros enviados:\n' + JSON.stringify(data.parametrosEjecutados, null, 2)
+      );
+      setCombinaciones([]);
+    } else {
+      let sqlSentencias = '';
+      for (const reg of payload) {
+        sqlSentencias += `INSERT INTO Plantilla_Imagenes (NodoID, PlantillaID, SegmentoID, EvidenciaID, RutaImagen, IdUsuario, FechaRegistro) VALUES (${reg.NodoID}, ${reg.PlantillaID}, ${reg.SegmentoID}, ${reg.EvidenciaID}, '${reg.RutaImagen || ''}', '${reg.IdUsuario}', '${new Date().toISOString()}');\n`;
+      }
+      alert('Error al grabar: ' + (data.error || '') + '\nSentencia SQL enviada:\n' + sqlSentencias + '\n\nParámetros enviados:\n' + JSON.stringify(data.parametrosEjecutados, null, 2));
+    }
+  }
 
   // Cargar plantillas al seleccionar nodo
   useEffect(() => {
@@ -370,7 +497,7 @@ const CopiaFormulario: React.FC = () => {
     </div>
   );
 
-  // Paso 4: Agregar evidencias por segmento
+  // Paso 4: Agregar evidencias por segmento y combinaciones
   const PasoEvidencias = () => (
     <div style={{ marginBottom: 32 }}>
       <h3 style={{ color: '#1e293b', fontWeight: 600 }}>4. Agrega Evidencias por Segmento</h3>
@@ -508,6 +635,45 @@ const CopiaFormulario: React.FC = () => {
           })}
         </div>
       )}
+      {/* NUEVO: Grid de combinaciones y botón para grabar en plantilla_imagenes */}
+      {combinaciones.length > 0 && (
+        <div style={{ marginTop: 24, border: '1px solid #e5e7eb', borderRadius: 8, background: '#f3f4f6', padding: 16, width: '100%', maxWidth: 700, minWidth: 320, marginLeft: 0, marginRight: 0, textAlign: 'left' }}>
+          <h4 style={{ marginBottom: 10 }}>Combinaciones agregadas</h4>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
+            <thead>
+              <tr style={{ background: '#e5e7eb' }}>
+                <th style={{ padding: 6, border: '1px solid #cbd5e1' }}>Nodo</th>
+                <th style={{ padding: 6, border: '1px solid #cbd5e1' }}>Plantilla</th>
+                <th style={{ padding: 6, border: '1px solid #cbd5e1' }}>Segmento</th>
+                <th style={{ padding: 6, border: '1px solid #cbd5e1' }}>Evidencia</th>
+                <th style={{ padding: 6, border: '1px solid #cbd5e1' }}>Acción</th>
+              </tr>
+            </thead>
+            <tbody>
+              {combinaciones.map((c, idx) => (
+                <tr key={idx}>
+                  <td style={{ display: 'none' }}>{c.NodoID}</td>
+                  <td style={{ display: 'none' }}>{c.PlantillaID}</td>
+                  <td style={{ display: 'none' }}>{c.SegmentoID}</td>
+                  <td style={{ display: 'none' }}>{c.EvidenciaID}</td>
+                  <td style={{ padding: 6, border: '1px solid #cbd5e1' }}>{c.NodoNombre}</td>
+                  <td style={{ padding: 6, border: '1px solid #cbd5e1' }}>{c.PlantillaNombre}</td>
+                  <td style={{ padding: 6, border: '1px solid #cbd5e1' }}>{c.SegmentoNombre}</td>
+                  <td style={{ padding: 6, border: '1px solid #cbd5e1' }}>{c.EvidenciaNombre}</td>
+                  <td style={{ padding: 6, border: '1px solid #cbd5e1' }}>
+                    <button onClick={() => handleEliminarCombinacion(idx)} style={{ background: '#ef4444', color: '#fff', border: 'none', borderRadius: 4, padding: '4px 10px', fontWeight: 600, cursor: 'pointer' }}>Eliminar</button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <div style={{ marginTop: 16, width: '100%', textAlign: 'right' }}>
+            <button onClick={handleGrabarCombinaciones} style={{ background: '#059669', color: '#fff', border: 'none', borderRadius: 6, padding: '10px 32px', fontWeight: 700, fontSize: 16 }}>
+              Grabar en Plantilla_Imagenes
+            </button>
+          </div>
+        </div>
+      )}
       <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 24 }}>
         <button
           onClick={() => setPaso(3)}
@@ -537,21 +703,37 @@ const CopiaFormulario: React.FC = () => {
         <div style={{ marginBottom: 12 }}>
           <strong>Plantilla:</strong> {plantillas.find(p => p.PlantillaID === plantillaSeleccionada)?.Nombre}
         </div>
-        <div style={{ marginBottom: 12 }}>
-          <strong>Segmento:</strong> {segmentos.find(s => s.SegmentoID === segmentoSeleccionado)?.Nombre}
-        </div>
         <div>
-          <strong>Evidencias:</strong>
+          <strong>Segmentos y Evidencias:</strong>
           <ul style={{ margin: 0, paddingLeft: 20 }}>
-            {Object.entries(evidenciasAgregadasPorSegmento).map(([segId, evidIds]) =>
-              evidIds.map(id => {
-                const ev = evidenciasPorSegmento[Number(segId)]?.find(e => e.EvidenciaID === id);
-                return ev ? <li key={id}>{ev.Nombre}</li> : null;
-              })
-            )}
+            {segmentosAgregados.map(segId => {
+              const seg = segmentos.find(s => s.SegmentoID === segId);
+              const evidIds = evidenciasAgregadasPorSegmento[segId] || [];
+              return (
+                <li key={segId} style={{ marginBottom: 8 }}>
+                  <span style={{ fontWeight: 600 }}>{seg?.Nombre || `Segmento ${segId}`}:</span>
+                  <ul style={{ margin: 0, paddingLeft: 20 }}>
+                    {evidIds.map(eid => {
+                      const ev = evidenciasPorSegmento[segId]?.find(e => e.EvidenciaID === eid);
+                      return ev ? <li key={eid}>{ev.Nombre}</li> : null;
+                    })}
+                  </ul>
+                </li>
+              );
+            })}
           </ul>
         </div>
       </div>
+      {/* Botón para ejecutar el SP de seguimiento (ejemplo con AutoID=1) */}
+      <button
+        style={{ background: '#2563eb', color: '#fff', border: 'none', borderRadius: 6, padding: '10px 32px', fontWeight: 700, fontSize: 16, marginBottom: 16 }}
+        onClick={() => {
+          const autoId = Number(prompt('Ingrese el Id_Auto para seguimiento:', '1'));
+          if (!isNaN(autoId) && autoId > 0) handleInsertarPlantillaSeguimiento(autoId);
+        }}
+      >
+        Ejecutar Seguimiento (SP)
+      </button>
       <div style={{ display: 'flex', justifyContent: 'space-between' }}>
         <button
           onClick={() => setPaso(4)}

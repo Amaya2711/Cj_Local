@@ -8,6 +8,7 @@ export async function POST(request: Request) {
   if (Array.isArray(body.combinaciones)) {
     const errores = [];
     const sentenciasSQL = [];
+    const parametrosEjecutados = [];
     for (const reg of body.combinaciones) {
       const { NodoID, PlantillaID, SegmentoID, EvidenciaID, RutaImagen, IdUsuario } = reg;
       if (!NodoID || !PlantillaID || !SegmentoID || !EvidenciaID || !IdUsuario) {
@@ -25,6 +26,7 @@ export async function POST(request: Request) {
         const fechaRegistro = formatInTimeZone(new Date(), 'America/Lima', 'yyyy-MM-dd HH:mm:ss');
         const sql = `INSERT INTO Plantilla_Imagenes (NodoID, PlantillaID, SegmentoID, EvidenciaID, RutaImagen, IdUsuario, FechaRegistro) VALUES (${NodoID}, ${PlantillaID}, ${SegmentoID}, ${EvidenciaID}, '${RutaImagen || ''}', '${IdUsuario}', '${fechaRegistro}')`;
         sentenciasSQL.push(sql);
+        parametrosEjecutados.push({ NodoID, PlantillaID, SegmentoID, EvidenciaID, RutaImagen: RutaImagen || '', IdUsuario, FechaRegistro: fechaRegistro });
         await sqlQuery`INSERT INTO [n8n_produccion].[dbo].[Plantilla_Imagenes] (NodoID, PlantillaID, SegmentoID, EvidenciaID, RutaImagen, IdUsuario, FechaRegistro) VALUES (${NodoID}, ${PlantillaID}, ${SegmentoID}, ${EvidenciaID}, ${RutaImagen || ''}, ${IdUsuario}, ${fechaRegistro})`;
       } catch (error) {
         let errorMsg = 'Error desconocido';
@@ -39,9 +41,9 @@ export async function POST(request: Request) {
     if (errores.length > 0) {
       // Mostrar detalle de error en la terminal
       console.error('Errores en POST /api/plantilla-imagenes:', errores);
-      return NextResponse.json({ error: errores.join('; '), sentenciasSQL }, { status: 400 });
+      return NextResponse.json({ error: errores.join('; '), sentenciasSQL, parametrosEjecutados }, { status: 400 });
     }
-    return NextResponse.json({ success: true, sentenciasSQL });
+    return NextResponse.json({ success: true, sentenciasSQL, parametrosEjecutados });
   }
   return NextResponse.json({ error: 'Formato de datos incorrecto' }, { status: 400 });
 }

@@ -17,6 +17,7 @@ export default function LoginForm({ onLogin }: { onLogin: (user: any) => void })
     e.preventDefault();
     setUsuarioIngresado(usuario); // Guardar el usuario ingresado para mostrarlo siempre
     setShowPopup(true); // Mostrar el popup
+    console.log('Popup disparado con usuario:', usuario);
     const res = await fetch('/api/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
