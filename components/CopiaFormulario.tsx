@@ -92,7 +92,7 @@ const CopiaFormulario: React.FC = () => {
       });
       const data = await res.json();
       if (res.ok) {
-        alert('Seguimiento insertado correctamente.\n' + JSON.stringify(data.result, null, 2));
+        alert((data.mensaje || 'Respuesta del backend:') + (data.filas ? ('\nFilas afectadas: ' + JSON.stringify(data.filas, null, 2)) : ''));
       } else {
         alert('Error al insertar seguimiento: ' + (data.error || ''));
       }
@@ -827,36 +827,42 @@ const CopiaFormulario: React.FC = () => {
   // Indicador de progreso
   const pasos = ['Nodo', 'Plantilla', 'Segmento', 'Evidencias', 'Resumen'];
   return (
-    <div style={{
-      maxWidth: 700,
-      margin: '40px auto',
-      background: '#fff',
-      borderRadius: 12,
-      boxShadow: '0 4px 24px rgba(0,0,0,0.08)',
-      padding: 32
-    }}>
-      <h2 style={{ color: '#1e293b', fontWeight: 700, marginBottom: 8 }}>Crear Plantilla (Wizard)</h2>
-      <div style={{ display: 'flex', justifyContent: 'center', gap: 16, marginBottom: 32 }}>
-        {pasos.map((p, idx) => (
-          <div key={p} style={{
-            padding: '8px 18px',
-            borderRadius: 20,
-            background: paso === idx + 1 ? '#2563eb' : '#e5e7eb',
-            color: paso === idx + 1 ? '#fff' : '#334155',
-            fontWeight: 600,
-            fontSize: 15
-          }}>{idx + 1}. {p}</div>
-        ))}
+    <>
+      <div style={{
+        maxWidth: 700,
+        margin: '40px auto',
+        background: '#fff',
+        borderRadius: 12,
+        boxShadow: '0 4px 24px rgba(0,0,0,0.08)',
+        padding: 32
+      }}>
+        <h2 style={{ color: '#1e293b', fontWeight: 700, marginBottom: 8 }}>Crear Plantilla (Wizard)</h2>
+        <div style={{ display: 'flex', justifyContent: 'center', gap: 16, marginBottom: 32 }}>
+          {pasos.map((p, idx) => (
+            <div key={p} style={{
+              padding: '8px 18px',
+              borderRadius: 20,
+              background: paso === idx + 1 ? '#2563eb' : '#e5e7eb',
+              color: paso === idx + 1 ? '#fff' : '#334155',
+              fontWeight: 600,
+              fontSize: 15
+            }}>{idx + 1}. {p}</div>
+          ))}
+        </div>
+        {paso === 1 && <PasoNodo />}
+        {paso === 2 && <PasoPlantilla />}
+        {paso === 3 && <PasoSegmento />}
+        {paso === 4 && <PasoEvidencias />}
+        {paso === 5 && <PasoResumen />}
+        {paso === 6 && <PasoExito />}
       </div>
-      {/* Mostrar resumen parcial en todos los pasos excepto el de éxito final */}
-      {paso !== 6 && <ResumenParcial />}
-      {paso === 1 && <PasoNodo />}
-      {paso === 2 && <PasoPlantilla />}
-      {paso === 3 && <PasoSegmento />}
-      {paso === 4 && <PasoEvidencias />}
-      {paso === 5 && <PasoResumen />}
-      {paso === 6 && <PasoExito />}
-    </div>
+      {/* Mostrar resumen parcial fuera del contenedor principal, al pie de la página, excepto en paso 5 (Resumen) y 6 (Éxito) */}
+      {(paso !== 5 && paso !== 6) && (
+        <div style={{ maxWidth: 700, margin: '32px auto 0 auto' }}>
+          <ResumenParcial />
+        </div>
+      )}
+    </>
   );
 };
 
