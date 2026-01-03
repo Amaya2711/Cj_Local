@@ -35,9 +35,9 @@ export async function POST(req: Request) {
             ptipotrabajo: row.TipoTrabajo,
             pNodo: row.nodoid,
             pPlantilla: row.plantillaid,
-            pSegmento: row.segmentoid
+            pSegmento: row.segmentoid ?? ''
           });
-          const insertResult = await pool.request()
+          const request = pool.request()
             .input('pidCuadrilla', row.id_cuadrilla)
             .input('pidsite', row.idsite)
             .input('pcorresite', row.correlativo)
@@ -48,8 +48,8 @@ export async function POST(req: Request) {
             .input('ptipotrabajo', row.TipoTrabajo)
             .input('pNodo', row.nodoid)
             .input('pPlantilla', row.plantillaid)
-            .input('pSegmento', row.segmentoid)
-            .execute('sp_CrearAsignacion');
+            .input('pSegmento', row.segmentoid ?? '');
+          const insertResult = await request.execute('sp_CrearAsignacion');
           console.log('Resultado sp_CrearAsignacion:', insertResult);
           // Obtener el último Id_Auto insertado
           const idAutoResult = await pool.request().query('SELECT TOP 1 Id_Auto FROM CuadrillaAsignacion ORDER BY Id_Auto DESC');
@@ -82,10 +82,18 @@ export async function POST(req: Request) {
         const NodoID = row.nodoid ?? row.NodoID ?? row.pNodo ?? null;
         const PlantillaID = row.plantillaid ?? row.PlantillaID ?? row.pPlantilla ?? null;
         if (!id_cuadrilla || !idsite || !correlativo) {
+          console.log('Faltan parámetros requeridos para seguimiento:', { id_cuadrilla, idsite, correlativo });
           continue;
         }
         try {
-          // Luego ejecutar sp_CrearSeguimiento (sin pidsite y pcorresite)
+          console.log('Ejecutando sp_CrearSeguimiento con:', {
+            pidCuadrilla: id_cuadrilla,
+            pNroInterno: row.NroInterno,
+            pFecha: row.fecha,
+            pEstado: 3,
+            pUsuario: usuario,
+            ptipotrabajo: row.ptipotrabajo ?? ''
+          });
           await pool.request()
             .input('pidCuadrilla', sql.Int, Number(id_cuadrilla))
             .input('pNroInterno', sql.Numeric(18,0), Number(row.NroInterno))
@@ -94,11 +102,28 @@ export async function POST(req: Request) {
             .input('pUsuario', sql.NVarChar(10), usuario)
             .input('ptipotrabajo', sql.NVarChar(250), row.ptipotrabajo ?? '')
             .execute('sp_CrearSeguimiento');
+
+          if (NodoID && PlantillaID) {
+            const idAutoResult = await pool.request().query('SELECT TOP 1 Id_Auto FROM CuadrillaAsignacion ORDER BY Id_Auto DESC');
+            const idAuto = idAutoResult.recordset?.[0]?.Id_Auto;
+            console.log('Ejecutando SP_InsertarPlantillaSeguimientoImagenes con:', {
+              NodoID, PlantillaID, AutoID: idAuto, IdUsuario: usuario
+            });
+            await pool.request()
+              .input('NodoID', NodoID)
+              .input('PlantillaID', PlantillaID)
+              .input('AutoID', idAuto)
+              .input('IdUsuario', usuario)
+              .execute('SP_InsertarPlantillaSeguimientoImagenes');
+          } else {
+            console.log('No se ejecuta SP_InsertarPlantillaSeguimientoImagenes por falta de NodoID o PlantillaID:', { NodoID, PlantillaID });
+          }
         } catch (err: any) {
-          return Response.json({ error: `Error al crear seguimiento: ${err.message}` }, { status: 500 });
+          console.error('Error SQL al crear seguimiento o insertar plantilla:', err);
+          return Response.json({ error: `Error al crear seguimiento o insertar plantilla: ${err.message || err}`, detalle: err }, { status: 500 });
         }
       }
-      return Response.json({ success: true, message: 'Seguimientos creados exitosamente.' });
+      return Response.json({ success: true, message: 'Seguimientos y plantillas creados exitosamente.' });
     } else {
       console.error('No se especificó la acción a realizar. Body:', body);
       return Response.json({ error: 'No se especificó la acción a realizar.', detalle: body }, { status: 400 });
