@@ -27,13 +27,13 @@ const CopiaFormulario: React.FC = () => {
   // Componente para mostrar el resumen parcial en cada paso
   const ResumenParcial = () => (
     <div style={{ background: '#f1f5f9', borderRadius: 8, padding: 16, margin: '24px 0', fontSize: 15 }}>
-      <div><strong>Nodo seleccionado:</strong> {nodos.find(n => n.NodoID === nodoSeleccionado)?.Nombre || '-'}</div>
-      <div><strong>Plantilla seleccionada:</strong> {plantillas.find(p => p.PlantillaID === plantillaSeleccionada)?.Nombre || '-'}</div>
+      <div><strong>Nodo seleccionado:</strong> {nodos.find(n => n.NodoID === nodoSeleccionado)?.Nombre || '-'} {nodoSeleccionado !== null && `(ID: ${nodoSeleccionado})`}</div>
+      <div><strong>Plantilla seleccionada:</strong> {plantillas.find(p => p.PlantillaID === plantillaSeleccionada)?.Nombre || '-'} {plantillaSeleccionada !== null && `(ID: ${plantillaSeleccionada})`}</div>
       <div><strong>Segmentos agregados:</strong>
         <ul style={{ margin: 0, paddingLeft: 20 }}>
           {segmentosAgregados.length === 0 ? <li>-</li> : segmentosAgregados.map(segId => {
             const seg = segmentos.find(s => s.SegmentoID === segId);
-            return <li key={segId}>{seg?.Nombre || `Segmento ${segId}`}</li>;
+            return <li key={segId}>{seg?.Nombre || `Segmento ${segId}`} (ID: {segId})</li>;
           })}
         </ul>
       </div>
@@ -43,11 +43,11 @@ const CopiaFormulario: React.FC = () => {
             const seg = segmentos.find(s => s.SegmentoID === segId);
             const evidIds = evidenciasAgregadasPorSegmento[segId] || [];
             return (
-              <li key={segId}><span style={{ fontWeight: 600 }}>{seg?.Nombre || `Segmento ${segId}`}:</span>
+              <li key={segId}><span style={{ fontWeight: 600 }}>{seg?.Nombre || `Segmento ${segId}`} (ID: {segId}):</span>
                 <ul style={{ margin: 0, paddingLeft: 20 }}>
                   {evidIds.length === 0 ? <li>-</li> : evidIds.map(eid => {
                     const ev = evidenciasPorSegmento[segId]?.find(e => e.EvidenciaID === eid);
-                    return ev ? <li key={eid}>{ev.Nombre}</li> : null;
+                    return ev ? <li key={eid}>{ev.Nombre} (ID: {eid})</li> : null;
                   })}
                 </ul>
               </li>
@@ -58,7 +58,7 @@ const CopiaFormulario: React.FC = () => {
       <div><strong>Combinaciones para grabar:</strong>
         <ul style={{ margin: 0, paddingLeft: 20 }}>
           {combinaciones.length === 0 ? <li>-</li> : combinaciones.map((c, idx) => (
-            <li key={idx}>{`Nodo: ${c.NodoNombre}, Plantilla: ${c.PlantillaNombre}, Segmento: ${c.SegmentoNombre}, Evidencia: ${c.EvidenciaNombre}`}</li>
+            <li key={idx}>{`Nodo: ${c.NodoNombre} (ID: ${c.NodoID}), Plantilla: ${c.PlantillaNombre} (ID: ${c.PlantillaID}), Segmento: ${c.SegmentoNombre} (ID: ${c.SegmentoID}), Evidencia: ${c.EvidenciaNombre} (ID: ${c.EvidenciaID})`}</li>
           ))}
         </ul>
       </div>
@@ -131,7 +131,17 @@ const CopiaFormulario: React.FC = () => {
   const [evidenciasAgregadasPorSegmento, setEvidenciasAgregadasPorSegmento] = useState<{ [segmentoId: number]: number[] }>({});
   const [guardado, setGuardado] = useState(false);
   // --- NUEVO: Para grid de combinaciones y grabado en plantilla_imagenes ---
-  const [combinaciones, setCombinaciones] = useState<any[]>([]);
+  interface Combinacion {
+    NodoID: number;
+    NodoNombre: string;
+    PlantillaID: number;
+    PlantillaNombre: string;
+    SegmentoID: number;
+    SegmentoNombre: string;
+    EvidenciaID: number;
+    EvidenciaNombre: string;
+  }
+  const [combinaciones, setCombinaciones] = useState<Combinacion[]>([]);
 
   // Agregar combinación Nodo-Plantilla-Segmento-Evidencia
   function handleAgregarCombinacion() {
@@ -152,13 +162,17 @@ const CopiaFormulario: React.FC = () => {
       alert('La combinación ya existe en el listado.');
       return;
     }
+    if (!plantilla || plantilla.PlantillaID === undefined || plantilla.Nombre === undefined) {
+      alert('Plantilla inválida.');
+      return;
+    }
     setCombinaciones(prev => [
       ...prev,
       {
         NodoID: nodoSeleccionado,
         NodoNombre: nodo?.Nombre || '',
-        PlantillaID: plantilla?.PlantillaID,
-        PlantillaNombre: plantilla?.Nombre,
+        PlantillaID: plantilla.PlantillaID,
+        PlantillaNombre: plantilla.Nombre,
         SegmentoID: segmentoSeleccionado,
         SegmentoNombre: segmento?.Nombre || '',
         EvidenciaID: evidencia.EvidenciaID,
@@ -181,10 +195,10 @@ const CopiaFormulario: React.FC = () => {
     for (const c of combinaciones) {
       for (const campo of camposObligatorios) {
         if (
-          c[campo] === undefined ||
-          c[campo] === null ||
-          c[campo] === '' ||
-          isNaN(Number(c[campo]))
+          c[campo as keyof Combinacion] === undefined ||
+          c[campo as keyof Combinacion] === null ||
+          c[campo as keyof Combinacion] === '' ||
+          isNaN(Number(c[campo as keyof Combinacion]))
         ) {
           alert('Error: Hay combinaciones con datos faltantes o inválidos. Verifique antes de grabar.');
           return;
@@ -723,7 +737,33 @@ const CopiaFormulario: React.FC = () => {
           Atrás
         </button>
         <button
-          onClick={() => setPaso(5)}
+          onClick={() => {
+            // Generar todas las combinaciones automáticamente al pasar al resumen
+            if (nodoSeleccionado && plantillaSeleccionada) {
+              const nuevasCombinaciones: Combinacion[] = [];
+              segmentosAgregados.forEach(segId => {
+                const seg = segmentos.find(s => s.SegmentoID === segId);
+                const evidIds = evidenciasAgregadasPorSegmento[segId] || [];
+                evidIds.forEach(eid => {
+                  const ev = evidenciasPorSegmento[segId]?.find(e => e.EvidenciaID === eid);
+                  if (seg && ev) {
+                    nuevasCombinaciones.push({
+                      NodoID: nodoSeleccionado,
+                      NodoNombre: nodos.find(n => n.NodoID === nodoSeleccionado)?.Nombre || '',
+                      PlantillaID: plantillaSeleccionada,
+                      PlantillaNombre: plantillas.find(p => p.PlantillaID === plantillaSeleccionada)?.Nombre || '',
+                      SegmentoID: seg.SegmentoID,
+                      SegmentoNombre: seg.Nombre,
+                      EvidenciaID: ev.EvidenciaID,
+                      EvidenciaNombre: ev.Nombre
+                    });
+                  }
+                });
+              });
+              setCombinaciones(nuevasCombinaciones);
+            }
+            setPaso(5);
+          }}
           disabled={Object.values(evidenciasAgregadasPorSegmento).every(arr => arr.length === 0)}
           style={{ padding: '10px 32px', background: '#2563eb', color: '#fff', border: 'none', borderRadius: 6, fontWeight: 600, fontSize: 16, cursor: Object.values(evidenciasAgregadasPorSegmento).every(arr => arr.length === 0) ? 'not-allowed' : 'pointer' }}
         >
@@ -734,76 +774,148 @@ const CopiaFormulario: React.FC = () => {
   );
 
   // Paso 5: Resumen y guardar
-  const PasoResumen = () => (
-    <div style={{ marginBottom: 32 }}>
-      <h3 style={{ color: '#1e293b', fontWeight: 600 }}>5. Resumen y Confirmación</h3>
-      <div style={{ background: '#f8fafc', borderRadius: 8, padding: 20, marginBottom: 24 }}>
-        <div style={{ marginBottom: 12 }}>
-          <strong>Nodo principal:</strong> {nodos.find(n => n.NodoID === nodoSeleccionado)?.Nombre}
-        </div>
-        <div style={{ marginBottom: 12 }}>
-          <strong>Plantilla:</strong> {plantillas.find(p => p.PlantillaID === plantillaSeleccionada)?.Nombre}
-        </div>
-        <div>
-          <strong>Segmentos y Evidencias:</strong>
-          <ul style={{ margin: 0, paddingLeft: 20 }}>
-            {segmentosAgregados.map(segId => {
-              const seg = segmentos.find(s => s.SegmentoID === segId);
-              const evidIds = evidenciasAgregadasPorSegmento[segId] || [];
-              return (
-                <li key={segId} style={{ marginBottom: 8 }}>
-                  <span style={{ fontWeight: 600 }}>{seg?.Nombre || `Segmento ${segId}`}:</span>
-                  <ul style={{ margin: 0, paddingLeft: 20 }}>
-                    {evidIds.map(eid => {
-                      const ev = evidenciasPorSegmento[segId]?.find(e => e.EvidenciaID === eid);
-                      return ev ? <li key={eid}>{ev.Nombre}</li> : null;
-                    })}
-                  </ul>
-                </li>
-              );
-            })}
-          </ul>
-        </div>
-      </div>
-      {/* Botón para ejecutar el SP de seguimiento (ejemplo con AutoID=1) */}
-      <button
-        style={{ background: '#2563eb', color: '#fff', border: 'none', borderRadius: 6, padding: '10px 32px', fontWeight: 700, fontSize: 16, marginBottom: 16 }}
-        onClick={() => {
-          // Mostrar primero los parámetros actuales
-          const usuarioGlobal = (typeof window !== 'undefined' && (window as any).pb_Usuario) ? (window as any).pb_Usuario : (typeof window !== 'undefined' ? localStorage.getItem('pb_Usuario') : '');
-          const parametrosPrevios = {
-            NodoID: nodoSeleccionado,
-            PlantillaID: plantillaSeleccionada,
-            IdUsuario: usuarioGlobal
-          };
-          alert('Parámetros actuales antes de ingresar Id_Auto:\n' + JSON.stringify(parametrosPrevios, null, 2));
-          const autoId = Number(prompt('Ingrese el Id_Auto para seguimiento:', '1'));
-          if (!isNaN(autoId) && autoId > 0) {
-            // Mostrar todos los parámetros juntos antes de ejecutar el SP
-            const parametrosFinales = { ...parametrosPrevios, AutoID: autoId };
-            alert('Parámetros enviados al SP_InsertarPlantillaSeguimientoImagenes:\n' + JSON.stringify(parametrosFinales, null, 2));
-            handleInsertarPlantillaSeguimiento(autoId);
+  const PasoResumen = () => {
+    // Nueva función para guardar y avanzar solo si es exitoso
+    const handleGuardarYAvanzar = async () => {
+      // Llama a la función de grabar combinaciones
+      if (combinaciones.length === 0) {
+        alert('No hay combinaciones para grabar.');
+        return;
+      }
+      // Llama a la función y espera resultado
+      let exito = false;
+      const camposObligatorios: (keyof Combinacion)[] = ['NodoID', 'PlantillaID', 'SegmentoID', 'EvidenciaID'];
+      for (const c of combinaciones) {
+        for (const campo of camposObligatorios) {
+          if (
+            c[campo] === undefined ||
+            c[campo] === null ||
+            c[campo] === '' ||
+            isNaN(Number(c[campo]))
+          ) {
+            alert('Error: Hay combinaciones con datos faltantes o inválidos. Verifique antes de grabar.');
+            return;
           }
-        }}
-      >
-        Ejecutar Seguimiento (SP)
-      </button>
-      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+        }
+      }
+      const usuarioGlobal = (typeof window !== 'undefined' && (window as any).pb_Usuario) ? (window as any).pb_Usuario : (typeof window !== 'undefined' ? localStorage.getItem('pb_Usuario') : '');
+      const payload = combinaciones.map(c => ({
+        NodoID: c.NodoID,
+        PlantillaID: c.PlantillaID,
+        SegmentoID: c.SegmentoID,
+        EvidenciaID: c.EvidenciaID,
+        RutaImagen: '',
+        IdUsuario: usuarioGlobal
+      }));
+      try {
+        const res = await fetch('/api/plantilla-imagenes', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ combinaciones: payload })
+        });
+        const data = await res.json();
+        if (res.ok) {
+          alert(
+            'Combinaciones grabadas correctamente.\n' +
+            'Sentencias SQL ejecutadas:\n' + (data.sentenciasSQL?.join('\n') || '') +
+            '\n\nParámetros enviados:\n' + JSON.stringify(data.parametrosEjecutados, null, 2)
+          );
+          setCombinaciones([]);
+          exito = true;
+        } else {
+          let sqlSentencias = '';
+          for (const reg of payload) {
+            sqlSentencias += `INSERT INTO Plantilla_Imagenes (NodoID, PlantillaID, SegmentoID, EvidenciaID, RutaImagen, IdUsuario, FechaRegistro) VALUES (${reg.NodoID}, ${reg.PlantillaID}, ${reg.SegmentoID}, ${reg.EvidenciaID}, '${reg.RutaImagen || ''}', '${reg.IdUsuario}', '${new Date().toISOString()}');\n`;
+          }
+          alert('Error al grabar: ' + (data.error || '') + '\nSentencia SQL enviada:\n' + sqlSentencias + '\n\nParámetros enviados:\n' + JSON.stringify(data.parametrosEjecutados, null, 2));
+        }
+      } catch (e) {
+        alert('Error inesperado al grabar combinaciones.');
+      }
+      if (exito) {
+        setGuardado(true);
+        setPaso(6);
+      }
+    };
+    return (
+      <div style={{ marginBottom: 32 }}>
+        <h3 style={{ color: '#1e293b', fontWeight: 600 }}>5. Resumen y Confirmación</h3>
+        <div style={{ background: '#f8fafc', borderRadius: 8, padding: 20, marginBottom: 24 }}>
+          <div style={{ marginBottom: 12 }}>
+            <strong>Nodo principal:</strong> {nodos.find(n => n.NodoID === nodoSeleccionado)?.Nombre} {nodoSeleccionado !== null && `(ID: ${nodoSeleccionado})`}
+          </div>
+          <div style={{ marginBottom: 12 }}>
+            <strong>Plantilla:</strong> {plantillas.find(p => p.PlantillaID === plantillaSeleccionada)?.Nombre} {plantillaSeleccionada !== null && `(ID: ${plantillaSeleccionada})`}
+          </div>
+          <div>
+            <strong>Segmentos y Evidencias:</strong>
+            <ul style={{ margin: 0, paddingLeft: 20 }}>
+              {segmentosAgregados.map(segId => {
+                const seg = segmentos.find(s => s.SegmentoID === segId);
+                const evidIds = evidenciasAgregadasPorSegmento[segId] || [];
+                return (
+                  <li key={segId} style={{ marginBottom: 8 }}>
+                    <span style={{ fontWeight: 600 }}>{seg?.Nombre || `Segmento ${segId}`} (ID: {segId}):</span>
+                    <ul style={{ margin: 0, paddingLeft: 20 }}>
+                      {evidIds.map(eid => {
+                        const ev = evidenciasPorSegmento[segId]?.find(e => e.EvidenciaID === eid);
+                        return ev ? <li key={eid}>{ev.Nombre} (ID: {eid})</li> : null;
+                      })}
+                    </ul>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+          <div style={{ marginTop: 16 }}>
+            <strong>Combinaciones para grabar:</strong>
+            <ul style={{ margin: 0, paddingLeft: 20 }}>
+              {combinaciones.length === 0 ? <li>-</li> : combinaciones.map((c, idx) => (
+                <li key={idx}>{`Nodo: ${c.NodoNombre} (ID: ${c.NodoID}), Plantilla: ${c.PlantillaNombre} (ID: ${c.PlantillaID}), Segmento: ${c.SegmentoNombre} (ID: ${c.SegmentoID}), Evidencia: ${c.EvidenciaNombre} (ID: ${c.EvidenciaID})`}</li>
+              ))}
+            </ul>
+          </div>
+        </div>
+        {/* Botón para ejecutar el SP de seguimiento (ejemplo con AutoID=1) */}
         <button
-          onClick={() => setPaso(4)}
-          style={{ padding: '10px 24px', background: '#e5e7eb', color: '#334155', border: 'none', borderRadius: 6, fontWeight: 600, fontSize: 16 }}
+          style={{ background: '#2563eb', color: '#fff', border: 'none', borderRadius: 6, padding: '10px 32px', fontWeight: 700, fontSize: 16, marginBottom: 16 }}
+          onClick={() => {
+            // Mostrar primero los parámetros actuales
+            const usuarioGlobal = (typeof window !== 'undefined' && (window as any).pb_Usuario) ? (window as any).pb_Usuario : (typeof window !== 'undefined' ? localStorage.getItem('pb_Usuario') : '');
+            const parametrosPrevios = {
+              NodoID: nodoSeleccionado,
+              PlantillaID: plantillaSeleccionada,
+              IdUsuario: usuarioGlobal
+            };
+            alert('Parámetros actuales antes de ingresar Id_Auto:\n' + JSON.stringify(parametrosPrevios, null, 2));
+            const autoId = Number(prompt('Ingrese el Id_Auto para seguimiento:', '1'));
+            if (!isNaN(autoId) && autoId > 0) {
+              // Mostrar todos los parámetros juntos antes de ejecutar el SP
+              const parametrosFinales = { ...parametrosPrevios, AutoID: autoId };
+              alert('Parámetros enviados al SP_InsertarPlantillaSeguimientoImagenes:\n' + JSON.stringify(parametrosFinales, null, 2));
+              handleInsertarPlantillaSeguimiento(autoId);
+            }
+          }}
         >
-          Atrás
+          Ejecutar Seguimiento (SP)
         </button>
-        <button
-          onClick={() => { setGuardado(true); setPaso(6); }}
-          style={{ padding: '12px 32px', background: '#059669', color: '#fff', border: 'none', borderRadius: 6, fontWeight: 700, fontSize: 16, boxShadow: '0 2px 8px rgba(5,150,105,0.08)', cursor: 'pointer' }}
-        >
-          Guardar Plantilla
-        </button>
+        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+          <button
+            onClick={() => setPaso(4)}
+            style={{ padding: '10px 24px', background: '#e5e7eb', color: '#334155', border: 'none', borderRadius: 6, fontWeight: 600, fontSize: 16 }}
+          >
+            Atrás
+          </button>
+          <button
+            onClick={handleGuardarYAvanzar}
+            style={{ padding: '12px 32px', background: '#059669', color: '#fff', border: 'none', borderRadius: 6, fontWeight: 700, fontSize: 16, boxShadow: '0 2px 8px rgba(5,150,105,0.08)', cursor: 'pointer' }}
+          >
+            Guardar Plantilla
+          </button>
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   // Paso 5: Éxito
   const PasoExito = () => (
@@ -864,6 +976,7 @@ const CopiaFormulario: React.FC = () => {
       )}
     </>
   );
+
 };
 
 export default CopiaFormulario;
