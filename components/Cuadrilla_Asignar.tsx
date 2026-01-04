@@ -480,16 +480,16 @@ const Cuadrilla_Asignar: React.FC = () => {
     // Mostrar los parámetros en pantalla antes de grabar
     const paramsPreview = asignacionesConNroInterno.map((row, idx) => {
       return `Registro ${idx + 1}:\n` +
+        `PlantillaID: ${row.plantillaid ?? ''}\n` +
+        `Id_Auto: (se genera en backend)\n` +
+        `IdUsuario: ADMIN_X5\n` +
         `id_cuadrilla: ${row.id_cuadrilla}\n` +
         `NroInterno: ${row.NroInterno}\n` +
         `fecha: ${row.fecha}\n` +
         `ptipotrabajo: ${row.ptipotrabajo}\n` +
-        `SegmentoID: ${row.SegmentoID}\n` +
-        `Nodo: ${row.Nodo ?? ''}\n` +
+           `Nodo: ${row.Nodo ?? ''}\n` +
         `Plantilla: ${row.Plantilla ?? ''}\n` +
-        `nodoid: ${row.nodoid ?? ''}\n` +
-        `plantillaid: ${row.plantillaid ?? ''}\n` +
-        `Segmento: ${row.Segmento ?? ''}`;
+        `nodoid: ${row.nodoid ?? ''}\n`;
     }).join('\n\n');
     alert('Parámetros enviados a SP_InsertarPlantillaSeguimientoImagenes:\n\n' + paramsPreview);
 
@@ -509,6 +509,11 @@ const Cuadrilla_Asignar: React.FC = () => {
       } else {
         let errorMsg = 'Datos NO GRABADOS';
         try {
+          if (seguimientoResponse.status === 409) {
+            const errorData = await seguimientoResponse.json();
+            alert(errorData?.error || 'Ya existe un registro para este Id_Auto y PlantillaID.');
+            return;
+          }
           if (seguimientoResponse.headers.get('content-type')?.includes('application/json')) {
             const errorData = await seguimientoResponse.json();
             if (errorData?.error) {

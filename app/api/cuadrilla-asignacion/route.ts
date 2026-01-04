@@ -78,7 +78,10 @@ export async function POST(req: Request) {
       for (const row of asignaciones) {
         const { id_cuadrilla, idsite, correlativo } = row;
         // Normalizar los nombres de los parámetros
-        const SegmentoID = row.SegmentoID ?? row.segmentoid ?? row.segmentoID ?? row.segmentoId ?? null;
+        let SegmentoID = row.SegmentoID ?? row.segmentoid ?? row.segmentoID ?? row.segmentoId;
+        if (SegmentoID === undefined || SegmentoID === null || SegmentoID === '') SegmentoID = 0;
+        let Segmento = row.Segmento ?? row.segmento;
+        if (Segmento === undefined || Segmento === null) Segmento = '';
         const NodoID = row.nodoid ?? row.NodoID ?? row.pNodo ?? null;
         const PlantillaID = row.plantillaid ?? row.PlantillaID ?? row.pPlantilla ?? null;
         if (!id_cuadrilla || !idsite || !correlativo) {
@@ -86,6 +89,39 @@ export async function POST(req: Request) {
           continue;
         }
         try {
+          // 1. Crear nueva asignación para obtener un nuevo Id_Auto
+          console.log('Insertando en CuadrillaAsignacion (para seguimiento) con:', {
+            pidCuadrilla: id_cuadrilla,
+            pidsite: idsite,
+            pcorresite: correlativo,
+            pNroInterno: row.NroInterno,
+            pFecha: row.fecha,
+            pEstado: 3, // Estado para seguimiento
+            pUsuario: usuario,
+            ptipotrabajo: row.ptipotrabajo ?? row.TipoTrabajo ?? '',
+            pNodo: NodoID,
+            pPlantilla: PlantillaID,
+            pSegmento: SegmentoID
+          });
+          await pool.request()
+            .input('pidCuadrilla', id_cuadrilla)
+            .input('pidsite', idsite)
+            .input('pcorresite', correlativo)
+            .input('pNroInterno', row.NroInterno)
+            .input('pFecha', row.fecha)
+            .input('pEstado', 3)
+            .input('pUsuario', usuario)
+            .input('ptipotrabajo', row.ptipotrabajo ?? row.TipoTrabajo ?? '')
+            .input('pNodo', NodoID)
+            .input('pPlantilla', PlantillaID)
+            .input('pSegmento', SegmentoID)
+            .execute('sp_CrearAsignacion');
+
+          // 2. Obtener el nuevo Id_Auto generado
+          const idAutoResult = await pool.request().query('SELECT TOP 1 Id_Auto FROM CuadrillaAsignacion ORDER BY Id_Auto DESC');
+          const idAuto = idAutoResult.recordset?.[0]?.Id_Auto;
+
+          // 3. Ejecutar el SP de seguimiento (opcional, si se requiere)
           console.log('Ejecutando sp_CrearSeguimiento con:', {
             pidCuadrilla: id_cuadrilla,
             pNroInterno: row.NroInterno,
@@ -103,22 +139,25 @@ export async function POST(req: Request) {
             .input('ptipotrabajo', sql.NVarChar(250), row.ptipotrabajo ?? '')
             .execute('sp_CrearSeguimiento');
 
-          if (NodoID && PlantillaID) {
-            const idAutoResult = await pool.request().query('SELECT TOP 1 Id_Auto FROM CuadrillaAsignacion ORDER BY Id_Auto DESC');
-            const idAuto = idAutoResult.recordset?.[0]?.Id_Auto;
+          // 4. Insertar en PlantillaSeguimientoImagenes con el nuevo Id_Auto
+          if (PlantillaID) {
             console.log('Ejecutando SP_InsertarPlantillaSeguimientoImagenes con:', {
-              NodoID, PlantillaID, AutoID: idAuto, IdUsuario: usuario
+              PlantillaID, Id_Auto: idAuto, IdUsuario: usuario
             });
             await pool.request()
-              .input('NodoID', NodoID)
               .input('PlantillaID', PlantillaID)
-              .input('AutoID', idAuto)
+              .input('Id_Auto', idAuto)
               .input('IdUsuario', usuario)
               .execute('SP_InsertarPlantillaSeguimientoImagenes');
           } else {
-            console.log('No se ejecuta SP_InsertarPlantillaSeguimientoImagenes por falta de NodoID o PlantillaID:', { NodoID, PlantillaID });
+            console.log('No se ejecuta SP_InsertarPlantillaSeguimientoImagenes por falta de PlantillaID:', { PlantillaID });
           }
         } catch (err: any) {
+          // Manejar error de clave duplicada
+          if (err && err.number === 2627 && err.message && err.message.includes('PlantillaSeguimientoImagenes')) {
+            console.error('Registro duplicado en PlantillaSeguimientoImagenes:', err);
+            return Response.json({ error: 'Ya existe un registro de PlantillaSeguimientoImagenes para este Id_Auto y PlantillaID.', detalle: err }, { status: 409 });
+          }
           console.error('Error SQL al crear seguimiento o insertar plantilla:', err);
           return Response.json({ error: `Error al crear seguimiento o insertar plantilla: ${err.message || err}`, detalle: err }, { status: 500 });
         }
