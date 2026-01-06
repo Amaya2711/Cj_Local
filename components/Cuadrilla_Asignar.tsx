@@ -410,7 +410,7 @@ const Cuadrilla_Asignar: React.FC = () => {
   useEffect(() => {
     async function fetchSites() {
       try {
-        const res = await fetch('/api/asignacion-sites');
+        const res = await fetch('/api/sites');
         if (!res.ok) {
           let errorMsg = 'Error al cargar sites.';
           try {
@@ -776,7 +776,6 @@ const Cuadrilla_Asignar: React.FC = () => {
             padding: 32,
           }}
         >
-          <h2 style={{ textAlign: 'center', marginBottom: 32 }}>Nueva asignación</h2>
             {/* Campo Cuadrilla */}
             <div style={{ marginBottom: 24, position: 'relative' }}>
               <label style={{ fontWeight: 600 }}>Asignacion</label>
@@ -855,7 +854,7 @@ const Cuadrilla_Asignar: React.FC = () => {
                 onChange={handleSiteInput}
                 onKeyDown={handleSiteInputKeyDown}
                 onFocus={() => setShowSiteSuggestions(true)}
-                placeholder="Buscar site por NroInterno o Concatenado..."
+                placeholder="Buscar site por Concatenado..."
                 style={{ width: '100%', padding: 10, borderRadius: 6, border: '1px solid #cbd5e1', marginTop: 6, fontSize: 16 }}
                 autoComplete="off"
                 ref={siteInputRef}
@@ -880,7 +879,7 @@ const Cuadrilla_Asignar: React.FC = () => {
                 >
                   {filteredSites.map((s, idx) => (
                     <li
-                      key={String(s.NroInterno) + '-' + s.Concatenado + '-' + idx}
+                      key={String(s.Concatenado) + '-' + idx}
                       style={{
                         padding: '8px 12px',
                         cursor: 'pointer',
@@ -890,7 +889,7 @@ const Cuadrilla_Asignar: React.FC = () => {
                       onMouseEnter={() => setActiveSiteSuggestion(idx)}
                       onClick={() => handleSiteSuggestionClick(s)}
                     >
-                      {(s.NroInterno ? s.NroInterno + ' - ' : '') + s.Concatenado}
+                      {s.Concatenado}
                     </li>
                   ))}
                 </ul>
