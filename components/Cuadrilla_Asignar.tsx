@@ -41,6 +41,7 @@ interface Ubicacion {
   idubicacion?: number;
   NombreUbicacion?: string;
   nombreubicacion?: string;
+  Nombreubicacion?: string;
   Latitud?: string;
   Longitud?: string;
   Direccion?: string;
@@ -70,11 +71,12 @@ const Cuadrilla_Asignar: React.FC = () => {
     });
     const [modalUbicacionError, setModalUbicacionError] = useState('');
 
-    // Fetch ubicaciones (SP_Ubicacion)
+    // Fetch ubicaciones (SP_Ubicacion) con @Accion=2
     useEffect(() => {
       async function fetchUbicaciones() {
         try {
-          const res = await fetch('/api/ubicacion');
+          // Llama al endpoint con el parámetro accion=2 para SP_Ubicacion
+          const res = await fetch('/api/ubicacion?accion=2');
           if (!res.ok) throw new Error('No se pudo cargar la lista de ubicaciones.');
           const data = await res.json();
           setUbicaciones(Array.isArray(data) ? data : []);
@@ -90,7 +92,7 @@ const Cuadrilla_Asignar: React.FC = () => {
     // Filtrado de ubicaciones para autocompletado
     const filteredUbicaciones = Array.isArray(ubicaciones)
       ? ubicaciones.filter(u => {
-          const nombre = (u.NombreUbicacion ?? u.nombreubicacion ?? '').toLowerCase();
+          const nombre = (u.NombreUbicacion ?? u.nombreubicacion ?? u.Nombreubicacion ?? '').toLowerCase();
           return ubicacionInput
             .toLowerCase()
             .split(' ')
@@ -107,7 +109,7 @@ const Cuadrilla_Asignar: React.FC = () => {
     };
 
     const handleUbicacionSuggestionClick = (u: Ubicacion) => {
-      setUbicacionInput(u.NombreUbicacion ?? u.nombreubicacion ?? '');
+      setUbicacionInput(u.NombreUbicacion ?? u.nombreubicacion ?? u.Nombreubicacion ?? '');
       setSelectedUbicacion(String(u.IdUbicacion ?? u.idubicacion));
       setSelectedUbicacionObj(u);
       setShowUbicacionSuggestions(false);
@@ -432,8 +434,14 @@ const Cuadrilla_Asignar: React.FC = () => {
       }
     }
 
-    fetchSites();
-  }, []);
+    // Solo buscar si hay al menos 1 letra en el input
+    if (siteInput && siteInput.trim().length > 0) {
+      fetchSites();
+    } else {
+      setSites([]);
+      setErrorSites('');
+    }
+  }, [siteInput]);
 
     const filteredCuadrillas = Array.isArray(cuadrillas)
       ? cuadrillas.filter(c => {
@@ -908,11 +916,9 @@ const Cuadrilla_Asignar: React.FC = () => {
               <div style={{ display: 'flex', gap: 8 }}>
                 <input
                   type="text"
-                  value={selectedUbicacion
-                    ? (ubicaciones.find(u => String(u.IdUbicacion ?? u.idubicacion) === selectedUbicacion)?.NombreUbicacion
-                      ?? ubicaciones.find(u => String(u.IdUbicacion ?? u.idubicacion) === selectedUbicacion)?.nombreubicacion
-                      ?? selectedUbicacion)
-                    : ubicacionInput}
+                  value={showUbicacionSuggestions || !selectedUbicacionObj
+                    ? ubicacionInput
+                    : (selectedUbicacionObj.NombreUbicacion ?? selectedUbicacionObj.nombreubicacion ?? selectedUbicacionObj.Nombreubicacion ?? '')}
                   onChange={handleUbicacionInput}
                   onKeyDown={handleUbicacionInputKeyDown}
                   onFocus={() => setShowUbicacionSuggestions(true)}
@@ -922,6 +928,21 @@ const Cuadrilla_Asignar: React.FC = () => {
                   disabled={modoSeleccion !== 'ubicacion'}
                 />
                 <button type="button" onClick={() => setShowModalUbicacion(true)} style={{ marginTop: 6, background: '#2563eb', color: 'white', border: 'none', borderRadius: 6, padding: '0 14px', fontWeight: 700, fontSize: 18, cursor: 'pointer', height: 40 }} disabled={modoSeleccion !== 'ubicacion'}>Nuevo</button>
+                <button
+                  type="button"
+                  style={{ marginTop: 6, background: '#059669', color: 'white', border: 'none', borderRadius: 6, padding: '0 14px', fontWeight: 700, fontSize: 18, cursor: 'pointer', height: 40 }}
+                  disabled={modoSeleccion !== 'ubicacion'}
+                  onClick={() => {
+                    const ubicacion = selectedUbicacionObj || ubicaciones.find(u => String(u.IdUbicacion ?? u.idubicacion) === selectedUbicacion);
+                    const lat = ubicacion?.Latitud;
+                    const lng = ubicacion?.Longitud;
+                    if (lat && lng) {
+                      window.open(`https://www.google.com/maps?q=${lat},${lng}`, '_blank');
+                    } else {
+                      alert('Seleccione una ubicación con coordenadas válidas.');
+                    }
+                  }}
+                >Mapa</button>
               </div>
               {showUbicacionSuggestions && ubicacionInput && filteredUbicaciones.length > 0 && (
                 <ul
@@ -948,11 +969,12 @@ const Cuadrilla_Asignar: React.FC = () => {
                         cursor: 'pointer',
                         borderBottom: '1px solid #f1f5f9',
                         background: idx === activeUbicacionSuggestion ? '#e0e7ff' : 'transparent',
+                        textAlign: 'left',
                       }}
                       onMouseEnter={() => setActiveUbicacionSuggestion(idx)}
                       onClick={() => handleUbicacionSuggestionClick(u)}
                     >
-                      {u.NombreUbicacion ?? u.nombreubicacion}
+                      {u.NombreUbicacion ?? u.nombreubicacion ?? u.Nombreubicacion}
                     </li>
                   ))}
                 </ul>

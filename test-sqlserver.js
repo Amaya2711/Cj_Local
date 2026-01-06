@@ -15,8 +15,11 @@ const config = {
 async function testConnection() {
   try {
     await sql.connect(config);
-    const result = await sql.query(`SELECT TOP 1 * FROM usuario`);
-    console.log('Conexión exitosa. Primer registro:', result.recordset[0]);
+    // Probar el SP directamente
+    const result = await new sql.Request()
+      .input('Accion', sql.Int, 2)
+      .execute('SP_Ubicacion');
+    console.log('Conexión exitosa. Resultado SP_Ubicacion:', result.recordset);
   } catch (err) {
     console.error('Error de conexión:', err);
   } finally {
