@@ -42,6 +42,7 @@ interface Ubicacion {
   NombreUbicacion?: string;
   nombreubicacion?: string;
   Nombreubicacion?: string;
+  NroInterno?: string; // Campo correcto para Ubicacion
   Latitud?: string;
   Longitud?: string;
   Direccion?: string;
@@ -211,15 +212,25 @@ const Cuadrilla_Asignar: React.FC = () => {
     const handleAsignar = async () => {
       // Buscar datos completos de cuadrilla y site seleccionados
       const cuadrilla = cuadrillas.find(c => String(c.IdEmpleado ?? c.idempleado) === selectedCuadrilla);
-      //const site = sites.find(s => (s.NroInterno ? String(s.NroInterno) : s.Concatenado) === selectedSite);
       const site = selectedSiteObj;
       setSelectedSiteObj(null);
-      if (!cuadrilla || !site) {
-        alert('Seleccione una asignacion y un site válidos.');
+      if (!cuadrilla) {
+        alert('Seleccione una asignacion válida.');
+        return;
+      }
+      if (modoSeleccion === 'site' && !site) {
+        alert('Seleccione un site válido.');
         return;
       }
       const id_cuadrilla = String(cuadrilla.IdEmpleado ?? cuadrilla.idempleado ?? '');
-      const NroInterno = String(site.NroInterno ?? '');
+      // Determinar NroInterno según el modo de selección
+      let NroInterno = '';
+      if (modoSeleccion === 'ubicacion') {
+        // Si el modo es ubicación, usar el campo NroInterno del objeto de ubicación seleccionado (nombre correcto)
+        NroInterno = String(selectedUbicacionObj?.NroInterno ?? '');
+      } else {
+        NroInterno = site ? String(site.NroInterno ?? '') : '';
+      }
       // Obtener fecha local en formato YYYY-MM-DD
       const now = new Date();
       const fecha = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
@@ -233,17 +244,13 @@ const Cuadrilla_Asignar: React.FC = () => {
 
       // Validar en la base de datos (asignaciones del día) por id_cuadrilla, NroInterno y fecha
       const existeEnAsignaciones = asignacionesDia.some(row => {
-        // Usar los nombres de columna según el SQL y los datos
         const rowIdCuadrilla = String(row.id_cuadrilla ?? row.ID_CUADRILLA ?? row.idempleado ?? row.IdEmpleado ?? '');
-        // NroInterno puede estar como string o número, normalizar ambos a string y quitar espacios
-        let rowNroInterno = row.NroInterno ?? row.nrointerno ?? row.NroInterno ?? row.nroInterno ?? '';
+        let rowNroInterno = row.NroInterno ?? '';
         let nroInternoLocal = NroInterno;
         rowNroInterno = String(rowNroInterno).trim();
         nroInternoLocal = String(nroInternoLocal).trim();
-        // Fecha puede venir como '2025-11-29' o '29/11/2025', normalizar a YYYY-MM-DD
         let rowFecha = String(row.fecha ?? row.fechacreacion ?? row.FechaCreacion ?? '');
         let fechaLocal = fecha;
-        // Si la fecha viene como DD/MM/YYYY, convertir a YYYY-MM-DD
         if (/^\d{2}\/\d{2}\/\d{4}$/.test(rowFecha)) {
           const [d, m, y] = rowFecha.split('/');
           rowFecha = `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
@@ -252,8 +259,6 @@ const Cuadrilla_Asignar: React.FC = () => {
           const [d, m, y] = fechaLocal.split('/');
           fechaLocal = `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
         }
-        // Depuración
-        // console.log('Comparando:', {rowIdCuadrilla, id_cuadrilla, rowNroInterno, nroInternoLocal, rowFecha, fechaLocal});
         return rowIdCuadrilla === id_cuadrilla && rowNroInterno === nroInternoLocal && rowFecha === fechaLocal;
       });
       if (existeEnAsignaciones) {
@@ -261,28 +266,26 @@ const Cuadrilla_Asignar: React.FC = () => {
         return;
       }
 
-      // Crear el registro en el grid, sin exigir segmentoid
+      // Crear el registro en el grid
       const nuevoRegistro = {
         id_cuadrilla,
         Empleado: cuadrilla.NombreEmpleado ?? cuadrilla.nombreempleado ?? '',
         NroInterno,
-        Concatenado: site.Concatenado ?? '',
-        idsite: String(site.IDSite ?? site.idsite ?? site.IdSite ?? ''),
-        correlativo: String(site.Correlativo ?? site.correlativo ?? site.Correlativo ?? ''),
+        Nombreubicacion: modoSeleccion === 'ubicacion' ? (selectedUbicacionObj?.Nombreubicacion ?? selectedUbicacionObj?.NombreUbicacion ?? selectedUbicacionObj?.nombreubicacion ?? '') : undefined,
+        Concatenado: modoSeleccion === 'site' && site ? site.Concatenado ?? '' : undefined,
+        idsite: modoSeleccion === 'ubicacion' ? 'SIST01' : (site ? String(site.IDSite ?? site.idsite ?? site.IdSite ?? '') : ''),
+        correlativo: modoSeleccion === 'ubicacion' ? '1' : (site ? String(site.Correlativo ?? site.correlativo ?? site.Correlativo ?? '') : ''),
         fecha,
-        TipoTrabajo: site.TipoTrabajo ?? '',
-        // Campos ocultos de la plantilla
+        TipoTrabajo: modoSeleccion === 'ubicacion' ? 'VARIOS' : (site ? site.TipoTrabajo ?? '' : ''),
         Nodo: selectedPlantillaObj?.Nodo ?? selectedPlantillaObj?.nodo ?? '',
         Plantilla: selectedPlantillaObj?.Plantilla ?? selectedPlantillaObj?.Nombre ?? selectedPlantillaObj?.name ?? '',
         nodoid: selectedPlantillaObj?.nodoid ?? selectedPlantillaObj?.NodoID ?? '',
         plantillaid: selectedPlantillaObj?.plantillaid ?? selectedPlantillaObj?.PlantillaID ?? '',
-        // segmentoid y Segmento son opcionales
         segmentoid: selectedPlantillaObj?.segmentoid ?? selectedPlantillaObj?.SegmentoID ?? '',
         Segmento: selectedPlantillaObj?.Segmento ?? selectedPlantillaObj?.segmento ?? '',
       };
       setGridData(prev => [...prev, nuevoRegistro]);
 
-      // Limpiar solo el campo Site y poner focus
       setSiteInput('');
       setSelectedSite('');
       setShowSiteSuggestions(true);
@@ -316,7 +319,8 @@ const Cuadrilla_Asignar: React.FC = () => {
     id_cuadrilla: string;
     Empleado: string;
     NroInterno: string;
-    Concatenado: string;
+    Concatenado?: string;
+    Nombreubicacion?: string;
     idsite?: string;
     correlativo?: string;
     fecha?: string;
@@ -332,7 +336,7 @@ const Cuadrilla_Asignar: React.FC = () => {
   // Declarar el ref para el input de site
   // Duplicate declaration removed. The ref is already declared above.
 
-  // Estado para plantillas (asegurar que solo exista una vez)
+  // Estado para plantillas (asegura que solo exista una vez)
   const [plantillas, setPlantillas] = useState<any[]>([]);
   const [selectedPlantilla, setSelectedPlantilla] = useState('');
   const [selectedPlantillaObj, setSelectedPlantillaObj] = useState<any | null>(null);
@@ -1183,9 +1187,9 @@ const Cuadrilla_Asignar: React.FC = () => {
                   <th style={{ padding: 8, border: '1px solid #e5e7eb' }}>id_cuadrilla</th>
                   <th style={{ padding: 8, border: '1px solid #e5e7eb', minWidth: 160 }}>Empleado</th>
                   <th style={{ padding: 8, border: '1px solid #e5e7eb' }}>Asignacion</th>
+                  <th style={{ padding: 8, border: '1px solid #e5e7eb' }}>NroInterno</th>
+                  <th style={{ padding: 8, border: '1px solid #e5e7eb' }}>correlativo</th>
                   <th style={{ padding: 8, border: '1px solid #e5e7eb', minWidth: 110 }}>Fecha</th>
-                  <th style={{ padding: 8, border: '1px solid #e5e7eb' }}>Segmento</th>
-                  <th style={{ padding: 8, border: '1px solid #e5e7eb' }}>SegmentoID</th>
                   <th style={{ padding: 8, border: '1px solid #e5e7eb', minWidth: 80 }}>Acción</th>
                 </tr>
               </thead>
@@ -1194,10 +1198,10 @@ const Cuadrilla_Asignar: React.FC = () => {
                   <tr key={row.id_cuadrilla + '-' + row.NroInterno + '-' + idx}>
                     <td style={{ padding: 8, border: '1px solid #e5e7eb' }}>{row.id_cuadrilla}</td>
                     <td style={{ padding: 8, border: '1px solid #e5e7eb' }}>{row.Empleado}</td>
-                    <td style={{ padding: 8, border: '1px solid #e5e7eb' }}>{row.Concatenado}</td>
+                    <td style={{ padding: 8, border: '1px solid #e5e7eb' }}>{row.Nombreubicacion ? row.Nombreubicacion : (row.Concatenado ?? '')}</td>
+                    <td style={{ padding: 8, border: '1px solid #e5e7eb' }}>{row.NroInterno ?? ''}</td>
+                    <td style={{ padding: 8, border: '1px solid #e5e7eb' }}>{row.correlativo ?? ''}</td>
                     <td style={{ padding: 8, border: '1px solid #e5e7eb' }}>{row.fecha ?? ''}</td>
-                    <td style={{ padding: 8, border: '1px solid #e5e7eb' }}>{row.Segmento ?? ''}</td>
-                    <td style={{ padding: 8, border: '1px solid #e5e7eb' }}>{row.segmentoid ?? ''}</td>
                     <td style={{ padding: 8, border: '1px solid #e5e7eb', textAlign: 'center' }}>
                       <button type="button" onClick={() => handleDeleteRow(idx)} style={{ background: '#dc2626', color: 'white', border: 'none', borderRadius: 4, padding: '4px 10px', fontWeight: 600, cursor: 'pointer' }}>
                         Eliminar
