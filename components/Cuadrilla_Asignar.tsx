@@ -1,28 +1,8 @@
-// [SHOW-FILE] Por favor, muestra el contenido real del archivo para poder analizar la lógica de conexión y uso de datos de empleados en Asignacion.
-// [EXTRACT-FULL] Necesito el contenido real del archivo para analizar la lógica de conexión y uso de datos de empleados en Asignacion.
-// [READ-FULL] Solicitud de lectura completa para analizar la lógica de conexión y uso de datos de empleados en Asignacion.
-// (Leyendo las primeras 60 líneas para identificar la estructura y los componentes relevantes)
-// (Leyendo el inicio del archivo para identificar imports y estructura general)
-// import React, { useState, useEffect } from 'react};
-// (Removed duplicate import. Keep only one import for React and hooks below.)
-
-
-
-// (Removed duplicate Cuadrilla_Asignar component implementation. The correct implementation is below.)
-
-// import React, { useState } from 'react';
-// (Removed duplicate import. Keep only one import for React and hooks below.)
+// Removed duplicate declaration of activeTab, TabNames, cuadrillaInput, siteInput, asignacionesDia, loading
 import React, { useState, useEffect } from 'react';
 
-// Removed duplicate Cuadrilla and Asignacion type declarations.
-
-// (Removed duplicate Cuadrilla_Asignar component implementation. The correct implementation is below.)
-// (Removed duplicate imports and duplicate type/component definitions.)
-// The main, correct implementation starts below.
-
-
 type Cuadrilla = {
-	IdEmpleado?: number;
+  IdEmpleado?: number;
   idempleado?: number;
   NombreEmpleado?: string;
   nombreempleado?: string;
@@ -33,11 +13,6 @@ type Asignacion = {
   empleado?: string;
   asignacion?: string;
   fecha?: string;
-}
-
-type Ubicacion = {
-  idubicacion?: number | string;
-  nombreubicacion?: string;
 }
 
 // Removed duplicate declaration of activeTab, TabNames, cuadrillaInput, siteInput, asignacionesDia, loading
@@ -63,7 +38,91 @@ interface SiteAsignacion {
   TipoTrabajo?: string;
 }
 
+// Tipos para Ubicación
+interface Ubicacion {
+  IdUbicacion?: number;
+  idubicacion?: number;
+  NombreUbicacion?: string;
+  nombreubicacion?: string;
+  Latitud?: string;
+  Longitud?: string;
+  Direccion?: string;
+  Referencia?: string;
+}
+
 const Cuadrilla_Asignar: React.FC = () => {
+    // Estado para modo de selección (site o ubicación)
+    const [modoSeleccion, setModoSeleccion] = useState<'site' | 'ubicacion'>('site');
+    // Estado para Ubicación
+    const [errorUbicaciones, setErrorUbicaciones] = useState('');
+
+    // Modal para nueva ubicación
+    const [showModalUbicacion, setShowModalUbicacion] = useState(false);
+    const [modalUbicacion, setModalUbicacion] = useState({
+      NombreUbicacion: '',
+      Latitud: '',
+      Longitud: '',
+      Direccion: '',
+      Referencia: '',
+    });
+    const [modalUbicacionError, setModalUbicacionError] = useState('');
+
+    // Fetch ubicaciones (SP_Ubicacion)
+    useEffect(() => {
+      async function fetchUbicaciones() {
+        try {
+          const res = await fetch('/api/ubicacion');
+          if (!res.ok) throw new Error('No se pudo cargar la lista de ubicaciones.');
+          const data = await res.json();
+          setUbicaciones(Array.isArray(data) ? data : []);
+          setErrorUbicaciones('');
+        } catch (err) {
+          setUbicaciones([]);
+          setErrorUbicaciones('Error al cargar ubicaciones.');
+        }
+      }
+      fetchUbicaciones();
+    }, []);
+
+    // Filtrado de ubicaciones para autocompletado
+    // (Eliminado: declaración duplicada de filteredUbicaciones)
+
+    // Removed duplicate handleUbicacionInput declaration
+
+    // Removed duplicate declaration of handleUbicacionSuggestionClick
+
+    // (Removed duplicate declaration of handleUbicacionInputKeyDown)
+
+    // Guardar nueva ubicación desde el modal
+    const handleGuardarUbicacion = async () => {
+      if (!modalUbicacion.NombreUbicacion.trim() || !modalUbicacion.Latitud.trim() || !modalUbicacion.Longitud.trim()) {
+        setModalUbicacionError('Nombre, Latitud y Longitud son obligatorios.');
+        return;
+      }
+      setModalUbicacionError('');
+      try {
+        const res = await fetch('/api/ubicacion', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(modalUbicacion),
+        });
+        if (!res.ok) {
+          const data = await res.json();
+          setModalUbicacionError(data?.error || 'Error al registrar ubicación.');
+          return;
+        }
+        setShowModalUbicacion(false);
+        setModalUbicacion({ NombreUbicacion: '', Latitud: '', Longitud: '', Direccion: '', Referencia: '' });
+        // Refrescar ubicaciones
+        const data = await res.json();
+        setUbicaciones(prev => [...prev, data]);
+        setUbicacionInput(data.NombreUbicacion ?? data.nombreubicacion ?? '');
+        setSelectedUbicacion(String(data.IdUbicacion ?? data.idubicacion));
+        setSelectedUbicacionObj(data);
+      } catch (err) {
+        setModalUbicacionError('Error al registrar ubicación.');
+      }
+    };
   const [mainTab, setMainTab] = useState<number>(0);
   const mainTabNames = ['Asignacion', 'Otro Tab'];
 
@@ -653,8 +712,221 @@ const Cuadrilla_Asignar: React.FC = () => {
           }}
         >
           <h2 style={{ textAlign: 'center', marginBottom: 32 }}>Nueva asignación</h2>
-          {/* Campo Cuadrilla */}
-          {/* ...existing code... */}
+            {/* Campo Cuadrilla */}
+            <div style={{ marginBottom: 24, position: 'relative' }}>
+              <label style={{ fontWeight: 600 }}>Asignacion</label>
+              <input
+                type="text"
+                value={cuadrillaInput}
+                onChange={handleCuadrillaInput}
+                onKeyDown={handleInputKeyDown}
+                onFocus={() => setShowSuggestions(true)}
+                placeholder="Buscar asignacion por nombre..."
+                style={{
+                  width: '100%',
+                  padding: 10,
+                  borderRadius: 6,
+                  border: '1px solid #cbd5e1',
+                  marginTop: 6,
+                  fontSize: 16,
+                }}
+                autoComplete="off"
+              />
+              {showSuggestions && cuadrillaInput && filteredCuadrillas.length > 0 && (
+                <ul
+                  style={{
+                    position: 'absolute',
+                    zIndex: 10,
+                    background: '#fff',
+                    border: '1px solid #e2e8f0',
+                    borderRadius: 8,
+                    width: '100%',
+                    maxHeight: 180,
+                    overflowY: 'auto',
+                    margin: 0,
+                    padding: 0,
+                    listStyle: 'none',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+                  }}
+                >
+                  {filteredCuadrillas.map((c, idx) => (
+                    <li
+                      key={c.IdEmpleado ?? c.idempleado}
+                      style={{
+                        padding: '8px 12px',
+                        cursor: 'pointer',
+                        borderBottom: '1px solid #f1f5f9',
+                        background: idx === activeSuggestion ? '#e0e7ff' : 'transparent',
+                      }}
+                      onMouseEnter={() => setActiveSuggestion(idx)}
+                      onClick={() => handleSuggestionClick(c)}
+                    >
+                      {c.NombreEmpleado ?? c.nombreempleado}
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {errorCuadrillas && (
+                <div style={{ color: '#dc2626', marginTop: 8 }}>{errorCuadrillas}</div>
+              )}
+            </div>
+            {/* Campo Site */}
+            <div style={{ marginBottom: 24, position: 'relative' }}>
+              <label style={{ fontWeight: 600 }}>Site</label>
+              <input
+                type="text"
+                value={siteInput}
+                onChange={handleSiteInput}
+                onKeyDown={handleSiteInputKeyDown}
+                onFocus={() => setShowSiteSuggestions(true)}
+                placeholder="Buscar site por NroInterno o Concatenado..."
+                style={{ width: '100%', padding: 10, borderRadius: 6, border: '1px solid #cbd5e1', marginTop: 6, fontSize: 16 }}
+                autoComplete="off"
+                ref={siteInputRef}
+              />
+              {showSiteSuggestions && siteInput && filteredSites.length > 0 && (
+                <ul
+                  style={{
+                    position: 'absolute',
+                    zIndex: 10,
+                    background: '#fff',
+                    border: '1px solid #e2e8f0',
+                    borderRadius: 8,
+                    width: '100%',
+                    maxHeight: 180,
+                    overflowY: 'auto',
+                    margin: 0,
+                    padding: 0,
+                    listStyle: 'none',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+                  }}
+                >
+                  {filteredSites.map((s, idx) => (
+                    <li
+                      key={String(s.NroInterno) + '-' + s.Concatenado + '-' + idx}
+                      style={{
+                        padding: '8px 12px',
+                        cursor: 'pointer',
+                        borderBottom: '1px solid #f1f5f9',
+                        background: idx === activeSiteSuggestion ? '#e0e7ff' : 'transparent',
+                      }}
+                      onMouseEnter={() => setActiveSiteSuggestion(idx)}
+                      onClick={() => handleSiteSuggestionClick(s)}
+                    >
+                      {(s.NroInterno ? s.NroInterno + ' - ' : '') + s.Concatenado}
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {errorSites && (
+                <div style={{ color: '#dc2626', marginTop: 8 }}>{errorSites}</div>
+              )}
+            </div>
+            {/* Campo Plantilla */}
+            <div style={{ marginBottom: 24, position: 'relative' }}>
+              <label style={{ fontWeight: 600 }}>Plantilla</label>
+              <input
+                type="text"
+                value={selectedPlantilla
+                  ? (plantillas.find(p => String(p.plantillaid ?? p.PlantillaID ?? p.id) === selectedPlantilla)?.Plantilla
+                    ?? plantillas.find(p => String(p.plantillaid ?? p.PlantillaID ?? p.id) === selectedPlantilla)?.Nombre
+                    ?? plantillas.find(p => String(p.plantillaid ?? p.PlantillaID ?? p.id) === selectedPlantilla)?.name
+                    ?? selectedPlantilla)
+                  : plantillaInput}
+                onChange={e => {
+                  setPlantillaInput(e.target.value);
+                  setShowPlantillaSuggestions(true);
+                  setSelectedPlantilla('');
+                  setSelectedPlantillaObj(null);
+                  setActivePlantillaSuggestion(0);
+                }}
+                onKeyDown={e => {
+                  if (!showPlantillaSuggestions || filteredPlantillas.length === 0) return;
+                  if (e.key === 'ArrowDown') {
+                    setActivePlantillaSuggestion(prev => Math.min(prev + 1, filteredPlantillas.length - 1));
+                  } else if (e.key === 'ArrowUp') {
+                    setActivePlantillaSuggestion(prev => Math.max(prev - 1, 0));
+                  } else if (e.key === 'Enter') {
+                    const p = filteredPlantillas[activePlantillaSuggestion];
+                    if (p) handlePlantillaSuggestionClick(p);
+                  }
+                }}
+                onFocus={() => setShowPlantillaSuggestions(true)}
+                placeholder="Buscar plantilla por nombre..."
+                style={{
+                  width: '100%',
+                  padding: 10,
+                  borderRadius: 6,
+                  border: '1px solid #cbd5e1',
+                  marginTop: 6,
+                  fontSize: 16,
+                }}
+                autoComplete="off"
+              />
+              {/* Mostrar el campo Segmento si hay una plantilla seleccionada */}
+              {selectedPlantillaObj && (
+                <div style={{ marginTop: 8, color: '#2563eb', fontWeight: 600 }}>
+                  Segmento: {selectedPlantillaObj.Segmento ?? selectedPlantillaObj.segmento ?? ''}
+                </div>
+              )}
+              {showPlantillaSuggestions && plantillaInput && filteredPlantillas.length > 0 && (
+                <ul
+                  style={{
+                    position: 'absolute',
+                    zIndex: 10,
+                    background: '#fff',
+                    border: '1px solid #e2e8f0',
+                    borderRadius: 8,
+                    width: '100%',
+                    maxHeight: 180,
+                    overflowY: 'auto',
+                    margin: 0,
+                    padding: 0,
+                    listStyle: 'none',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+                  }}
+                >
+                  {filteredPlantillas.map((p, idx) => (
+                    <li
+                      key={String(p.plantillaid ?? p.PlantillaID ?? p.id) + '-' + idx}
+                      style={{
+                        padding: '8px 12px',
+                        cursor: 'pointer',
+                        borderBottom: '1px solid #f1f5f9',
+                        background: idx === activePlantillaSuggestion ? '#e0e7ff' : 'transparent',
+                      }}
+                      onMouseEnter={() => setActivePlantillaSuggestion(idx)}
+                      onClick={() => handlePlantillaSuggestionClick(p)}
+                    >
+                      {/* Mostrar solo Nodo, Plantilla y Segmento */}
+                      <span style={{ fontWeight: 600 }}>{p.Nodo ?? ''}</span>
+                      {' - '}
+                      <span>{p.Plantilla ?? ''}</span>
+                      {' - '}
+                      <span style={{ color: '#2563eb' }}>{p.Segmento ?? ''}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+            {/* Mostrar botones solo si los tres campos tienen valor */}
+            <div style={{ display: 'flex', gap: '10px', marginTop: 10 }}>
+              <button
+                type="button"
+                style={{ flex: 1, height: 40, fontSize: 16, backgroundColor: '#059669', color: 'white', border: 'none', borderRadius: '4px', fontWeight: 'bold', cursor: 'pointer' }}
+                onClick={handleBuscarAsignaciones}
+              >
+                Buscar
+              </button>
+              <button
+                type="button"
+                style={{ flex: 1, height: 40, fontSize: 16, backgroundColor: '#2563eb', color: 'white', border: 'none', borderRadius: '4px', fontWeight: 'bold', cursor: 'pointer' }}
+                onClick={handleAsignar}
+              >
+                Asignar
+              </button>
+            </div>
+          {/* Botón Asignar eliminado, solo queda el de la línea con Buscar */}
         </form>
       )}
       {activeTab === 1 && (
