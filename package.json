@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "@googlemaps/js-api-loader": "^2.0.2",
+    "@react-google-maps/api": "^2.20.8",
     "@supabase/supabase-js": "^2.45.0",
     "@types/antd": "^0.12.32",
     "@types/google.maps": "^3.58.1",

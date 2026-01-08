@@ -1,4 +1,13 @@
 import React, { useState, useEffect } from 'react';
+import { GoogleMap, Marker, useJsApiLoader } from '@react-google-maps/api';
+// Configuración para el modal de Google Maps
+const MAPS_MODAL_STYLE = {
+  position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(0,0,0,0.25)', zIndex: 2000,
+  display: 'flex', alignItems: 'center', justifyContent: 'center',
+};
+const MAPS_CONTAINER_STYLE = {
+  width: '400px', height: '400px', borderRadius: 12, overflow: 'hidden', boxShadow: '0 8px 32px rgba(0,0,0,0.18)', background: 'white', padding: 24
+};
 
 type Cuadrilla = {
   IdEmpleado?: number;
@@ -52,14 +61,9 @@ interface Ubicacion {
 const Cuadrilla_Asignar: React.FC = () => {
     // Estado para modo de selección (site o ubicación)
     const [modoSeleccion, setModoSeleccion] = useState<'site' | 'ubicacion'>('site');
-    // Estado para Ubicación
-    const [ubicaciones, setUbicaciones] = useState<Ubicacion[]>([]);
-    const [ubicacionInput, setUbicacionInput] = useState('');
-    const [showUbicacionSuggestions, setShowUbicacionSuggestions] = useState(false);
-    const [activeUbicacionSuggestion, setActiveUbicacionSuggestion] = useState(0);
-    const [selectedUbicacion, setSelectedUbicacion] = useState('');
-    const [selectedUbicacionObj, setSelectedUbicacionObj] = useState<Ubicacion | null>(null);
-    const [errorUbicaciones, setErrorUbicaciones] = useState('');
+    // Estado para mostrar el modal de Google Maps
+    const [showMapsModal, setShowMapsModal] = useState(false);
+    const [selectedMapCoords, setSelectedMapCoords] = useState<{ lat: number, lng: number } | null>(null);
 
     // Modal para nueva ubicación
     const [showModalUbicacion, setShowModalUbicacion] = useState(false);
@@ -72,21 +76,49 @@ const Cuadrilla_Asignar: React.FC = () => {
     });
     const [modalUbicacionError, setModalUbicacionError] = useState('');
 
-    // Fetch ubicaciones (SP_Ubicacion) con @Accion=2
+    // Para insertar coordenadas seleccionadas en el modal de nueva ubicación
+
+    // Cuando cambian las coordenadas seleccionadas en el mapa y el modal de nueva ubicación está abierto,
+    // actualiza automáticamente los campos de latitud y longitud en el formulario de nueva ubicación.
     useEffect(() => {
-      async function fetchUbicaciones() {
-        try {
-          // Llama al endpoint con el parámetro accion=2 para SP_Ubicacion
-          const res = await fetch('/api/ubicacion?accion=2');
-          if (!res.ok) throw new Error('No se pudo cargar la lista de ubicaciones.');
-          const data = await res.json();
-          setUbicaciones(Array.isArray(data) ? data : []);
-          setErrorUbicaciones('');
-        } catch (err) {
-          setUbicaciones([]);
-          setErrorUbicaciones('Error al cargar ubicaciones.');
-        }
+      if (showModalUbicacion && selectedMapCoords) {
+        setModalUbicacion(v => ({ ...v, Latitud: String(selectedMapCoords.lat), Longitud: String(selectedMapCoords.lng) }));
       }
+    }, [selectedMapCoords, showModalUbicacion]);
+
+    const handleInsertCoordsToModal = () => {
+      setShowMapsModal(false);
+    };
+
+    // Cargar Google Maps API
+    const { isLoaded } = useJsApiLoader({
+      googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '',
+      libraries: ['places'],
+    });
+    // Estado para Ubicación
+    const [ubicaciones, setUbicaciones] = useState<Ubicacion[]>([]);
+    const [ubicacionInput, setUbicacionInput] = useState('');
+    const [showUbicacionSuggestions, setShowUbicacionSuggestions] = useState(false);
+    const [activeUbicacionSuggestion, setActiveUbicacionSuggestion] = useState(0);
+    const [selectedUbicacion, setSelectedUbicacion] = useState('');
+    const [selectedUbicacionObj, setSelectedUbicacionObj] = useState<Ubicacion | null>(null);
+    const [errorUbicaciones, setErrorUbicaciones] = useState('');
+
+    // Fetch ubicaciones (SP_Ubicacion) con @Accion=2
+    // Función para refrescar ubicaciones (usada en el efecto y después de guardar)
+    const fetchUbicaciones = async () => {
+      try {
+        const res = await fetch('/api/ubicacion?accion=2');
+        if (!res.ok) throw new Error('No se pudo cargar la lista de ubicaciones.');
+        const data = await res.json();
+        setUbicaciones(Array.isArray(data) ? data : []);
+        setErrorUbicaciones('');
+      } catch (err) {
+        setUbicaciones([]);
+        setErrorUbicaciones('Error al cargar ubicaciones.');
+      }
+    };
+    useEffect(() => {
       fetchUbicaciones();
     }, []);
 
@@ -148,12 +180,9 @@ const Cuadrilla_Asignar: React.FC = () => {
         }
         setShowModalUbicacion(false);
         setModalUbicacion({ NombreUbicacion: '', Latitud: '', Longitud: '', Direccion: '', Referencia: '' });
-        // Refrescar ubicaciones
-        const data = await res.json();
-        setUbicaciones(prev => [...prev, data]);
-        setUbicacionInput(data.NombreUbicacion ?? data.nombreubicacion ?? '');
-        setSelectedUbicacion(String(data.IdUbicacion ?? data.idubicacion));
-        setSelectedUbicacionObj(data);
+        // Refrescar ubicaciones desde el backend para asegurar que el nuevo registro esté incluido
+        await fetchUbicaciones();
+        // Opcional: puedes buscar el registro recién creado y seleccionarlo automáticamente
       } catch (err) {
         setModalUbicacionError('Error al registrar ubicación.');
       }
@@ -930,12 +959,45 @@ const Cuadrilla_Asignar: React.FC = () => {
                   autoComplete="off"
                   disabled={modoSeleccion !== 'ubicacion'}
                 />
-                <button type="button" onClick={() => setShowModalUbicacion(true)} style={{ marginTop: 6, background: '#2563eb', color: 'white', border: 'none', borderRadius: 6, padding: '0 14px', fontWeight: 700, fontSize: 18, cursor: 'pointer', height: 40 }} disabled={modoSeleccion !== 'ubicacion'}>Nuevo</button>
                 <button
                   type="button"
-                  style={{ marginTop: 6, background: '#059669', color: 'white', border: 'none', borderRadius: 6, padding: '0 14px', fontWeight: 700, fontSize: 18, cursor: 'pointer', height: 40 }}
+                  onClick={() => setShowModalUbicacion(true)}
+                  style={{
+                    marginTop: 6,
+                    background: '#2563eb',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: 6,
+                    padding: '0 14px',
+                    fontWeight: 700,
+                    fontSize: 18,
+                    cursor: modoSeleccion === 'ubicacion' ? 'pointer' : 'not-allowed',
+                    height: 40,
+                    opacity: modoSeleccion === 'ubicacion' ? 1 : 0.5
+                  }}
+                  disabled={modoSeleccion !== 'ubicacion'}
+                >Nuevo</button>
+                <button
+                  type="button"
+                  style={{
+                    marginTop: 6,
+                    background: '#059669',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: 6,
+                    padding: '0 14px',
+                    fontWeight: 700,
+                    fontSize: 18,
+                    cursor: modoSeleccion === 'ubicacion' ? 'pointer' : 'not-allowed',
+                    height: 40,
+                    opacity: modoSeleccion === 'ubicacion' ? 1 : 0.5,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}
                   disabled={modoSeleccion !== 'ubicacion'}
                   onClick={() => {
+                    if (modoSeleccion !== 'ubicacion') return;
                     const ubicacion = selectedUbicacionObj || ubicaciones.find(u => String(u.IdUbicacion ?? u.idubicacion) === selectedUbicacion);
                     const lat = ubicacion?.Latitud;
                     const lng = ubicacion?.Longitud;
@@ -945,7 +1007,90 @@ const Cuadrilla_Asignar: React.FC = () => {
                       alert('Seleccione una ubicación con coordenadas válidas.');
                     }
                   }}
-                >Mapa</button>
+                  title="Ver ubicación en Google Maps"
+                >
+                  {/* Ícono de lupa SVG */}
+                  <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ verticalAlign: 'middle' }}>
+                    <circle cx="11" cy="11" r="8" />
+                    <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                  </svg>
+                </button>
+                <button
+                  type="button"
+                  style={{
+                    marginTop: 6,
+                    background: '#fff',
+                    color: '#059669',
+                    border: '1px solid #059669',
+                    borderRadius: 6,
+                    padding: '0 10px',
+                    fontWeight: 700,
+                    fontSize: 18,
+                    cursor: modoSeleccion === 'ubicacion' ? 'pointer' : 'not-allowed',
+                    height: 40,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    opacity: modoSeleccion === 'ubicacion' ? 1 : 0.5
+                  }}
+                  disabled={modoSeleccion !== 'ubicacion'}
+                  title="Seleccionar ubicación en Google Maps"
+                  onClick={() => {
+                    if (modoSeleccion !== 'ubicacion') return;
+                    setShowMapsModal(true);
+                  }}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#059669" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ verticalAlign: 'middle' }}>
+                    <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
+                    <circle cx="12" cy="9" r="2.5"/>
+                  </svg>
+                </button>
+                    {/* Modal Google Maps para seleccionar coordenadas */}
+                    {showMapsModal && (
+                      <div style={MAPS_MODAL_STYLE as React.CSSProperties}>
+                        <div style={{...MAPS_CONTAINER_STYLE, position: 'relative'} as React.CSSProperties}>
+                          {/* Botón Salir en la esquina superior derecha */}
+                          <button
+                            type="button"
+                            onClick={() => setShowMapsModal(false)}
+                            style={{ position: 'absolute', top: 10, right: 10, background: 'transparent', border: 'none', fontSize: 22, color: '#888', cursor: 'pointer', zIndex: 10 }}
+                            title="Salir"
+                          >✕</button>
+                          <h3 style={{ marginBottom: 10, textAlign: 'center' }}>Selecciona una ubicación en el mapa</h3>
+                          {isLoaded ? (
+                            <GoogleMap
+                              mapContainerStyle={{ width: '100%', height: 320, borderRadius: 8 }}
+                              center={selectedMapCoords || { lat: -12.0464, lng: -77.0428 }}
+                              zoom={13}
+                              onClick={e => {
+                                if (e.latLng) setSelectedMapCoords({ lat: e.latLng.lat(), lng: e.latLng.lng() });
+                              }}
+                            >
+                              {selectedMapCoords && <Marker position={selectedMapCoords} />}
+                            </GoogleMap>
+                          ) : (
+                            <div>Cargando mapa...</div>
+                          )}
+                          <div style={{ marginTop: 16, textAlign: 'center' }}>
+                            <div style={{ marginBottom: 8 }}>
+                              <strong>Latitud:</strong> {selectedMapCoords?.lat ?? '-'}<br />
+                              <strong>Longitud:</strong> {selectedMapCoords?.lng ?? '-'}
+                            </div>
+                            <button
+                              type="button"
+                              style={{ background: '#059669', color: 'white', border: 'none', borderRadius: 5, padding: '8px 18px', fontWeight: 600, cursor: 'pointer', marginRight: 8 }}
+                              disabled={!selectedMapCoords}
+                              onClick={handleInsertCoordsToModal}
+                            >Usar estas coordenadas</button>
+                            <button
+                              type="button"
+                              style={{ background: '#e5e7eb', color: '#222', border: 'none', borderRadius: 5, padding: '8px 18px', fontWeight: 600, cursor: 'pointer' }}
+                              onClick={() => setShowMapsModal(false)}
+                            >Cancelar</button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
               </div>
               {showUbicacionSuggestions && ubicacionInput && filteredUbicaciones.length > 0 && (
                 <ul

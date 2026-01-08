@@ -36,34 +36,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     } finally {
       await sql.close();
     }
-  } else if (req.method === 'POST') {
-    // Registrar nueva ubicación usando el SP_Ubicacion con @Accion=1
-    const { NombreUbicacion, Latitud, Longitud, Direccion, Referencia } = req.body;
-    if (!NombreUbicacion || !Latitud || !Longitud) {
-      res.status(400).json({ error: 'Nombre, Latitud y Longitud son obligatorios.' });
-      return;
-    }
-    try {
-      await sql.connect(config);
-      const result = await new sql.Request()
-        .input('Accion', sql.Int, 1)
-        .input('NombreUbicacion', sql.NVarChar(100), NombreUbicacion)
-        .input('Latitud', sql.NVarChar(50), Latitud)
-        .input('Longitud', sql.NVarChar(50), Longitud)
-        .input('Direccion', sql.NVarChar(200), Direccion || '')
-        .input('Referencia', sql.NVarChar(200), Referencia || '')
-        .execute('SP_Ubicacion');
-      // Retornar la nueva ubicación registrada (puede variar según el SP)
-      const nuevaUbicacion = result.recordset && result.recordset[0] ? result.recordset[0] : {
-        NombreUbicacion, Latitud, Longitud, Direccion, Referencia
-      };
-      res.status(201).json(nuevaUbicacion);
-    } catch (err) {
-      console.error('Error al registrar ubicación:', err);
-      res.status(500).json({ error: 'Error al registrar ubicación', details: err && err.message ? err.message : String(err) });
-    } finally {
-      await sql.close();
-    }
   } else {
     res.status(405).json({ error: 'Método no permitido' });
   }
