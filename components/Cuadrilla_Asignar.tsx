@@ -399,12 +399,11 @@ const Cuadrilla_Asignar: React.FC = () => {
   useEffect(() => {
     async function fetchPlantillas() {
       try {
-        // Llama al endpoint con el parámetro tipo=1 para filtrar por @Tipo=1
-        const res = await fetch('/api/plantillas?tipo=1');
+        // Llama al endpoint que ejecuta el store sp_GetPlaPlantilla
+        const res = await fetch('/api/plantillas?store=sp_GetPlaPlantilla');
         if (!res.ok) throw new Error('No se pudo cargar la lista de plantillas.');
         const data = await res.json();
-        // Si el backend retorna menos de 6 campos, puedes mapear aquí para asegurar los 6 campos
-        // Ejemplo: PlantillaID, Plantilla, Nodo, Segmento, Campo5, Campo6
+        // Mapear los campos esperados del store
         setPlantillas(Array.isArray(data) ? data.map(p => ({
           PlantillaID: p.PlantillaID ?? p.plantillaid ?? p.id,
           Plantilla: p.Plantilla ?? p.Nombre ?? p.name,

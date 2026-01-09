@@ -1,3 +1,4 @@
+import PlantillaV3 from '../pages/Plantilla_v3';
 // [SHOW-FILE] Por favor, muestra el contenido real del archivo para poder analizar el uso del store EmpleadoCuadrilla y el autocompletado.
 // [EXTRACT-FULL] Necesito el contenido real del archivo para analizar el problema de datos y autocompletado.
 // [READ-FULL] Solicitud de lectura completa para análisis de store y autocompletado
@@ -13,6 +14,9 @@ import GoogleMapsForm from './GoogleMapsForm';
 import Aprobar from './Aprobar';
 import ReporteEstados from './ReporteEstados';
 import CopiaFormulario from './CopiaFormulario';
+
+// import dynamic from 'next/dynamic';
+// const FormatoPlantilla = dynamic(() => import('./FormatoPlantilla'), { ssr: false });
 // Puedes crear un componente Aprobar.tsx o mostrar un placeholder temporal
 // import GoogleMap from '../map-google/GoogleMap';
 
@@ -63,6 +67,10 @@ const MainForm: React.FC = () => {
     contenido = <ReporteEstados />;
   } else if (opcion === 'copiaformulario') {
     contenido = <CopiaFormulario />;
+  } else if (opcion === 'plantilla_v3') {
+    contenido = <PlantillaV3 />;
+  // } else if (opcion === 'formato-plantilla') {
+  //   contenido = <FormatoPlantilla />;
   } else {
     contenido = <PanelKPI />;
   }
@@ -96,8 +104,8 @@ const MainForm: React.FC = () => {
         <a href="#" style={{ color: menuColor, textDecoration: 'none' }} onClick={e => { e.preventDefault(); setOpcion('asignacion'); }}>Asignacion</a>
         <a href="#" style={{ color: menuColor, textDecoration: 'none' }} onClick={e => { e.preventDefault(); setOpcion('aprobar'); }}>Aprobar</a>
         <a href="#" style={{ color: menuColor, textDecoration: 'none' }} onClick={e => { e.preventDefault(); setOpcion('googlemaps'); }}>Google Maps</a>
-        {/* <a href="#" style={{ color: menuColor, textDecoration: 'none' }} onClick={e => { e.preventDefault(); setOpcion('formulario'); }}>Formulario</a> */}
         <a href="#" style={{ color: menuColor, textDecoration: 'none' }} onClick={e => { e.preventDefault(); setOpcion('copiaformulario'); }}>Plantilla</a>
+        <a href="#" style={{ color: menuColor, textDecoration: 'none' }} onClick={e => { e.preventDefault(); setOpcion('plantilla_v3'); }}>Plantilla V3</a>
         <a href="#" style={{ color: menuColor, textDecoration: 'none' }} onClick={e => { e.preventDefault(); setOpcion('reporte'); }}>Reporte</a>
       </nav>
       {/* Contenido principal dinámico */}
