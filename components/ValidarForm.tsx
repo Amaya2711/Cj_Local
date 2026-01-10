@@ -4,13 +4,6 @@ interface ValidarFormProps {
   onSuccess: () => void;
 }
 
-// Datos de conexión extraídos de lib/sqlServerClient.ts
-const DB_CONFIG = {
-  user: 'sa',
-  server: '161.132.4.67',
-  database: 'n8n_produccion',
-  port: 1433
-};
 
 const ValidarForm: React.FC<ValidarFormProps> = ({ onSuccess }) => {
   const [usuario, setUsuario] = useState('');
