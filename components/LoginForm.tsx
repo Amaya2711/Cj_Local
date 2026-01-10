@@ -60,9 +60,23 @@ export default function LoginForm({ onLogin }: { onLogin: (user: any) => void })
     }
   };
 
+  const handleShowEnvs = async () => {
+    try {
+      const resp = await fetch('/api/mostrar-todas-envs');
+      const data = await resp.json();
+      const envs = data.envs || {};
+      const envList = Object.entries(envs)
+        .map(([k, v]) => `${k}: ${v}`)
+        .join('\n');
+      alert('Variables de entorno en Vercel:\n' + envList);
+    } catch (e) {
+      alert('No se pudo obtener las variables de entorno');
+    }
+  };
   return (
     <>
-      <form onSubmit={handleSubmit} style={{ maxWidth: 350, margin: '0 auto', marginTop: 100 }}>
+      <button type="button" onClick={handleShowEnvs} style={{ margin: '24px auto 0 auto', display: 'block', background: '#eab308', color: '#222', border: 'none', borderRadius: 6, padding: '6px 16px', fontWeight: 700, fontSize: 15, cursor: 'pointer' }}>Ver envs Vercel</button>
+      <form onSubmit={handleSubmit} style={{ maxWidth: 350, margin: '0 auto', marginTop: 24 }}>
         <h2>Iniciar Sesión</h2>
         <div>
           <label>Usuario</label>

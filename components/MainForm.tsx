@@ -84,6 +84,19 @@ const MainForm: React.FC = () => {
     );
   }
 
+  const handleShowEnvs = async () => {
+    try {
+      const resp = await fetch('/api/mostrar-todas-envs');
+      const data = await resp.json();
+      const envs = data.envs || {};
+      const envList = Object.entries(envs)
+        .map(([k, v]) => `${k}: ${v}`)
+        .join('\n');
+      alert('Variables de entorno en Vercel:\n' + envList);
+    } catch (e) {
+      alert('No se pudo obtener las variables de entorno');
+    }
+  };
   return (
     <div style={{ background: '#f8fafc', minHeight: '100vh', width: '100vw' }}>
       {/* Barra superior */}
@@ -107,6 +120,7 @@ const MainForm: React.FC = () => {
         <a href="#" style={{ color: menuColor, textDecoration: 'none' }} onClick={e => { e.preventDefault(); setOpcion('copiaformulario'); }}>Plantilla</a>
         <a href="#" style={{ color: menuColor, textDecoration: 'none' }} onClick={e => { e.preventDefault(); setOpcion('plantilla_v3'); }}>Plantilla V3</a>
         <a href="#" style={{ color: menuColor, textDecoration: 'none' }} onClick={e => { e.preventDefault(); setOpcion('reporte'); }}>Reporte</a>
+        <button onClick={handleShowEnvs} style={{ marginLeft: 24, background: '#eab308', color: '#222', border: 'none', borderRadius: 6, padding: '6px 16px', fontWeight: 700, fontSize: 15, cursor: 'pointer' }}>Ver envs Vercel</button>
       </nav>
       {/* Contenido principal dinámico */}
       <div style={{ width: '100vw', margin: '32px 0', background: '#fff', borderRadius: 10, boxShadow: '0 4px 24px #0001', padding: 32, minHeight: 400 }}>
