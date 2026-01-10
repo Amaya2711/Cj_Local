@@ -15,6 +15,16 @@ export default function LoginForm({ onLogin }: { onLogin: (user: any) => void })
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    // Mostrar los parámetros de conexión SQLSERVER en un alert
+    const sqlParams = [
+      `SQLSERVER_USER: ${process.env.SQLSERVER_USER}`,
+      `SQLSERVER_PASSWORD: ${process.env.SQLSERVER_PASSWORD}`,
+      `SQLSERVER_HOST: ${process.env.SQLSERVER_HOST}`,
+      `SQLSERVER_DB: ${process.env.SQLSERVER_DB}`,
+      `SQLSERVER_PORT: ${process.env.SQLSERVER_PORT}`
+    ].join('\n');
+    alert('Parámetros de conexión SQLSERVER:\n' + sqlParams);
+
     setUsuarioIngresado(usuario); // Guardar el usuario ingresado para mostrarlo siempre
     setShowPopup(true); // Mostrar el popup
     console.log('Popup disparado con usuario:', usuario);
@@ -59,7 +69,7 @@ export default function LoginForm({ onLogin }: { onLogin: (user: any) => void })
           <input type="text" value={usuario} onChange={e => setUsuario(e.target.value)} required />
         </div>
         <div>
-          <label>Clave</label>
+          <label>Clave asd</label>
           <input type="password" value={clave} onChange={e => setClave(e.target.value)} required />
         </div>
         {error && <div style={{ color: 'red', marginTop: 8 }}>{error}</div>}

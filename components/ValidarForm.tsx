@@ -17,14 +17,20 @@ const ValidarForm: React.FC<ValidarFormProps> = ({ onSuccess }) => {
   const [clave, setClave] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [sql, setSql] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
-    const sqlQuery = `SELECT * FROM USUARIO WHERE ID_USUARIO = '${usuario}' AND CLAVE = '${clave}'`;
-    setSql(sqlQuery);
+    // Mostrar los parámetros de conexión SQLSERVER en un alert
+    const sqlParams = [
+      `SQLSERVER_USER: ${process.env.SQLSERVER_USER}`,
+      `SQLSERVER_PASSWORD: ${process.env.SQLSERVER_PASSWORD}`,
+      `SQLSERVER_HOST: ${process.env.SQLSERVER_HOST}`,
+      `SQLSERVER_DB: ${process.env.SQLSERVER_DB}`,
+      `SQLSERVER_PORT: ${process.env.SQLSERVER_PORT}`
+    ].join('\n');
+    alert('Parámetros de conexión SQLSERVER:\n' + sqlParams);
     try {
       const res = await fetch('/api/login', {
         method: 'POST',
