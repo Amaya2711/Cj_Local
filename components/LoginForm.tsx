@@ -92,7 +92,6 @@ export default function LoginForm({ onLogin }: { onLogin: (user: any) => void })
   };
   return (
     <>
-      <button type="button" onClick={handleShowEnvs} style={{ margin: '24px auto 0 auto', display: 'block', background: '#eab308', color: '#222', border: 'none', borderRadius: 6, padding: '6px 16px', fontWeight: 700, fontSize: 15, cursor: 'pointer' }}>Ver envs Vercel</button>
       <form onSubmit={handleSubmit} style={{ maxWidth: 350, margin: '0 auto', marginTop: 24 }}>
         <h2>Iniciar Sesión</h2>
         <div>
@@ -104,7 +103,29 @@ export default function LoginForm({ onLogin }: { onLogin: (user: any) => void })
           <input type="password" value={clave} onChange={e => setClave(e.target.value)} required />
         </div>
         {error && <div style={{ color: 'red', marginTop: 8 }}>{error}</div>}
-        <button type="submit" style={{ marginTop: 16 }}>Ingresar</button>
+        <div style={{ display: 'flex', flexDirection: 'row', gap: 12, marginTop: 16, justifyContent: 'center', alignItems: 'center' }}>
+          <button type="submit">Ingresar</button>
+          <button
+            type="button"
+            onClick={handleShowEnvs}
+            style={{
+              background: '#eab308',
+              color: '#222',
+              border: '2px solid #f59e42',
+              borderRadius: 8,
+              padding: '8px 18px',
+              fontWeight: 700,
+              fontSize: 15,
+              cursor: 'pointer',
+              boxShadow: '0 2px 8px #eab30833',
+              letterSpacing: 1,
+              textTransform: 'uppercase',
+              zIndex: 1000
+            }}
+          >
+            👁️ Ver envs Vercel
+          </button>
+        </div>
       </form>
       {sqlParamsPantalla && (
         <div style={{ background: '#fffbe6', color: '#222', border: '1px solid #eab308', borderRadius: 8, padding: 16, margin: '24px auto', maxWidth: 400, fontSize: 15, fontFamily: 'monospace', whiteSpace: 'pre-line' }}>
