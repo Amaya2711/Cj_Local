@@ -22,15 +22,21 @@ const ValidarForm: React.FC<ValidarFormProps> = ({ onSuccess }) => {
     e.preventDefault();
     setLoading(true);
     setError('');
-    // Mostrar los parámetros de conexión SQLSERVER en un alert
-    const sqlParams = [
-      `SQLSERVER_USER: ${process.env.SQLSERVER_USER}`,
-      `SQLSERVER_PASSWORD: ${process.env.SQLSERVER_PASSWORD}`,
-      `SQLSERVER_HOST: ${process.env.SQLSERVER_HOST}`,
-      `SQLSERVER_DB: ${process.env.SQLSERVER_DB}`,
-      `SQLSERVER_PORT: ${process.env.SQLSERVER_PORT}`
-    ].join('\n');
-    alert('Parámetros de conexión SQLSERVER:\n' + sqlParams);
+    // Obtener los parámetros de conexión SQLSERVER desde el backend
+    try {
+      const resp = await fetch('/api/mostrar-config-sqlserver');
+      const config = await resp.json();
+      const sqlParams = [
+        `SQLSERVER_USER: ${config.SQLSERVER_USER}`,
+        `SQLSERVER_PASSWORD: ${config.SQLSERVER_PASSWORD}`,
+        `SQLSERVER_HOST: ${config.SQLSERVER_HOST}`,
+        `SQLSERVER_DB: ${config.SQLSERVER_DB}`,
+        `SQLSERVER_PORT: ${config.SQLSERVER_PORT}`
+      ].join('\n');
+      alert('Parámetros de conexión SQLSERVER:\n' + sqlParams);
+    } catch (e) {
+      alert('No se pudo obtener la configuración SQLSERVER');
+    }
     try {
       const res = await fetch('/api/login', {
         method: 'POST',
