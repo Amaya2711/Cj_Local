@@ -12,6 +12,7 @@ export default function LoginForm({ onLogin }: { onLogin: (user: any) => void })
   const [error, setError] = useState('');
   const [usuarioIngresado, setUsuarioIngresado] = useState('');
   const [showPopup, setShowPopup] = useState(false);
+  const [sqlParamsPantalla, setSqlParamsPantalla] = useState<string>('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -57,6 +58,22 @@ export default function LoginForm({ onLogin }: { onLogin: (user: any) => void })
     } else {
       setError(data.error || 'Error de autenticación');
       localStorage.removeItem('pb_Usuario'); // Limpiar pb_Usuario si el login falla
+      // Mostrar parámetros de conexión en consola y pantalla si el error es de acceso no autorizado y estamos en producción
+      if ((data.error === 'Acceso no autorizado. Por favor, inicie sesión.' || error === 'Acceso no autorizado. Por favor, inicie sesión.') && process.env.NODE_ENV === 'production') {
+        fetch('/api/mostrar-config-sqlserver')
+          .then(resp => resp.json())
+          .then(cfg => {
+            const paramsStr = Object.entries(cfg)
+              .map(([k, v]) => `${k}: ${v}`)
+              .join('\n');
+            console.log('Parametros SQLSERVER usados en Vercel:', cfg);
+            setSqlParamsPantalla(paramsStr);
+          })
+          .catch(() => {
+            console.log('No se pudo obtener los parametros SQLSERVER desde Vercel');
+            setSqlParamsPantalla('No se pudo obtener los parametros SQLSERVER desde Vercel');
+          });
+      }
     }
   };
 
@@ -89,6 +106,13 @@ export default function LoginForm({ onLogin }: { onLogin: (user: any) => void })
         {error && <div style={{ color: 'red', marginTop: 8 }}>{error}</div>}
         <button type="submit" style={{ marginTop: 16 }}>Ingresar</button>
       </form>
+      {sqlParamsPantalla && (
+        <div style={{ background: '#fffbe6', color: '#222', border: '1px solid #eab308', borderRadius: 8, padding: 16, margin: '24px auto', maxWidth: 400, fontSize: 15, fontFamily: 'monospace', whiteSpace: 'pre-line' }}>
+          <b>Parámetros SQLSERVER usados en Vercel:</b>
+          <br />
+          {sqlParamsPantalla}
+        </div>
+      )}
       {showPopup && (
         <div style={{
           position: 'fixed',
