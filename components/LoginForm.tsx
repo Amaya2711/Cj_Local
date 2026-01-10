@@ -10,16 +10,12 @@ export default function LoginForm({ onLogin }: { onLogin: (user: any) => void })
   const [usuario, setUsuario] = useState('');
   const [clave, setClave] = useState('');
   const [error, setError] = useState('');
-  const [usuarioIngresado, setUsuarioIngresado] = useState('');
-  const [showPopup, setShowPopup] = useState(false);
   const [sqlParamsPantalla, setSqlParamsPantalla] = useState<string>('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    setUsuarioIngresado(usuario); // Guardar el usuario ingresado para mostrarlo siempre
-    setShowPopup(true); // Mostrar el popup
-    console.log('Popup disparado con usuario:', usuario);
+    // Popup eliminado
     const res = await fetch('/api/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -49,7 +45,6 @@ export default function LoginForm({ onLogin }: { onLogin: (user: any) => void })
     } else {
       setError(data.error || 'Error de autenticación');
       localStorage.removeItem('pb_Usuario'); // Limpiar pb_Usuario si el login falla
-      // ...existing code...
     }
   };
 
@@ -84,27 +79,7 @@ export default function LoginForm({ onLogin }: { onLogin: (user: any) => void })
           </div>
         </div>
       </form>
-      {/* Visualización de parámetros SQLSERVER eliminada */}
-      {showPopup && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          width: '100vw',
-          height: '100vh',
-          background: 'rgba(0,0,0,0.4)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 9999
-        }}>
-          <div style={{ background: '#fff', padding: 32, borderRadius: 12, minWidth: 300, textAlign: 'center', boxShadow: '0 4px 32px #0002' }}>
-            <h3>Usuario Mostrar</h3>
-            <div style={{ fontSize: 20, color: '#2563eb', margin: '16px 0' }}><b>{usuarioIngresado}</b></div>
-            <button onClick={() => setShowPopup(false)} style={{ marginTop: 16, padding: '8px 24px', background: '#2563eb', color: '#fff', border: 'none', borderRadius: 6, fontWeight: 700, fontSize: 16, cursor: 'pointer' }}>Cerrar</button>
-          </div>
-        </div>
-      )}
+      {/* Popup eliminado */}
     </>
   );
 }
