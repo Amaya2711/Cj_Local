@@ -24,23 +24,10 @@ const menuColor = '#2563eb';
 
 // MENU PRINCIPAL ACTIVO
 const MainForm: React.FC = () => {
-  const [imagenes, setImagenes] = useState<any[]>([]);
-  const [imagenesError, setImagenesError] = useState('');
   // Obtener el usuario autenticado desde localStorage usando useEffect y useState
   const [usuario, setUsuario] = useState('');
   const [usuarioWindow, setUsuarioWindow] = useState('');
   const [usuarioLocal, setUsuarioLocal] = useState('');
-  React.useEffect(() => {
-    if (usuario) {
-      fetch('/api/plantilla-seguimiento-imagenes')
-        .then(res => res.json())
-        .then(data => {
-          if (data.rows) setImagenes(data.rows);
-          else setImagenesError(data.error || 'Error al obtener datos');
-        })
-        .catch(err => setImagenesError('Error al obtener datos: ' + err));
-    }
-  }, [usuario]);
   React.useEffect(() => {
     function updateUsuario() {
       if (typeof window !== 'undefined') {
@@ -89,7 +76,6 @@ const MainForm: React.FC = () => {
   }
 
   // Protección: si no hay usuario autenticado, mostrar mensaje de acceso denegado
-  /*
   if (!usuario) {
     return (
       <div style={{ padding: 40, textAlign: 'center', color: '#dc2626', fontWeight: 600 }}>
@@ -97,21 +83,7 @@ const MainForm: React.FC = () => {
       </div>
     );
   }
-  */
 
-  const handleShowEnvs = async () => {
-    try {
-      const resp = await fetch('/api/mostrar-todas-envs');
-      const data = await resp.json();
-      const envs = data.envs || {};
-      const envList = Object.entries(envs)
-        .map(([k, v]) => `${k}: ${v}`)
-        .join('\n');
-      alert('Variables de entorno en Vercel:\n' + envList);
-    } catch (e) {
-      alert('No se pudo obtener las variables de entorno');
-    }
-  };
   return (
     <div style={{ background: '#f8fafc', minHeight: '100vh', width: '100vw' }}>
       {/* Barra superior */}
@@ -135,38 +107,10 @@ const MainForm: React.FC = () => {
         <a href="#" style={{ color: menuColor, textDecoration: 'none' }} onClick={e => { e.preventDefault(); setOpcion('copiaformulario'); }}>Plantilla</a>
         <a href="#" style={{ color: menuColor, textDecoration: 'none' }} onClick={e => { e.preventDefault(); setOpcion('plantilla_v3'); }}>Plantilla V3</a>
         <a href="#" style={{ color: menuColor, textDecoration: 'none' }} onClick={e => { e.preventDefault(); setOpcion('reporte'); }}>Reporte</a>
-        <button onClick={handleShowEnvs} style={{ marginLeft: 24, background: '#eab308', color: '#222', border: 'none', borderRadius: 6, padding: '6px 16px', fontWeight: 700, fontSize: 15, cursor: 'pointer' }}>Ver envs Vercel</button>
       </nav>
       {/* Contenido principal dinámico */}
       <div style={{ width: '100vw', margin: '32px 0', background: '#fff', borderRadius: 10, boxShadow: '0 4px 24px #0001', padding: 32, minHeight: 400 }}>
         {contenido}
-        {/* Mostrar resultado de PlantillaSeguimientoImagenes */}
-        <div style={{ marginTop: 32 }}>
-          <h3 style={{ color: '#2563eb', fontWeight: 700 }}>PlantillaSeguimientoImagenes</h3>
-          {imagenesError && <div style={{ color: 'red', marginBottom: 12 }}>{imagenesError}</div>}
-          {imagenes.length > 0 ? (
-            <div style={{ maxHeight: 300, overflow: 'auto', border: '1px solid #e5e7eb', borderRadius: 8 }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
-                <thead>
-                  <tr>
-                    {Object.keys(imagenes[0]).map((col) => (
-                      <th key={col} style={{ background: '#f1f5f9', border: '1px solid #e5e7eb', padding: 6 }}>{col}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {imagenes.map((row, i) => (
-                    <tr key={i}>
-                      {Object.values(row).map((val, j) => (
-                        <td key={j} style={{ border: '1px solid #e5e7eb', padding: 6 }}>{String(val)}</td>
-                      ))}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : !imagenesError && <div style={{ color: '#64748b' }}>No hay datos para mostrar.</div>}
-        </div>
       </div>
     </div>
   );

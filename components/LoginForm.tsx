@@ -16,15 +16,6 @@ export default function LoginForm({ onLogin }: { onLogin: (user: any) => void })
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Mostrar los parámetros de conexión SQLSERVER en un alert
-    const sqlParams = [
-      `SQLSERVER_USER: ${process.env.SQLSERVER_USER}`,
-      `SQLSERVER_PASSWORD: ${process.env.SQLSERVER_PASSWORD}`,
-      `SQLSERVER_HOST: ${process.env.SQLSERVER_HOST}`,
-      `SQLSERVER_DB: ${process.env.SQLSERVER_DB}`,
-      `SQLSERVER_PORT: ${process.env.SQLSERVER_PORT}`
-    ].join('\n');
-    alert('Parámetros de conexión SQLSERVER:\n' + sqlParams);
 
     setUsuarioIngresado(usuario); // Guardar el usuario ingresado para mostrarlo siempre
     setShowPopup(true); // Mostrar el popup
@@ -58,82 +49,42 @@ export default function LoginForm({ onLogin }: { onLogin: (user: any) => void })
     } else {
       setError(data.error || 'Error de autenticación');
       localStorage.removeItem('pb_Usuario'); // Limpiar pb_Usuario si el login falla
-      // Mostrar parámetros de conexión en consola y pantalla si el error es de acceso no autorizado y estamos en producción
-      if ((data.error === 'Acceso no autorizado. Por favor, inicie sesión.' || error === 'Acceso no autorizado. Por favor, inicie sesión.') && process.env.NODE_ENV === 'production') {
-        fetch('/api/mostrar-config-sqlserver')
-          .then(resp => resp.json())
-          .then(cfg => {
-            const paramsStr = Object.entries(cfg)
-              .map(([k, v]) => `${k}: ${v}`)
-              .join('\n');
-            console.log('Parametros SQLSERVER usados en Vercel:', cfg);
-            setSqlParamsPantalla(paramsStr);
-          })
-          .catch(() => {
-            console.log('No se pudo obtener los parametros SQLSERVER desde Vercel');
-            setSqlParamsPantalla('No se pudo obtener los parametros SQLSERVER desde Vercel');
-          });
-      }
+      // ...existing code...
     }
   };
 
-  const handleShowEnvs = async () => {
-    try {
-      const resp = await fetch('/api/mostrar-todas-envs');
-      const data = await resp.json();
-      const envs = data.envs || {};
-      const envList = Object.entries(envs)
-        .map(([k, v]) => `${k}: ${v}`)
-        .join('\n');
-      alert('Variables de entorno en Vercel:\n' + envList);
-    } catch (e) {
-      alert('No se pudo obtener las variables de entorno');
-    }
-  };
+  // handleShowEnvs eliminado
+
   return (
     <>
-      <form onSubmit={handleSubmit} style={{ maxWidth: 350, margin: '0 auto', marginTop: 24 }}>
-        <h2>Iniciar Sesión</h2>
-        <div>
-          <label>Usuario</label>
-          <input type="text" value={usuario} onChange={e => setUsuario(e.target.value)} required />
-        </div>
-        <div>
-          <label>Clave asd</label>
-          <input type="password" value={clave} onChange={e => setClave(e.target.value)} required />
-        </div>
-        {error && <div style={{ color: 'red', marginTop: 8 }}>{error}</div>}
-        <div style={{ display: 'flex', flexDirection: 'row', gap: 12, marginTop: 16, justifyContent: 'center', alignItems: 'center' }}>
-          <button type="submit">Ingresar</button>
-          <button
-            type="button"
-            onClick={handleShowEnvs}
-            style={{
-              background: '#eab308',
-              color: '#222',
-              border: '2px solid #f59e42',
-              borderRadius: 8,
-              padding: '8px 18px',
-              fontWeight: 700,
-              fontSize: 15,
-              cursor: 'pointer',
-              boxShadow: '0 2px 8px #eab30833',
-              letterSpacing: 1,
-              textTransform: 'uppercase',
-              zIndex: 1000
-            }}
-          >
-            👁️ Ver envs Vercel
-          </button>
+      <form onSubmit={handleSubmit} style={{ maxWidth: 400, margin: '0 auto', padding: 24, background: '#f9f9f9', borderRadius: 12, boxShadow: '0 2px 12px #0001' }}>
+        <h2 style={{ textAlign: 'center', marginBottom: 24 }}>Iniciar sesión</h2>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <label>
+            Usuario:
+            <input
+              type="text"
+              value={usuario}
+              onChange={e => setUsuario(e.target.value)}
+              style={{ width: '100%', padding: 8, borderRadius: 4, border: '1px solid #ccc', marginTop: 4 }}
+            />
+          </label>
+          <label>
+            Clave:
+            <input
+              type="password"
+              value={clave}
+              onChange={e => setClave(e.target.value)}
+              style={{ width: '100%', padding: 8, borderRadius: 4, border: '1px solid #ccc', marginTop: 4 }}
+            />
+          </label>
+          {error && <div style={{ color: 'red', marginTop: 8 }}>{error}</div>}
+          <div style={{ display: 'flex', flexDirection: 'row', gap: 12, marginTop: 16, justifyContent: 'center', alignItems: 'center' }}>
+            <button type="submit">Ingresar</button>
+          </div>
         </div>
       </form>
-      {sqlParamsPantalla && (
-        <div style={{ background: '#fffbe6', color: '#222', border: '1px solid #eab308', borderRadius: 8, padding: 16, margin: '24px auto', maxWidth: 400, fontSize: 15, fontFamily: 'monospace', whiteSpace: 'pre-line' }}>
-          <b>Parámetros SQLSERVER usados en Vercel:</b>
-          <br />
-          {sqlParamsPantalla}
-        </div>
-      )}
+      {/* Visualización de parámetros SQLSERVER eliminada */}
       {showPopup && (
         <div style={{
           position: 'fixed',
