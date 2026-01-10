@@ -2,6 +2,7 @@
 declare global {
   interface Window {
     pb_Usuario: string;
+    pb_Clave: string;
   }
 }
 import React, { useState } from 'react';
@@ -15,7 +16,11 @@ export default function LoginForm({ onLogin }: { onLogin: (user: any) => void })
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Popup eliminado
+    // Guardar usuario y clave en variables globales
+    window.pb_Usuario = usuario;
+    window.pb_Clave = clave;
+    localStorage.setItem('pb_Usuario', usuario);
+    localStorage.setItem('pb_Clave', clave);
     const res = await fetch('/api/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -25,7 +30,9 @@ export default function LoginForm({ onLogin }: { onLogin: (user: any) => void })
     if (data.success) {
       onLogin(data.usuario);
       window.pb_Usuario = usuario; // Asignar el valor del input usuario
+      window.pb_Clave = clave; // Guardar también la clave en window
       localStorage.setItem('pb_Usuario', usuario); // Guardar también en localStorage
+      localStorage.setItem('pb_Clave', clave); // Guardar también la clave en localStorage
       console.log('pb_Usuario en localStorage después de login:', localStorage.getItem('pb_Usuario'));
       // Obtener coordenadas y registrar en cuadrilla_coordenadas
       if (navigator.geolocation) {
@@ -45,6 +52,7 @@ export default function LoginForm({ onLogin }: { onLogin: (user: any) => void })
     } else {
       setError(data.error || 'Error de autenticación');
       localStorage.removeItem('pb_Usuario'); // Limpiar pb_Usuario si el login falla
+      localStorage.removeItem('pb_Clave'); // Limpiar pb_Clave si el login falla
     }
   };
 

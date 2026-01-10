@@ -28,19 +28,23 @@ const MainForm: React.FC = () => {
   const [usuario, setUsuario] = useState('');
   const [usuarioWindow, setUsuarioWindow] = useState('');
   const [usuarioLocal, setUsuarioLocal] = useState('');
+  const [claveWindow, setClaveWindow] = useState('');
+  const [claveLocal, setClaveLocal] = useState('');
   React.useEffect(() => {
     function updateUsuario() {
       if (typeof window !== 'undefined') {
         // Leer SIEMPRE de localStorage para reflejar el último login
         const usuarioLocal = localStorage.getItem('pb_Usuario') || '';
+        const claveLocal = localStorage.getItem('pb_Clave') || '';
         setUsuario(usuarioLocal);
         setUsuarioWindow(window.pb_Usuario || '');
         setUsuarioLocal(usuarioLocal);
+        setClaveWindow(window.pb_Clave || '');
+        setClaveLocal(claveLocal);
       }
     }
     updateUsuario();
     window.addEventListener('pbUsuarioChange', updateUsuario);
-    // También escuchar cambios en localStorage (por si hay cambios en otras pestañas)
     window.addEventListener('storage', updateUsuario);
     return () => {
       window.removeEventListener('pbUsuarioChange', updateUsuario);
@@ -92,10 +96,15 @@ const MainForm: React.FC = () => {
           {usuario ? `Bienvenido, ${usuario}` : ''}
         </div>
         <div style={{ fontSize: 15, display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
-          {usuario ? `Usuario: ${usuario}  |  ${fecha}` : fecha}
-          <span style={{ fontSize: 12, color: '#eab308', marginTop: 2 }}>
+          {usuario ? `Usuario: ${usuario.toUpperCase()}  |  ${fecha}` : fecha}
+          {/*
+          <span style={{ fontSize: 12, color: '#eab308', marginTop: 2, display: 'block' }}>
             window.pb_Usuario: <b>{usuarioWindow || '(vacío)'}</b> | localStorage pb_Usuario: <b>{usuarioLocal || '(vacío)'}</b>
           </span>
+          <span style={{ fontSize: 12, color: '#16a34a', marginTop: 2, display: 'block' }}>
+            window.pb_Clave: <b>{claveWindow ? '••••••••' : '(vacío)'}</b> | localStorage pb_Clave: <b>{claveLocal ? '••••••••' : '(vacío)'}</b>
+          </span>
+          */}
         </div>
       </div>
       {/* Menú principal */}

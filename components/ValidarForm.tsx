@@ -15,21 +15,7 @@ const ValidarForm: React.FC<ValidarFormProps> = ({ onSuccess }) => {
     e.preventDefault();
     setLoading(true);
     setError('');
-    // Obtener los parámetros de conexión SQLSERVER desde el backend
-    try {
-      const resp = await fetch('/api/mostrar-config-sqlserver');
-      const config = await resp.json();
-      const sqlParams = [
-        `SQLSERVER_USER: ${config.SQLSERVER_USER}`,
-        `SQLSERVER_PASSWORD: ${config.SQLSERVER_PASSWORD}`,
-        `SQLSERVER_HOST: ${config.SQLSERVER_HOST}`,
-        `SQLSERVER_DB: ${config.SQLSERVER_DB}`,
-        `SQLSERVER_PORT: ${config.SQLSERVER_PORT}`
-      ].join('\n');
-      alert('Parámetros de conexión SQLSERVER:\n' + sqlParams);
-    } catch (e) {
-      alert('No se pudo obtener la configuración SQLSERVER');
-    }
+    // ...existing code...
     try {
       const res = await fetch('/api/login', {
         method: 'POST',
@@ -37,6 +23,11 @@ const ValidarForm: React.FC<ValidarFormProps> = ({ onSuccess }) => {
         body: JSON.stringify({ usuario, clave }),
       });
       if (res.ok) {
+        // Guardar usuario y clave en localStorage
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('pb_Usuario', usuario);
+          localStorage.setItem('pb_Clave', clave);
+        }
         onSuccess();
       } else {
         setError('Usuario o clave incorrectos');
