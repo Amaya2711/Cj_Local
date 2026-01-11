@@ -93,7 +93,7 @@ const MainForm: React.FC = () => {
       {/* Barra superior */}
       <div style={{ background: '#222c36', color: '#fff', padding: '10px 32px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div style={{ fontWeight: 700, fontSize: 18 }}>
-          {usuario ? `Bienvenido, ${usuario}` : ''}
+          {usuario ? `Bienvenido, ${usuario.toUpperCase()}` : ''}
         </div>
         <div style={{ fontSize: 15, display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
           {usuario ? `Usuario: ${usuario.toUpperCase()}  |  ${fecha}` : fecha}
