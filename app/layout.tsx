@@ -15,7 +15,6 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     <html lang="es">
       <body>
         <AuthProvider>
-          <GoogleMapsScriptLoader />
           <AppContent>{children}</AppContent>
         </AuthProvider>
       </body>

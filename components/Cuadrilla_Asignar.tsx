@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { GoogleMap, Marker, useJsApiLoader } from '@react-google-maps/api';
+// Definir el array de librerías fuera del componente para evitar warnings de Google Maps
+// Usar solo los valores permitidos por el tipo Library de @react-google-maps/api
+const GOOGLE_MAPS_LIBRARIES: Array<'places' | 'drawing' | 'geometry' | 'visualization'> = ['places'];
 // Configuración para el modal de Google Maps
 const MAPS_MODAL_STYLE = {
   position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(0,0,0,0.25)', zIndex: 2000,
@@ -100,7 +103,7 @@ const Cuadrilla_Asignar: React.FC = () => {
     // Cargar Google Maps API
     const { isLoaded } = useJsApiLoader({
       googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '',
-      libraries: ['places'],
+      libraries: GOOGLE_MAPS_LIBRARIES,
     });
     // Estado para Ubicación
     const [ubicaciones, setUbicaciones] = useState<Ubicacion[]>([]);
