@@ -62,13 +62,19 @@ interface Ubicacion {
 }
 
 const Cuadrilla_Asignar: React.FC = () => {
-      // Estado para la fecha seleccionada
-      // Usar la fecha actual del sistema en formato YYYY-MM-DD
-      function getTodayDateStr() {
-        const d = new Date();
-        return d.toISOString().slice(0, 10);
-      }
-      const [fechaInput, setFechaInput] = useState<string>(getTodayDateStr());
+    // Estado para la fecha seleccionada
+    // Usar la fecha actual del sistema +1 día en formato YYYY-MM-DD, considerando la zona horaria local de Perú
+    function getTomorrowDateStr() {
+      // Obtener la fecha actual en la zona horaria local
+      const now = new Date();
+      // Sumar un día (24 horas)
+      now.setDate(now.getDate() + 1);
+      // Ajustar a la zona horaria de Perú (UTC-5)
+      const offsetMs = (now.getTimezoneOffset() + 300) * 60 * 1000; // 300 min = 5 horas
+      const peruDate = new Date(now.getTime() - offsetMs);
+      return peruDate.toISOString().slice(0, 10);
+    }
+    const [fechaInput, setFechaInput] = useState<string>(getTomorrowDateStr());
     // Estado para modo de selección (site o ubicación)
     const [modoSeleccion, setModoSeleccion] = useState<'site' | 'ubicacion'>('site');
     // Estado para mostrar el modal de Google Maps

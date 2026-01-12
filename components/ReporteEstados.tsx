@@ -17,13 +17,29 @@ interface ResultadoAprobar {
 }
 
 const ReporteEstados: React.FC = () => {
+  // Función para obtener la fecha actual en formato YYYY-MM-DD considerando la zona horaria de Perú (UTC-5)
+  function getTodayPeruDateStr() {
+    const now = new Date();
+    // Ajustar a la zona horaria de Perú (UTC-5)
+    const offsetMs = (now.getTimezoneOffset() + 300) * 60 * 1000; // 300 min = 5 horas
+    const peruDate = new Date(now.getTime() - offsetMs);
+    return peruDate.toISOString().slice(0, 10);
+  }
+  // Función para obtener la fecha de mañana en Perú
+  function getTomorrowPeruDateStr() {
+    const now = new Date();
+    now.setDate(now.getDate() + 1);
+    const offsetMs = (now.getTimezoneOffset() + 300) * 60 * 1000;
+    const peruDate = new Date(now.getTime() - offsetMs);
+    return peruDate.toISOString().slice(0, 10);
+  }
   const [cuadrillas, setCuadrillas] = useState<EmpleadoCuadrilla[]>([]);
   const [cuadrillaInput, setCuadrillaInput] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [activeSuggestion, setActiveSuggestion] = useState(0);
   const [selectedCuadrilla, setSelectedCuadrilla] = useState<string>('');
-  const [fechaIni, setFechaIni] = useState('');
-  const [fechaFin, setFechaFin] = useState('');
+  const [fechaIni, setFechaIni] = useState(getTodayPeruDateStr());
+  const [fechaFin, setFechaFin] = useState(getTomorrowPeruDateStr());
   const [resultados, setResultados] = useState<ResultadoAprobar[]>([]);
   const [buscando, setBuscando] = useState(false);
   const [seleccionados, setSeleccionados] = useState<number[]>([]);
