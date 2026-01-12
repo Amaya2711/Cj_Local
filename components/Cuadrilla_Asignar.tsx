@@ -59,6 +59,13 @@ interface Ubicacion {
 }
 
 const Cuadrilla_Asignar: React.FC = () => {
+      // Estado para la fecha seleccionada
+      // Usar la fecha actual del sistema en formato YYYY-MM-DD
+      function getTodayDateStr() {
+        const d = new Date();
+        return d.toISOString().slice(0, 10);
+      }
+      const [fechaInput, setFechaInput] = useState<string>(getTodayDateStr());
     // Estado para modo de selección (site o ubicación)
     const [modoSeleccion, setModoSeleccion] = useState<'site' | 'ubicacion'>('site');
     // Estado para mostrar el modal de Google Maps
@@ -206,9 +213,8 @@ const Cuadrilla_Asignar: React.FC = () => {
         alert('Seleccione una asignacion válida.');
         return;
       }
-      // Obtener fecha local en formato YYYY-MM-DD
-      const now = new Date();
-      const pFecha = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+      // Usar la fecha seleccionada
+      const pFecha = fechaInput;
       setLoading(true);
       try {
         const res = await fetch(`/api/cuadrilla-asignacion?id_cuadrilla=${idCuadrilla}&pFecha=${pFecha}`);
@@ -260,9 +266,8 @@ const Cuadrilla_Asignar: React.FC = () => {
       } else {
         NroInterno = site ? String(site.NroInterno ?? '') : '';
       }
-      // Obtener fecha local en formato YYYY-MM-DD
-      const now = new Date();
-      const fecha = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+      // Usar la fecha seleccionada
+      const fecha = fechaInput;
 
       // Validar en el grid local
       const existeEnGrid = gridData.some(row => row.id_cuadrilla === id_cuadrilla && row.NroInterno === NroInterno && row.fecha === fecha);
@@ -575,9 +580,8 @@ const Cuadrilla_Asignar: React.FC = () => {
     const site = selectedSiteObj;
     setSelectedSiteObj(null);
     if (!cuadrilla || !site) return;
-    // Obtener fecha local en formato YYYY-MM-DD
-    const now = new Date();
-    const fechaLocal = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    // Usar la fecha seleccionada
+    const fechaLocal = fechaInput;
     setGridData(prev => [
       ...prev,
       {
@@ -711,9 +715,8 @@ const Cuadrilla_Asignar: React.FC = () => {
       setAsignacionesDia([]);
       return;
     }
-    // Obtener fecha local en formato YYYY-MM-DD
-    const now = new Date();
-    const pFecha = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    // Usar la fecha seleccionada
+    const pFecha = fechaInput;
     try {
       const res = await fetch(`/api/cuadrilla-asignacion-dia?idCuadrilla=${selectedCuadrilla}&pFecha=${pFecha}`);
       if (!res.ok) throw new Error('No se pudo cargar asignaciones del día');
@@ -808,6 +811,23 @@ const Cuadrilla_Asignar: React.FC = () => {
             padding: 32,
           }}
         >
+            {/* Campo Fecha (antes de Asignacion) */}
+            <div style={{ marginBottom: 24 }}>
+              <label style={{ fontWeight: 600 }}>Fecha</label>
+              <input
+                type="date"
+                value={fechaInput}
+                onChange={e => setFechaInput(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: 10,
+                  borderRadius: 6,
+                  border: '1px solid #cbd5e1',
+                  marginTop: 6,
+                  fontSize: 16,
+                }}
+              />
+            </div>
             {/* Campo Cuadrilla */}
             <div style={{ marginBottom: 24, position: 'relative' }}>
               <label style={{ fontWeight: 600 }}>Asignacion</label>
@@ -960,24 +980,6 @@ const Cuadrilla_Asignar: React.FC = () => {
                 />
                 <button
                   type="button"
-                  onClick={() => setShowModalUbicacion(true)}
-                  style={{
-                    marginTop: 6,
-                    background: '#2563eb',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: 6,
-                    padding: '0 14px',
-                    fontWeight: 700,
-                    fontSize: 18,
-                    cursor: modoSeleccion === 'ubicacion' ? 'pointer' : 'not-allowed',
-                    height: 40,
-                    opacity: modoSeleccion === 'ubicacion' ? 1 : 0.5
-                  }}
-                  disabled={modoSeleccion !== 'ubicacion'}
-                >Nuevo</button>
-                <button
-                  type="button"
                   style={{
                     marginTop: 6,
                     background: '#059669',
@@ -1044,6 +1046,24 @@ const Cuadrilla_Asignar: React.FC = () => {
                     <circle cx="12" cy="9" r="2.5"/>
                   </svg>
                 </button>
+                <button
+                  type="button"
+                  onClick={() => setShowModalUbicacion(true)}
+                  style={{
+                    marginTop: 6,
+                    background: '#2563eb',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: 6,
+                    padding: '0 14px',
+                    fontWeight: 700,
+                    fontSize: 18,
+                    cursor: modoSeleccion === 'ubicacion' ? 'pointer' : 'not-allowed',
+                    height: 40,
+                    opacity: modoSeleccion === 'ubicacion' ? 1 : 0.5
+                  }}
+                  disabled={modoSeleccion !== 'ubicacion'}
+                >Nuevo</button>
                     {/* Modal Google Maps para seleccionar coordenadas */}
                     {showMapsModal && (
                       <div style={MAPS_MODAL_STYLE as React.CSSProperties}>
