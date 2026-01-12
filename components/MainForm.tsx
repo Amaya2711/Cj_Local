@@ -113,8 +113,7 @@ const MainForm: React.FC = () => {
         <a href="#" style={{ color: menuColor, textDecoration: 'none' }} onClick={e => { e.preventDefault(); setOpcion('asignacion'); }}>Asignacion</a>
         <a href="#" style={{ color: menuColor, textDecoration: 'none' }} onClick={e => { e.preventDefault(); setOpcion('aprobar'); }}>Aprobar</a>
         <a href="#" style={{ color: menuColor, textDecoration: 'none' }} onClick={e => { e.preventDefault(); setOpcion('googlemaps'); }}>Google Maps</a>
-        <a href="#" style={{ color: menuColor, textDecoration: 'none' }} onClick={e => { e.preventDefault(); setOpcion('copiaformulario'); }}>Plantilla</a>
-        <a href="#" style={{ color: menuColor, textDecoration: 'none' }} onClick={e => { e.preventDefault(); setOpcion('plantilla_v3'); }}>Plantilla V3</a>
+        <a href="#" style={{ color: menuColor, textDecoration: 'none' }} onClick={e => { e.preventDefault(); setOpcion('plantilla_v3'); }}>Plantilla</a>
         <a href="#" style={{ color: menuColor, textDecoration: 'none' }} onClick={e => { e.preventDefault(); setOpcion('reporte'); }}>Reporte</a>
       </nav>
       {/* Contenido principal dinámico */}

@@ -27,4 +27,17 @@ async function testConnection() {
   }
 }
 
-testConnection();
+// Exporta una función para obtener la conexión (pool) reutilizable
+let poolPromise = null;
+async function getTestSqlConnection() {
+  if (!poolPromise) {
+    poolPromise = sql.connect(config);
+  }
+  return poolPromise;
+}
+
+module.exports = {
+  getTestSqlConnection
+};
+
+// testConnection();

@@ -17,13 +17,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Método no permitido' });
   }
-  const { PlantillaID, NodoID, SegmentoID, EvidenciaID, RutaImagen } = req.body;
+  const { PlantillaID, NodoID, SegmentoID, EvidenciaID, RutaImagen, IdUsuario } = req.body;
   // Permitir 0 como valor válido para los IDs
   if (
     typeof PlantillaID === 'undefined' || PlantillaID === null ||
     typeof NodoID === 'undefined' || NodoID === null ||
     typeof SegmentoID === 'undefined' || SegmentoID === null ||
-    typeof EvidenciaID === 'undefined' || EvidenciaID === null
+    typeof EvidenciaID === 'undefined' || EvidenciaID === null ||
+    !IdUsuario
   ) {
     return res.status(400).json({ error: 'Faltan parámetros requeridos' });
   }
@@ -37,7 +38,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     request.input('NodoID', sql.Int, NodoID);
     request.input('SegmentoID', sql.Int, SegmentoID);
     request.input('EvidenciaID', sql.Int, EvidenciaID);
-    request.input('RutaImagen', sql.NVarChar(sql.MAX), RutaImagen || '');
+    request.input('RutaImagen', sql.NVarChar(250), RutaImagen || '');
+    request.input('IdUsuario', sql.NVarChar(50), IdUsuario);
     const result = await request.execute('sp_InsertPlantillaImagenes');
     res.status(200).json(result.recordset || { success: true });
   } catch (error: any) {
