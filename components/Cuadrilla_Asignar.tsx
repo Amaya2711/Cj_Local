@@ -771,7 +771,7 @@ const Cuadrilla_Asignar: React.FC = () => {
 
   // El return principal del componente debe estar aquí, no dentro de otra función
   return (
-    <div style={{ maxWidth: 1600, margin: '40px auto', background: '#f8fafc', borderRadius: 18, boxShadow: '0 8px 32px #0002', padding: 40 }}>
+    <div style={{ maxWidth: 2400, margin: '40px auto', background: '#f8fafc', borderRadius: 18, boxShadow: '0 8px 32px #0002', padding: 40, minWidth: 1600 }}>
       {/* Tabs secundarios con estilo igual a Plantilla_v3 */}
       <div style={{ display: 'flex', borderBottom: '2px solid #2563eb', marginBottom: 32 }}>
         <button
@@ -1347,40 +1347,37 @@ const Cuadrilla_Asignar: React.FC = () => {
       )}
       {activeTab === 1 && (
         // ...contenido de la pestaña Buscar asignación...
-        <div style={{ maxWidth: 600, margin: '40px auto', background: 'white', borderRadius: 16, boxShadow: '0 8px 32px rgba(0,0,0,0.08)', padding: 32 }}>
-          {/* Aquí puedes agregar filtros o información de búsqueda adicional si lo necesitas */}
-          <div style={{ display: 'flex', gap: 24, justifyContent: 'center', marginTop: 32 }}>
-            {/* Grid de asignaciones del día */}
-            <div style={{ maxWidth: 800, background: 'white', borderRadius: 12, boxShadow: '0 4px 16px rgba(0,0,0,0.06)', padding: 20, flex: 1 }}>
-              <h3 style={{ marginBottom: 16, textAlign: 'center' }}>Asignaciones del día</h3>
-              <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 10, gap: 8 }}>
-                <button type="button" onClick={() => handleExportAsignacionesDiaCSV()} style={{ background: '#059669', color: 'white', border: 'none', borderRadius: 5, padding: '7px 16px', fontWeight: 600, cursor: 'pointer' }}>
-                  Exportar CSV
-                </button>
-              </div>
-              <div style={{ overflowX: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 15 }}>
-                  <thead>
-                    <tr style={{ background: '#f1f5f9' }}>
-                      <th style={{ padding: 8, border: '1px solid #e5e7eb', minWidth: 160 }}>Empleado</th>
-                      <th style={{ padding: 8, border: '1px solid #e5e7eb' }}>Asignacion</th>
-                      <th style={{ padding: 8, border: '1px solid #e5e7eb', minWidth: 110 }}>Fecha</th>
+        <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', margin: '40px 0' }}>
+          <div style={{ maxWidth: 1200, width: '100%', background: 'white', borderRadius: 16, boxShadow: '0 8px 32px rgba(0,0,0,0.08)', padding: 32, marginBottom: 32, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            {/* Aquí puedes agregar filtros o información de búsqueda adicional si lo necesitas */}
+            <h3 style={{ marginBottom: 16, textAlign: 'center' }}>Asignaciones del día</h3>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 10, gap: 8, width: '100%' }}>
+              <button type="button" onClick={() => handleExportAsignacionesDiaCSV()} style={{ background: '#059669', color: 'white', border: 'none', borderRadius: 5, padding: '7px 16px', fontWeight: 600, cursor: 'pointer' }}>
+                Exportar CSV
+              </button>
+            </div>
+            <div style={{ overflowX: 'auto', width: '100%' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 15, minWidth: 900 }}>
+                <thead>
+                  <tr style={{ background: '#f1f5f9' }}>
+                    <th style={{ padding: 8, border: '1px solid #e5e7eb', minWidth: 260 }}>Empleado</th>
+                    <th style={{ padding: 8, border: '1px solid #e5e7eb', minWidth: 260 }}>Asignacion</th>
+                    <th style={{ padding: 8, border: '1px solid #e5e7eb', minWidth: 110 }}>Fecha</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {asignacionesDia.map((row: any, idx: number) => (
+                    <tr key={
+                      (row.ID_CUADRILLA ?? row.id_cuadrilla ?? row.idempleado ?? row.IdEmpleado ?? idx) +
+                      '-' + (row.IDSITE ?? row.idsite ?? row.IdSite ?? idx)
+                    }>
+                      <td style={{ padding: 8, border: '1px solid #e5e7eb', minWidth: 260, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{row.Empleado ?? row.NombreEmpleado ?? row.nombreempleado ?? ''}</td>
+                      <td style={{ padding: 8, border: '1px solid #e5e7eb', minWidth: 260, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{row.Concatenado ?? row.concatenado ?? ''}</td>
+                      <td style={{ padding: 8, border: '1px solid #e5e7eb' }}>{row.fecha ?? ''}</td>
                     </tr>
-                  </thead>
-                  <tbody>
-                    {asignacionesDia.map((row: any, idx: number) => (
-                      <tr key={
-                        (row.ID_CUADRILLA ?? row.id_cuadrilla ?? row.idempleado ?? row.IdEmpleado ?? idx) +
-                        '-' + (row.IDSITE ?? row.idsite ?? row.IdSite ?? idx)
-                      }>
-                        <td style={{ padding: 8, border: '1px solid #e5e7eb' }}>{row.Empleado ?? row.NombreEmpleado ?? row.nombreempleado ?? ''}</td>
-                        <td style={{ padding: 8, border: '1px solid #e5e7eb' }}>{row.Concatenado ?? row.concatenado ?? ''}</td>
-                        <td style={{ padding: 8, border: '1px solid #e5e7eb' }}>{row.fecha ?? ''}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </div>
         </div>
