@@ -9,6 +9,43 @@ const fetchSP = async (spName: string, params: any = {}) => {
 };
 
 const PlantillaV3 = () => {
+      // Funciones para eliminar registros
+      const eliminarArea = async (id: any) => {
+        if (!window.confirm('¿Está seguro de eliminar esta área?')) return;
+        try {
+          await axios.post('/api/sp_EliminarNodoPrincipal', { NodoID: id });
+          axios.post('/api/sp_GetPlaNodoPrincipal').then(r => setAreas(r.data));
+        } catch (err) {
+          alert('No se puede eliminar Area por que tiene plantilla referenciada');
+        }
+      };
+      const eliminarPlantilla = async (id: any) => {
+        if (!window.confirm('¿Está seguro de eliminar esta plantilla?')) return;
+        try {
+          await axios.post('/api/sp_EliminarPlantilla', { PlantillaID: id });
+          axios.post('/api/sp_GetPlaPlantilla').then(r => setPlantillas(r.data));
+        } catch (err) {
+          alert('No se puede eliminar Plantilla');
+        }
+      };
+      const eliminarSegmento = async (id: any) => {
+        if (!window.confirm('¿Está seguro de eliminar este segmento?')) return;
+        try {
+          await axios.post('/api/sp_EliminarSegmento', { SegmentoID: id });
+          axios.post('/api/sp_GetPlaSegmento').then(r => setSegmentos(r.data));
+        } catch (err) {
+          alert('No se puede eliminar Segmento por que tiene plantilla referenciada');
+        }
+      };
+      const eliminarEvidencia = async (id: any) => {
+        if (!window.confirm('¿Está seguro de eliminar esta evidencia?')) return;
+        try {
+          await axios.post('/api/sp_EliminarEvidencia', { EvidenciaID: id });
+          axios.post('/api/sp_GetPlaEvidencia').then(r => setEvidencias(r.data));
+        } catch (err) {
+          alert('No se puede eliminar Evidencia por que tiene plantilla referenciada');
+        }
+      };
     // Estado para el popup de nuevo nodo principal
     const [showAddNodo, setShowAddNodo] = useState(false);
     const [nuevoNodoNombre, setNuevoNodoNombre] = useState('');
@@ -73,6 +110,9 @@ const PlantillaV3 = () => {
   // Relación de evidencias seleccionadas por segmento
   const [evidenciasPorSegmento, setEvidenciasPorSegmento] = useState<{ [segmentoId: string]: any[] }>({});
 
+  // Control de pestaña activa
+  const [activeTab, setActiveTab] = useState<'registro' | 'mantenimiento'>('registro');
+
   // Cargar datos iniciales
   useEffect(() => {
     // Obtener áreas, plantillas y segmentos al cargar
@@ -81,14 +121,12 @@ const PlantillaV3 = () => {
     axios.post('/api/sp_GetPlaSegmento').then(res => setSegmentos(res.data));
   }, []);
 
-  // Cuando selecciona un segmento, obtener evidencias
+  // Cargar evidencias al entrar en la pestaña de mantenimiento
   useEffect(() => {
-    if (segmentoSel) {
+    if (activeTab === 'mantenimiento') {
       axios.post('/api/sp_GetPlaEvidencia').then(res => setEvidencias(res.data));
-    } else {
-      setEvidencias([]);
     }
-  }, [segmentoSel]);
+  }, [activeTab]);
 
   // Actualizar estructura seleccionada
   useEffect(() => {
@@ -122,8 +160,62 @@ const PlantillaV3 = () => {
     }
   }, [areaSel, plantillaSel, evidenciasPorSegmento, segmentos]);
 
-  // Control de pestaña activa
-  const [activeTab, setActiveTab] = useState<'registro' | 'mantenimiento'>('registro');
+  // Función para cargar plantilla (antes era el onClick del botón)
+  const cargarPlantilla = async (areaId = areaSel, plantillaId = plantillaSel) => {
+    if (!areaId || !plantillaId) return;
+    try {
+      const params = {
+        Tipo: 5,
+        PlantillaID: Number(plantillaId),
+        pArea: Number(areaId)
+      };
+      const { data } = await axios.post('/api/sp_BuscarPlantilla', params);
+      if (data && data.length > 0) {
+        setSegmentoEvidenciasEnabled(false);
+        const segmentosMap: {
+          [key: string]: {
+            segmento: string,
+            segmentoId: string,
+            evidencias: Array<{ evidencia: string, evidenciaId: string }>
+          }
+        } = {};
+        data.forEach((row: any) => {
+          const segmentoId = String(row.SegmentoID || row.segmentoid || '');
+          const segmentoNombre = row.Segmento || row.segmento || segmentoId;
+          const evidenciaId = String(row.EvidenciaID || row.evidenciaid || '');
+          const evidenciaNombre = row.Evidencia || row.evidencia || evidenciaId;
+          if (!segmentosMap[segmentoId]) {
+            segmentosMap[segmentoId] = {
+              segmento: segmentoNombre,
+              segmentoId: segmentoId,
+              evidencias: []
+            };
+          }
+          if (evidenciaId) {
+            segmentosMap[segmentoId].evidencias.push({ evidencia: evidenciaNombre, evidenciaId });
+          }
+        });
+        const areaObj = areas.find(a => (a.NodoID || a.id) == areaId);
+        const plantillaObj = plantillas.find(p => (p.PlantillaID || p.id) == plantillaId);
+        const estructuraNueva = [
+          {
+            area: areaObj ? (areaObj.Nombre || areaObj.nombre) : areaId,
+            areaId: areaObj ? (areaObj.NodoID || areaObj.id) : areaId,
+            plantilla: plantillaObj ? (plantillaObj.Nombre || plantillaObj.nombre) : plantillaId,
+            plantillaId: plantillaObj ? (plantillaObj.PlantillaID || plantillaObj.id) : plantillaId,
+            segmentos: Object.values(segmentosMap)
+          }
+        ];
+        setEstructura(estructuraNueva);
+      } else {
+        setSegmentoEvidenciasEnabled(true);
+        setEstructura([]);
+      }
+    } catch (err) {
+      setEstructura([]);
+      setSegmentoEvidenciasEnabled(true);
+    }
+  };
 
   return (
     <div style={{ maxWidth: 1600, margin: '40px auto', background: '#f8fafc', borderRadius: 18, boxShadow: '0 8px 32px #0002', padding: 40 }}>
@@ -167,7 +259,27 @@ const PlantillaV3 = () => {
             <div style={{ marginBottom: 24 }}>
               <label style={{ fontWeight: 700 }}>Área:</label>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <select value={areaSel} onChange={e => setAreaSel(e.target.value)} className="form-select" style={{ marginLeft: 8 }}>
+                <select value={areaSel} onChange={e => setAreaSel(e.target.value)}
+                  className="form-select"
+                  style={{
+                    marginLeft: 8,
+                    padding: '10px 18px',
+                    borderRadius: 8,
+                    border: '1.5px solid #2563eb',
+                    background: '#f8fafc',
+                    color: '#1e293b',
+                    fontWeight: 600,
+                    fontSize: 16,
+                    boxShadow: '0 2px 8px #2563eb22',
+                    outline: 'none',
+                    transition: 'border 0.2s',
+                    minWidth: 220,
+                    width: 'auto',
+                    maxWidth: 400
+                  }}
+                  onFocus={e => e.currentTarget.style.border = '2px solid #1d4ed8'}
+                  onBlur={e => e.currentTarget.style.border = '1.5px solid #2563eb'}
+                >
                   <option value="">Seleccione...</option>
                   {areas.map((a: any) => <option key={a.NodoID || a.id} value={a.NodoID || a.id}>{a.Nombre || a.nombre}</option>)}
                 </select>
@@ -177,77 +289,72 @@ const PlantillaV3 = () => {
             <div style={{ marginBottom: 24 }}>
               <label style={{ fontWeight: 700 }}>Plantilla:</label>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <select value={plantillaSel} onChange={e => setPlantillaSel(e.target.value)} className="form-select" style={{ marginLeft: 8, marginRight: 8, width: 180 }}>
-                  <option value="">Seleccione...</option>
-                  {plantillas.map((p: any) => <option key={p.PlantillaID} value={p.PlantillaID}>{p.Nombre || p.nombre}</option>)}
-                </select>
-                {/* Botón para agregar nueva plantilla oculto en Registro */}
-                <button
-                  type="button"
-                  className="btn btn-info"
-                  onClick={async () => {
-                    if (!areaSel || !plantillaSel) return;
-                    try {
-                      const params = {
-                        Tipo: 5,
-                        PlantillaID: Number(plantillaSel),
-                        pArea: Number(areaSel)
-                      };
-                      const { data } = await axios.post('/api/sp_BuscarPlantilla', params);
-                      if (data && data.length > 0) {
-                        setSegmentoEvidenciasEnabled(false);
-                        const segmentosMap: {
-                          [key: string]: {
-                            segmento: string,
-                            segmentoId: string,
-                            evidencias: Array<{ evidencia: string, evidenciaId: string }>
-                          }
-                        } = {};
-                        data.forEach((row: any) => {
-                          const segmentoId = String(row.SegmentoID || row.segmentoid || '');
-                          const segmentoNombre = row.Segmento || row.segmento || segmentoId;
-                          const evidenciaId = String(row.EvidenciaID || row.evidenciaid || '');
-                          const evidenciaNombre = row.Evidencia || row.evidencia || evidenciaId;
-                          if (!segmentosMap[segmentoId]) {
-                            segmentosMap[segmentoId] = {
-                              segmento: segmentoNombre,
-                              segmentoId: segmentoId,
-                              evidencias: []
-                            };
-                          }
-                          if (evidenciaId) {
-                            segmentosMap[segmentoId].evidencias.push({ evidencia: evidenciaNombre, evidenciaId });
-                          }
-                        });
-                        const areaObj = areas.find(a => (a.NodoID || a.id) == areaSel);
-                        const plantillaObj = plantillas.find(p => (p.PlantillaID || p.id) == plantillaSel);
-                        const estructuraNueva = [
-                          {
-                            area: areaObj ? (areaObj.Nombre || areaObj.nombre) : areaSel,
-                            areaId: areaObj ? (areaObj.NodoID || areaObj.id) : areaSel,
-                            plantilla: plantillaObj ? (plantillaObj.Nombre || plantillaObj.nombre) : plantillaSel,
-                            plantillaId: plantillaObj ? (plantillaObj.PlantillaID || plantillaObj.id) : plantillaSel,
-                            segmentos: Object.values(segmentosMap)
-                          }
-                        ];
-                        setEstructura(estructuraNueva);
-                      } else {
-                        setSegmentoEvidenciasEnabled(true);
-                        setEstructura([]);
-                      }
-                    } catch (err) {
+                <select
+                  value={plantillaSel}
+                  onChange={async e => {
+                    setPlantillaSel(e.target.value);
+                    // Ejecutar automáticamente la lógica de cargar plantilla al seleccionar una nueva
+                    if (e.target.value && areaSel) {
+                      await cargarPlantilla(areaSel, e.target.value);
+                    } else {
                       setEstructura([]);
                       setSegmentoEvidenciasEnabled(true);
                     }
                   }}
-                >Cargar Plantilla</button>
+                  className="form-select"
+                  style={{
+                    marginLeft: 8,
+                    marginRight: 8,
+                    minWidth: 220,
+                    width: 'auto',
+                    maxWidth: 400,
+                    padding: '10px 18px',
+                    borderRadius: 8,
+                    border: '1.5px solid #2563eb',
+                    background: '#f8fafc',
+                    color: '#1e293b',
+                    fontWeight: 600,
+                    fontSize: 16,
+                    boxShadow: '0 2px 8px #2563eb22',
+                    outline: 'none',
+                    transition: 'border 0.2s',
+                  }}
+                  onFocus={e => e.currentTarget.style.border = '2px solid #1d4ed8'}
+                  onBlur={e => e.currentTarget.style.border = '1.5px solid #2563eb'}
+                >
+                  <option value="">Seleccione...</option>
+                  {plantillas.map((p: any) => <option key={p.PlantillaID} value={p.PlantillaID}>{p.Nombre || p.nombre}</option>)}
+                </select>
+                {/* Botón para agregar nueva plantilla oculto en Registro */}
+                {/* El botón Cargar Plantilla queda oculto, la acción es automática */}
                 {showAddPlantilla && null}
               </div>
             </div>
             <div style={{ marginBottom: 24, opacity: segmentoEvidenciasEnabled ? 1 : 0.5, pointerEvents: segmentoEvidenciasEnabled ? 'auto' : 'none' }}>
               <label style={{ fontWeight: 700 }}>Segmento:</label>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <select value={segmentoSel} onChange={e => setSegmentoSel(e.target.value)} className="form-select" style={{ marginLeft: 8, width: 180 }} disabled={!segmentoEvidenciasEnabled}>
+                <select value={segmentoSel} onChange={e => setSegmentoSel(e.target.value)}
+                  className="form-select"
+                  style={{
+                    marginLeft: 8,
+                    minWidth: 220,
+                    width: 'auto',
+                    maxWidth: 400,
+                    padding: '10px 18px',
+                    borderRadius: 8,
+                    border: '1.5px solid #2563eb',
+                    background: '#f8fafc',
+                    color: '#1e293b',
+                    fontWeight: 600,
+                    fontSize: 16,
+                    boxShadow: '0 2px 8px #2563eb22',
+                    outline: 'none',
+                    transition: 'border 0.2s',
+                  }}
+                  onFocus={e => e.currentTarget.style.border = '2px solid #1d4ed8'}
+                  onBlur={e => e.currentTarget.style.border = '1.5px solid #2563eb'}
+                  disabled={!segmentoEvidenciasEnabled}
+                >
                   <option value="">Seleccione...</option>
                   {segmentos.map((s: any) => <option key={s.SegmentoID} value={s.SegmentoID}>{s.Nombre || s.nombre}</option>)}
                 </select>
@@ -280,11 +387,50 @@ const PlantillaV3 = () => {
                           </div>
                         ))}
                       </div>
-                      <button type="button" className="btn btn-primary" style={{ marginTop: 12 }} disabled={!segmentoEvidenciasEnabled || evidenciasSel.length === 0} onClick={() => {
-                        if (!segmentoSel) return;
-                        setEvidenciasPorSegmento(prev => ({ ...prev, [segmentoSel]: evidencias.filter(ev => evidenciasSel.includes(String(ev.EvidenciaID))) }));
-                        setEvidenciasSel([]);
-                      }}>Registrar evidencias para este segmento</button>
+                      <button
+                        type="button"
+                        className="btn"
+                        style={{
+                          marginTop: 12,
+                          background: 'linear-gradient(90deg, #2563eb 0%, #1d4ed8 100%)',
+                          color: '#fff',
+                          fontWeight: 700,
+                          fontSize: 15,
+                          padding: '8px 22px',
+                          border: 'none',
+                          borderRadius: 8,
+                          boxShadow: '0 2px 8px #2563eb33',
+                          letterSpacing: 0.5,
+                          cursor: (!segmentoEvidenciasEnabled || evidenciasSel.length === 0) ? 'not-allowed' : 'pointer',
+                          opacity: (!segmentoEvidenciasEnabled || evidenciasSel.length === 0) ? 0.6 : 1,
+                          transition: 'background 0.2s, box-shadow 0.2s',
+                        }}
+                        onMouseOver={e => {
+                          if (segmentoEvidenciasEnabled && evidenciasSel.length > 0) {
+                            e.currentTarget.style.background = 'linear-gradient(90deg, #1d4ed8 0%, #2563eb 100%)';
+                            e.currentTarget.style.boxShadow = '0 4px 16px #1d4ed833';
+                          }
+                        }}
+                        onMouseOut={e => {
+                          e.currentTarget.style.background = 'linear-gradient(90deg, #2563eb 0%, #1d4ed8 100%)';
+                          e.currentTarget.style.boxShadow = '0 2px 8px #2563eb33';
+                        }}
+                        disabled={!segmentoEvidenciasEnabled || evidenciasSel.length === 0}
+                        onClick={() => {
+                          if (!segmentoSel) return;
+                          setEvidenciasPorSegmento(prev => ({ ...prev, [segmentoSel]: evidencias.filter(ev => evidenciasSel.includes(String(ev.EvidenciaID))) }));
+                          setEvidenciasSel([]);
+                        }}
+                      >
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                          <svg width="18" height="18" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ marginRight: 4 }}>
+                            <rect x="3" y="6" width="16" height="10" rx="3" fill="#fff" fillOpacity="0.12" stroke="#fff" strokeWidth="1.2"/>
+                            <rect x="7" y="2.5" width="8" height="3" rx="1.5" fill="#fff" fillOpacity="0.18" stroke="#fff" strokeWidth="1.2"/>
+                            <path d="M8 11H14" stroke="#fff" strokeWidth="1.5" strokeLinecap="round"/>
+                          </svg>
+                          Cargar datos plantilla
+                        </span>
+                      </button>
                     </>
                   )}
                 </div>
@@ -331,10 +477,34 @@ const PlantillaV3 = () => {
             <div style={{ fontWeight: 700, color: '#2563eb', fontSize: 20, marginBottom: 18 }}>Estructura Seleccionada</div>
             <button
               type="button"
-              className="btn btn-success"
-              style={{ marginBottom: 18 }}
+              className="btn"
+              style={{
+                marginBottom: 18,
+                background: 'linear-gradient(90deg, #22c55e 0%, #15803d 100%)',
+                color: '#fff',
+                fontWeight: 700,
+                fontSize: 16,
+                padding: '10px 26px',
+                border: 'none',
+                borderRadius: 10,
+                boxShadow: '0 4px 16px #22c55e33',
+                letterSpacing: 1,
+                cursor: (estructura.length === 0 || !segmentoEvidenciasEnabled) ? 'not-allowed' : 'pointer',
+                opacity: (estructura.length === 0 || !segmentoEvidenciasEnabled) ? 0.6 : 1,
+                transition: 'background 0.2s, box-shadow 0.2s',
+              }}
+              onMouseOver={e => {
+                if (estructura.length !== 0 && segmentoEvidenciasEnabled) {
+                  e.currentTarget.style.background = 'linear-gradient(90deg, #15803d 0%, #22c55e 100%)';
+                  e.currentTarget.style.boxShadow = '0 6px 24px #15803d33';
+                }
+              }}
+              onMouseOut={e => {
+                e.currentTarget.style.background = 'linear-gradient(90deg, #22c55e 0%, #15803d 100%)';
+                e.currentTarget.style.boxShadow = '0 4px 16px #22c55e33';
+              }}
               onClick={async () => {
-                if (!estructura.length) return;
+                if (!estructura.length || !segmentoEvidenciasEnabled) return;
                 try {
                   // Usar los IDs reales almacenados en la estructura seleccionada
                   const estr = estructura[0];
@@ -398,8 +568,17 @@ const PlantillaV3 = () => {
                   alert('Error al grabar la plantilla.');
                 }
               }}
-              disabled={estructura.length === 0}
-            >Grabar Plantilla</button>
+              disabled={estructura.length === 0 || !segmentoEvidenciasEnabled}
+            >
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 10 }}>
+                <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ marginRight: 6 }}>
+                  <rect x="3" y="6" width="16" height="10" rx="3" fill="#fff" fillOpacity="0.12" stroke="#fff" strokeWidth="1.2"/>
+                  <rect x="7" y="2.5" width="8" height="3" rx="1.5" fill="#fff" fillOpacity="0.18" stroke="#fff" strokeWidth="1.2"/>
+                  <path d="M8 11H14" stroke="#fff" strokeWidth="1.5" strokeLinecap="round"/>
+                </svg>
+                Grabar Plantilla
+              </span>
+            </button>
             <ul style={{ listStyle: 'none', paddingLeft: 0 }}>
               {estructura.length === 0 ? (
                 <li style={{ color: '#64748b', fontStyle: 'italic' }}>No hay estructura seleccionada.</li>
@@ -572,11 +751,14 @@ const PlantillaV3 = () => {
                   <li style={{ color: '#64748b', fontStyle: 'italic' }}>No hay áreas registradas.</li>
                 ) : (
                   areas.map((a: any) => (
-                    <li key={a.NodoID || a.id} style={{ padding: '6px 0', borderBottom: '1px solid #f1f5f9' }}>
+                    <li key={a.NodoID || a.id} style={{ padding: '6px 0', borderBottom: '1px solid #f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                       <span style={{ fontWeight: 500 }}>{a.Nombre || a.nombre}</span>
+                      <button title="Eliminar área" onClick={() => eliminarArea(a.NodoID || a.id)} style={{ background: 'none', border: 'none', color: '#dc2626', cursor: 'pointer', marginLeft: 8, fontSize: 22, lineHeight: 1 }}>
+                        <span role="img" aria-label="Eliminar">⨯</span>
+                      </button>
                     </li>
-                  ))
-                )}
+                  )))
+                }
               </ul>
             </div>
             {/* Popup para agregar nueva área */}
@@ -638,8 +820,11 @@ const PlantillaV3 = () => {
                   <li style={{ color: '#64748b', fontStyle: 'italic' }}>No hay plantillas registradas.</li>
                 ) : (
                   plantillas.map((p: any) => (
-                    <li key={p.PlantillaID || p.id} style={{ padding: '6px 0', borderBottom: '1px solid #f1f5f9' }}>
+                    <li key={p.PlantillaID || p.id} style={{ padding: '6px 0', borderBottom: '1px solid #f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                       <span style={{ fontWeight: 500 }}>{p.Nombre || p.nombre}</span>
+                      <button title="Eliminar plantilla" onClick={() => eliminarPlantilla(p.PlantillaID || p.id)} style={{ background: 'none', border: 'none', color: '#dc2626', cursor: 'pointer', marginLeft: 8, fontSize: 22, lineHeight: 1 }}>
+                        <span role="img" aria-label="Eliminar">⨯</span>
+                      </button>
                     </li>
                   ))
                 )}
@@ -711,8 +896,11 @@ const PlantillaV3 = () => {
                   <li style={{ color: '#64748b', fontStyle: 'italic' }}>No hay segmentos registrados.</li>
                 ) : (
                   segmentos.map((s: any) => (
-                    <li key={s.SegmentoID || s.id} style={{ padding: '6px 0', borderBottom: '1px solid #f1f5f9' }}>
+                    <li key={s.SegmentoID || s.id} style={{ padding: '6px 0', borderBottom: '1px solid #f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                       <span style={{ fontWeight: 500 }}>{s.Nombre || s.nombre}</span>
+                      <button title="Eliminar segmento" onClick={() => eliminarSegmento(s.SegmentoID || s.id)} style={{ background: 'none', border: 'none', color: '#dc2626', cursor: 'pointer', marginLeft: 8, fontSize: 22, lineHeight: 1 }}>
+                        <span role="img" aria-label="Eliminar">⨯</span>
+                      </button>
                     </li>
                   ))
                 )}
@@ -779,8 +967,11 @@ const PlantillaV3 = () => {
                   <li style={{ color: '#64748b', fontStyle: 'italic' }}>No hay evidencias registradas.</li>
                 ) : (
                   evidencias.map((ev: any) => (
-                    <li key={ev.EvidenciaID || ev.id} style={{ padding: '6px 0', borderBottom: '1px solid #f1f5f9' }}>
+                    <li key={ev.EvidenciaID || ev.id} style={{ padding: '6px 0', borderBottom: '1px solid #f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                       <span style={{ fontWeight: 500 }}>{ev.Nombre || ev.nombre}</span>
+                      <button title="Eliminar evidencia" onClick={() => eliminarEvidencia(ev.EvidenciaID || ev.id)} style={{ background: 'none', border: 'none', color: '#dc2626', cursor: 'pointer', marginLeft: 8, fontSize: 22, lineHeight: 1 }}>
+                        <span role="img" aria-label="Eliminar">⨯</span>
+                      </button>
                     </li>
                   ))
                 )}
