@@ -216,7 +216,7 @@ const PlantillaV3 = () => {
   };
 
   return (
-    <div style={{ maxWidth: 1600, margin: '40px auto', background: '#f8fafc', borderRadius: 18, boxShadow: '0 8px 32px #0002', padding: 40 }}>
+    <div style={{ maxWidth: 1600, margin: '0px auto 40px auto', background: '#f8fafc', borderRadius: 18, boxShadow: '0 8px 32px #0002', padding: '0px 40px 40px 40px' }}>
       {/* Tabs */}
       <div style={{ display: 'flex', borderBottom: '2px solid #2563eb', marginBottom: 32 }}>
         <button

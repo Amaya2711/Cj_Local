@@ -4,7 +4,6 @@ interface ValidarFormProps {
   onSuccess: () => void;
 }
 
-
 const ValidarForm: React.FC<ValidarFormProps> = ({ onSuccess }) => {
   const [usuario, setUsuario] = useState('');
   const [clave, setClave] = useState('');
@@ -15,7 +14,6 @@ const ValidarForm: React.FC<ValidarFormProps> = ({ onSuccess }) => {
     e.preventDefault();
     setLoading(true);
     setError('');
-    // ...existing code...
     try {
       const res = await fetch('/api/login', {
         method: 'POST',
@@ -23,10 +21,17 @@ const ValidarForm: React.FC<ValidarFormProps> = ({ onSuccess }) => {
         body: JSON.stringify({ usuario, clave }),
       });
       if (res.ok) {
+        const data = await res.json();
         // Guardar usuario y clave en localStorage
         if (typeof window !== 'undefined') {
           localStorage.setItem('pb_Usuario', usuario);
           localStorage.setItem('pb_Clave', clave);
+          // Guardar NombreEmpleado si existe
+          if (data.usuario && data.usuario.NombreEmpleado) {
+            window.pb_NombreEmpleado = data.usuario.NombreEmpleado;
+            localStorage.setItem('pb_NombreEmpleado', data.usuario.NombreEmpleado);
+            window.dispatchEvent(new Event('pbNombreEmpleadoChange'));
+          }
         }
         onSuccess();
       } else {
@@ -54,7 +59,7 @@ const ValidarForm: React.FC<ValidarFormProps> = ({ onSuccess }) => {
     }}>
       <div style={{ textAlign: 'center', marginBottom: 24 }}>
         <img src="/logo-empresa.png" alt="Logo" style={{ height: 48, marginBottom: 8 }} />
-        <h2 style={{ fontWeight: 700, color: '#1e293b', margin: 0 }}>Acceso al Sistema</h2>
+        {/* Título eliminado según requerimiento */}
         <div style={{ color: '#64748b', fontSize: 15, marginTop: 4 }}>Ingrese sus credenciales empresariales</div>
       </div>
       <form onSubmit={handleSubmit}>

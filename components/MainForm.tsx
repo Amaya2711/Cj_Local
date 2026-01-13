@@ -24,12 +24,24 @@ const menuColor = '#2563eb';
 
 // MENU PRINCIPAL ACTIVO
 const MainForm: React.FC = () => {
-  // Obtener el usuario autenticado desde localStorage usando useEffect y useState
-  const [usuario, setUsuario] = useState('');
-  const [usuarioWindow, setUsuarioWindow] = useState('');
-  const [usuarioLocal, setUsuarioLocal] = useState('');
-  const [claveWindow, setClaveWindow] = useState('');
-  const [claveLocal, setClaveLocal] = useState('');
+    // Obtener el usuario autenticado desde localStorage usando useEffect y useState
+    const [usuario, setUsuario] = useState('');
+    const [usuarioWindow, setUsuarioWindow] = useState('');
+    const [usuarioLocal, setUsuarioLocal] = useState('');
+    const [claveWindow, setClaveWindow] = useState('');
+    const [claveLocal, setClaveLocal] = useState('');
+    // DEBUG: Mostrar valores en consola en cada render
+  // Obtener el nombre del empleado autenticado
+  const [nombreEmpleado, setNombreEmpleado] = useState('');
+
+    React.useEffect(() => {
+      if (typeof window !== 'undefined') {
+        console.log('[DEBUG MainForm] usuario:', usuario);
+        console.log('[DEBUG MainForm] nombreEmpleado (state):', nombreEmpleado);
+        console.log('[DEBUG MainForm] window.pb_NombreEmpleado:', window.pb_NombreEmpleado);
+        console.log('[DEBUG MainForm] localStorage pb_NombreEmpleado:', localStorage.getItem('pb_NombreEmpleado'));
+      }
+    }, [usuario, nombreEmpleado]);
   React.useEffect(() => {
     function updateUsuario() {
       if (typeof window !== 'undefined') {
@@ -51,6 +63,31 @@ const MainForm: React.FC = () => {
       window.removeEventListener('storage', updateUsuario);
     };
   }, []);
+  React.useEffect(() => {
+    function updateNombreEmpleado() {
+      if (typeof window !== 'undefined') {
+        // Siempre leer de localStorage tras login exitoso y limpiar espacios
+        let nombre = (localStorage.getItem('pb_NombreEmpleado') || '').trim();
+        window.pb_NombreEmpleado = nombre;
+        setNombreEmpleado(nombre);
+        console.log('[MainForm] NombreEmpleado actualizado:', nombre);
+      }
+    }
+    updateNombreEmpleado();
+    // Escuchar evento custom para forzar actualización tras login
+    function handleNombreEmpleadoChange() {
+      updateNombreEmpleado();
+    }
+    window.addEventListener('pbNombreEmpleadoChange', handleNombreEmpleadoChange);
+    window.addEventListener('pbUsuarioChange', updateNombreEmpleado);
+    window.addEventListener('storage', updateNombreEmpleado);
+    // También actualizar cuando cambia usuario
+    return () => {
+      window.removeEventListener('pbNombreEmpleadoChange', handleNombreEmpleadoChange);
+      window.removeEventListener('pbUsuarioChange', updateNombreEmpleado);
+      window.removeEventListener('storage', updateNombreEmpleado);
+    };
+  }, [usuario]);
   const fecha = new Date().toLocaleDateString('es-PE', {
     weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
   });
@@ -88,12 +125,20 @@ const MainForm: React.FC = () => {
     );
   }
 
+  // Mostrar Bienvenido, nombreEmpleado si existe, si no mostrar usuario
+  // Ejemplo: Bienvenido, JUAN PEREZ
+  const bienvenidoTexto = (nombreEmpleado && nombreEmpleado.trim())
+    ? `Bienvenido, ${nombreEmpleado}`
+    : usuario
+      ? `Bienvenido, ${usuario.toUpperCase()}`
+      : '';
+
   return (
     <div style={{ background: '#f8fafc', minHeight: '100vh', width: '100vw' }}>
       {/* Barra superior */}
       <div style={{ background: '#222c36', color: '#fff', padding: '10px 32px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div style={{ fontWeight: 700, fontSize: 18 }}>
-          {usuario ? `Bienvenido, ${usuario.toUpperCase()}` : ''}
+          {bienvenidoTexto}
         </div>
         <div style={{ fontSize: 15, display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
           {usuario ? `Usuario: ${usuario.toUpperCase()}  |  ${fecha}` : fecha}

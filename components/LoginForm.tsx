@@ -3,6 +3,7 @@ declare global {
   interface Window {
     pb_Usuario: string;
     pb_Clave: string;
+    pb_NombreEmpleado: string;
   }
 }
 import React, { useState } from 'react';
@@ -27,12 +28,15 @@ export default function LoginForm({ onLogin }: { onLogin: (user: any) => void })
       body: JSON.stringify({ usuario, clave }),
     });
     const data = await res.json();
-    if (data.success) {
+      if (data.ok) {
       onLogin(data.usuario);
       window.pb_Usuario = usuario; // Asignar el valor del input usuario
       window.pb_Clave = clave; // Guardar también la clave en window
+      window.pb_NombreEmpleado = data.usuario?.NombreEmpleado || '';
       localStorage.setItem('pb_Usuario', usuario); // Guardar también en localStorage
       localStorage.setItem('pb_Clave', clave); // Guardar también la clave en localStorage
+      localStorage.setItem('pb_NombreEmpleado', data.usuario?.NombreEmpleado || '');
+        window.dispatchEvent(new Event('pbNombreEmpleadoChange'));
       console.log('pb_Usuario en localStorage después de login:', localStorage.getItem('pb_Usuario'));
       // Obtener coordenadas y registrar en cuadrilla_coordenadas
       if (navigator.geolocation) {
@@ -58,10 +62,24 @@ export default function LoginForm({ onLogin }: { onLogin: (user: any) => void })
 
   // handleShowEnvs eliminado
 
+  // Mostrar mensaje de bienvenida si existe NombreEmpleado
+  // Se expone nombreEmpleado para uso externo igual que usuario
+  function getNombreEmpleado(): string {
+    if (typeof window !== 'undefined') {
+      return window.pb_NombreEmpleado || localStorage.getItem('pb_NombreEmpleado') || '';
+    }
+    return '';
+  }
+
   return (
     <>
+      {getNombreEmpleado() && (
+        <div style={{ textAlign: 'center', margin: '16px 0', fontWeight: 700, fontSize: 18, color: '#2563eb' }}>
+          Bienvenido, {getNombreEmpleado()}
+        </div>
+      )}
       <form onSubmit={handleSubmit} style={{ maxWidth: 400, margin: '0 auto', padding: 24, background: '#f9f9f9', borderRadius: 12, boxShadow: '0 2px 12px #0001' }}>
-        <h2 style={{ textAlign: 'center', marginBottom: 24 }}>Iniciar sesión</h2>
+        {/* Título eliminado según requerimiento */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <label>
             Usuario:
@@ -90,6 +108,14 @@ export default function LoginForm({ onLogin }: { onLogin: (user: any) => void })
       {/* Popup eliminado */}
     </>
   );
+}
+
+// Exportar la función getNombreEmpleado para uso externo
+export function getNombreEmpleado(): string {
+  if (typeof window !== 'undefined') {
+    return window.pb_NombreEmpleado || localStorage.getItem('pb_NombreEmpleado') || '';
+  }
+  return '';
 }
 
   // Archivo eliminado: LoginForm.tsx

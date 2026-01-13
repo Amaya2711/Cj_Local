@@ -771,7 +771,7 @@ const Cuadrilla_Asignar: React.FC = () => {
 
   // El return principal del componente debe estar aquí, no dentro de otra función
   return (
-    <div style={{ maxWidth: 2400, margin: '40px auto', background: '#f8fafc', borderRadius: 18, boxShadow: '0 8px 32px #0002', padding: 40, minWidth: 1600 }}>
+    <div style={{ maxWidth: 2400, margin: '0px auto 16px auto', background: '#f8fafc', borderRadius: 18, boxShadow: '0 8px 32px #0002', padding: '0px 40px 40px 40px', minWidth: 1600 }}>
       {/* Tabs secundarios con estilo igual a Plantilla_v3 */}
       <div style={{ display: 'flex', borderBottom: '2px solid #2563eb', marginBottom: 32 }}>
         <button
@@ -788,7 +788,7 @@ const Cuadrilla_Asignar: React.FC = () => {
             marginRight: 8
           }}
           onClick={() => setActiveTab(0)}
-        >Nueva asignación</button>
+        >Nuevo registro</button>
         <button
           style={{
             padding: '12px 32px',
@@ -802,7 +802,7 @@ const Cuadrilla_Asignar: React.FC = () => {
             borderTopRightRadius: 10
           }}
           onClick={() => setActiveTab(1)}
-        >Buscar asignación</button>
+        >Asignacion del dia</button>
       </div>
       {/* Contenido de pestañas */}
       {activeTab === 0 && (
