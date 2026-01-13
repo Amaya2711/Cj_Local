@@ -630,22 +630,6 @@ const Cuadrilla_Asignar: React.FC = () => {
       SegmentoID: row.segmentoid ?? '' // Enviar como @SegmentoID
     }));
 
-    // Mostrar los parámetros en pantalla antes de grabar
-    const paramsPreview = asignacionesConNroInterno.map((row, idx) => {
-      return `Registro ${idx + 1}:\n` +
-        `PlantillaID: ${row.plantillaid ?? ''}\n` +
-        `Id_Auto: (se genera en backend)\n` +
-        `IdUsuario: ADMIN_X5\n` +
-        `id_cuadrilla: ${row.id_cuadrilla}\n` +
-        `NroInterno: ${row.NroInterno}\n` +
-        `fecha: ${row.fecha}\n` +
-        `ptipotrabajo: ${row.ptipotrabajo}\n` +
-           `Nodo: ${row.Nodo ?? ''}\n` +
-        `Plantilla: ${row.Plantilla ?? ''}\n` +
-        `nodoid: ${row.nodoid ?? ''}\n`;
-    }).join('\n\n');
-    alert('Parámetros enviados a SP_InsertarPlantillaSeguimientoImagenes:\n\n' + paramsPreview);
-
     setLoading(true);
     try {
       // Ejecutar el SP de seguimiento directamente (SP_InsertarPlantillaSeguimientoImagenes)
@@ -787,43 +771,53 @@ const Cuadrilla_Asignar: React.FC = () => {
 
   // El return principal del componente debe estar aquí, no dentro de otra función
   return (
-    <div>
-      {/* Tabs secundarios */}
-      <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 24, marginTop: 24 }}>
-        {TabNames.map((tabName, idx) => (
-          <button
-            key={tabName}
-            onClick={() => setActiveTab(idx)}
+    <div style={{ maxWidth: 1600, margin: '40px auto', background: '#f8fafc', borderRadius: 18, boxShadow: '0 8px 32px #0002', padding: 40 }}>
+      {/* Tabs secundarios con estilo igual a Plantilla_v3 */}
+      <div style={{ display: 'flex', borderBottom: '2px solid #2563eb', marginBottom: 32 }}>
+        <button
+          style={{
+            padding: '12px 32px',
+            border: 'none',
+            background: activeTab === 0 ? '#2563eb' : '#fff',
+            color: activeTab === 0 ? '#fff' : '#2563eb',
+            fontWeight: 700,
+            fontSize: 18,
+            cursor: 'pointer',
+            borderTopLeftRadius: 10,
+            borderTopRightRadius: 10,
+            marginRight: 8
+          }}
+          onClick={() => setActiveTab(0)}
+        >Nueva asignación</button>
+        <button
+          style={{
+            padding: '12px 32px',
+            border: 'none',
+            background: activeTab === 1 ? '#2563eb' : '#fff',
+            color: activeTab === 1 ? '#fff' : '#2563eb',
+            fontWeight: 700,
+            fontSize: 18,
+            cursor: 'pointer',
+            borderTopLeftRadius: 10,
+            borderTopRightRadius: 10
+          }}
+          onClick={() => setActiveTab(1)}
+        >Buscar asignación</button>
+      </div>
+      {/* Contenido de pestañas */}
+      {activeTab === 0 && (
+        <>
+          <form
+            onSubmit={handleSubmit}
             style={{
-              padding: '8px 24px',
-              marginRight: 8,
-              borderRadius: 8,
-              border: 'none',
-              background: activeTab === idx ? '#059669' : '#e5e7eb',
-              color: activeTab === idx ? 'white' : '#222',
-              fontWeight: activeTab === idx ? 700 : 500,
-              fontSize: 16,
-              cursor: 'pointer',
-              boxShadow: activeTab === idx ? '0 2px 8px rgba(5,150,105,0.12)' : 'none',
+              maxWidth: 500,
+              margin: '40px auto',
+              background: 'white',
+              borderRadius: 16,
+              boxShadow: '0 8px 32px rgba(0,0,0,0.08)',
+              padding: 32,
             }}
           >
-            {tabName}
-          </button>
-        ))}
-      </div>
-      {/* Contenido de la pestaña secundaria seleccionada */}
-      {activeTab === 0 && (
-        <form
-          onSubmit={handleSubmit}
-          style={{
-            maxWidth: 500,
-            margin: '40px auto',
-            background: 'white',
-            borderRadius: 16,
-            boxShadow: '0 8px 32px rgba(0,0,0,0.08)',
-            padding: 32,
-          }}
-        >
             {/* Campo Fecha (antes de Asignacion) */}
             <div style={{ marginBottom: 24 }}>
               <label style={{ fontWeight: 600 }}>Fecha</label>
@@ -901,7 +895,6 @@ const Cuadrilla_Asignar: React.FC = () => {
             </div>
             {/* Checkboxes al costado de cada título para habilitar/deshabilitar Site y Ubicación */}
             <div style={{ height: 0, marginBottom: 0 }}></div>
-
             {/* Campo Site con checkbox */}
             <div style={{ marginBottom: 24, position: 'relative' }}>
               <label style={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -963,9 +956,6 @@ const Cuadrilla_Asignar: React.FC = () => {
                 <div style={{ color: '#dc2626', marginTop: 8 }}>{errorSites}</div>
               )}
             </div>
-
-
-
             {/* Campo Ubicación con checkbox */}
             <div style={{ marginBottom: 24, position: 'relative' }}>
               <label style={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -1077,52 +1067,52 @@ const Cuadrilla_Asignar: React.FC = () => {
                   }}
                   disabled={modoSeleccion !== 'ubicacion'}
                 >Nuevo</button>
-                    {/* Modal Google Maps para seleccionar coordenadas */}
-                    {showMapsModal && (
-                      <div style={MAPS_MODAL_STYLE as React.CSSProperties}>
-                        <div style={{...MAPS_CONTAINER_STYLE, position: 'relative'} as React.CSSProperties}>
-                          {/* Botón Salir en la esquina superior derecha */}
-                          <button
-                            type="button"
-                            onClick={() => setShowMapsModal(false)}
-                            style={{ position: 'absolute', top: 10, right: 10, background: 'transparent', border: 'none', fontSize: 22, color: '#888', cursor: 'pointer', zIndex: 10 }}
-                            title="Salir"
-                          >✕</button>
-                          <h3 style={{ marginBottom: 10, textAlign: 'center' }}>Selecciona una ubicación en el mapa</h3>
-                          {isLoaded ? (
-                            <GoogleMap
-                              mapContainerStyle={{ width: '100%', height: 320, borderRadius: 8 }}
-                              center={selectedMapCoords || { lat: -12.0464, lng: -77.0428 }}
-                              zoom={13}
-                              onClick={e => {
-                                if (e.latLng) setSelectedMapCoords({ lat: e.latLng.lat(), lng: e.latLng.lng() });
-                              }}
-                            >
-                              {selectedMapCoords && <Marker position={selectedMapCoords} />}
-                            </GoogleMap>
-                          ) : (
-                            <div>Cargando mapa...</div>
-                          )}
-                          <div style={{ marginTop: 16, textAlign: 'center' }}>
-                            <div style={{ marginBottom: 8 }}>
-                              <strong>Latitud:</strong> {selectedMapCoords?.lat ?? '-'}<br />
-                              <strong>Longitud:</strong> {selectedMapCoords?.lng ?? '-'}
-                            </div>
-                            <button
-                              type="button"
-                              style={{ background: '#059669', color: 'white', border: 'none', borderRadius: 5, padding: '8px 18px', fontWeight: 600, cursor: 'pointer', marginRight: 8 }}
-                              disabled={!selectedMapCoords}
-                              onClick={handleInsertCoordsToModal}
-                            >Usar estas coordenadas</button>
-                            <button
-                              type="button"
-                              style={{ background: '#e5e7eb', color: '#222', border: 'none', borderRadius: 5, padding: '8px 18px', fontWeight: 600, cursor: 'pointer' }}
-                              onClick={() => setShowMapsModal(false)}
-                            >Cancelar</button>
-                          </div>
+                {/* Modal Google Maps para seleccionar coordenadas */}
+                {showMapsModal && (
+                  <div style={MAPS_MODAL_STYLE as React.CSSProperties}>
+                    <div style={{...MAPS_CONTAINER_STYLE, position: 'relative'} as React.CSSProperties}>
+                      {/* Botón Salir en la esquina superior derecha */}
+                      <button
+                        type="button"
+                        onClick={() => setShowMapsModal(false)}
+                        style={{ position: 'absolute', top: 10, right: 10, background: 'transparent', border: 'none', fontSize: 22, color: '#888', cursor: 'pointer', zIndex: 10 }}
+                        title="Salir"
+                      >✕</button>
+                      <h3 style={{ marginBottom: 10, textAlign: 'center' }}>Selecciona una ubicación en el mapa</h3>
+                      {isLoaded ? (
+                        <GoogleMap
+                          mapContainerStyle={{ width: '100%', height: 320, borderRadius: 8 }}
+                          center={selectedMapCoords || { lat: -12.0464, lng: -77.0428 }}
+                          zoom={13}
+                          onClick={e => {
+                            if (e.latLng) setSelectedMapCoords({ lat: e.latLng.lat(), lng: e.latLng.lng() });
+                          }}
+                        >
+                          {selectedMapCoords && <Marker position={selectedMapCoords} />}
+                        </GoogleMap>
+                      ) : (
+                        <div>Cargando mapa...</div>
+                      )}
+                      <div style={{ marginTop: 16, textAlign: 'center' }}>
+                        <div style={{ marginBottom: 8 }}>
+                          <strong>Latitud:</strong> {selectedMapCoords?.lat ?? '-'}<br />
+                          <strong>Longitud:</strong> {selectedMapCoords?.lng ?? '-'}
                         </div>
+                        <button
+                          type="button"
+                          style={{ background: '#059669', color: 'white', border: 'none', borderRadius: 5, padding: '8px 18px', fontWeight: 600, cursor: 'pointer', marginRight: 8 }}
+                          disabled={!selectedMapCoords}
+                          onClick={handleInsertCoordsToModal}
+                        >Usar estas coordenadas</button>
+                        <button
+                          type="button"
+                          style={{ background: '#e5e7eb', color: '#222', border: 'none', borderRadius: 5, padding: '8px 18px', fontWeight: 600, cursor: 'pointer' }}
+                          onClick={() => setShowMapsModal(false)}
+                        >Cancelar</button>
                       </div>
-                    )}
+                    </div>
+                  </div>
+                )}
               </div>
               {showUbicacionSuggestions && ubicacionInput && filteredUbicaciones.length > 0 && (
                 <ul
@@ -1163,42 +1153,42 @@ const Cuadrilla_Asignar: React.FC = () => {
                 <div style={{ color: '#dc2626', marginTop: 8 }}>{errorUbicaciones}</div>
               )}
             </div>
-                  {/* Modal para nueva ubicación */}
-                  {showModalUbicacion && (
-                    <div style={{
-                      position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(0,0,0,0.25)', zIndex: 1000,
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    }}>
-                      <div style={{ background: 'white', borderRadius: 12, padding: 32, minWidth: 340, boxShadow: '0 8px 32px rgba(0,0,0,0.18)' }}>
-                        <h3 style={{ marginBottom: 18, textAlign: 'center' }}>Registrar nueva ubicación</h3>
-                        <div style={{ marginBottom: 14 }}>
-                          <label>Nombre ubicación <span style={{ color: '#dc2626' }}>*</span></label>
-                          <input type="text" value={modalUbicacion.NombreUbicacion} onChange={e => setModalUbicacion(v => ({ ...v, NombreUbicacion: e.target.value }))} style={{ width: '100%', padding: 8, borderRadius: 5, border: '1px solid #cbd5e1', marginTop: 4 }} />
-                        </div>
-                        <div style={{ marginBottom: 14 }}>
-                          <label>Latitud <span style={{ color: '#dc2626' }}>*</span></label>
-                          <input type="text" value={modalUbicacion.Latitud} onChange={e => setModalUbicacion(v => ({ ...v, Latitud: e.target.value }))} style={{ width: '100%', padding: 8, borderRadius: 5, border: '1px solid #cbd5e1', marginTop: 4 }} />
-                        </div>
-                        <div style={{ marginBottom: 14 }}>
-                          <label>Longitud <span style={{ color: '#dc2626' }}>*</span></label>
-                          <input type="text" value={modalUbicacion.Longitud} onChange={e => setModalUbicacion(v => ({ ...v, Longitud: e.target.value }))} style={{ width: '100%', padding: 8, borderRadius: 5, border: '1px solid #cbd5e1', marginTop: 4 }} />
-                        </div>
-                        <div style={{ marginBottom: 14 }}>
-                          <label>Dirección</label>
-                          <input type="text" value={modalUbicacion.Direccion} onChange={e => setModalUbicacion(v => ({ ...v, Direccion: e.target.value }))} style={{ width: '100%', padding: 8, borderRadius: 5, border: '1px solid #cbd5e1', marginTop: 4 }} />
-                        </div>
-                        <div style={{ marginBottom: 18 }}>
-                          <label>Referencia</label>
-                          <input type="text" value={modalUbicacion.Referencia} onChange={e => setModalUbicacion(v => ({ ...v, Referencia: e.target.value }))} style={{ width: '100%', padding: 8, borderRadius: 5, border: '1px solid #cbd5e1', marginTop: 4 }} />
-                        </div>
-                        {modalUbicacionError && <div style={{ color: '#dc2626', marginBottom: 10 }}>{modalUbicacionError}</div>}
-                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
-                          <button type="button" onClick={() => setShowModalUbicacion(false)} style={{ background: '#e5e7eb', color: '#222', border: 'none', borderRadius: 5, padding: '8px 18px', fontWeight: 600, cursor: 'pointer' }}>Cancelar</button>
-                          <button type="button" onClick={handleGuardarUbicacion} style={{ background: '#059669', color: 'white', border: 'none', borderRadius: 5, padding: '8px 18px', fontWeight: 600, cursor: 'pointer' }}>Guardar</button>
-                        </div>
-                      </div>
-                    </div>
-                  )}
+            {/* Modal para nueva ubicación */}
+            {showModalUbicacion && (
+              <div style={{
+                position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(0,0,0,0.25)', zIndex: 1000,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}>
+                <div style={{ background: 'white', borderRadius: 12, padding: 32, minWidth: 340, boxShadow: '0 8px 32px rgba(0,0,0,0.18)' }}>
+                  <h3 style={{ marginBottom: 18, textAlign: 'center' }}>Registrar nueva ubicación</h3>
+                  <div style={{ marginBottom: 14 }}>
+                    <label>Nombre ubicación <span style={{ color: '#dc2626' }}>*</span></label>
+                    <input type="text" value={modalUbicacion.NombreUbicacion} onChange={e => setModalUbicacion(v => ({ ...v, NombreUbicacion: e.target.value }))} style={{ width: '100%', padding: 8, borderRadius: 5, border: '1px solid #cbd5e1', marginTop: 4 }} />
+                  </div>
+                  <div style={{ marginBottom: 14 }}>
+                    <label>Latitud <span style={{ color: '#dc2626' }}>*</span></label>
+                    <input type="text" value={modalUbicacion.Latitud} onChange={e => setModalUbicacion(v => ({ ...v, Latitud: e.target.value }))} style={{ width: '100%', padding: 8, borderRadius: 5, border: '1px solid #cbd5e1', marginTop: 4 }} />
+                  </div>
+                  <div style={{ marginBottom: 14 }}>
+                    <label>Longitud <span style={{ color: '#dc2626' }}>*</span></label>
+                    <input type="text" value={modalUbicacion.Longitud} onChange={e => setModalUbicacion(v => ({ ...v, Longitud: e.target.value }))} style={{ width: '100%', padding: 8, borderRadius: 5, border: '1px solid #cbd5e1', marginTop: 4 }} />
+                  </div>
+                  <div style={{ marginBottom: 14 }}>
+                    <label>Dirección</label>
+                    <input type="text" value={modalUbicacion.Direccion} onChange={e => setModalUbicacion(v => ({ ...v, Direccion: e.target.value }))} style={{ width: '100%', padding: 8, borderRadius: 5, border: '1px solid #cbd5e1', marginTop: 4 }} />
+                  </div>
+                  <div style={{ marginBottom: 18 }}>
+                    <label>Referencia</label>
+                    <input type="text" value={modalUbicacion.Referencia} onChange={e => setModalUbicacion(v => ({ ...v, Referencia: e.target.value }))} style={{ width: '100%', padding: 8, borderRadius: 5, border: '1px solid #cbd5e1', marginTop: 4 }} />
+                  </div>
+                  {modalUbicacionError && <div style={{ color: '#dc2626', marginBottom: 10 }}>{modalUbicacionError}</div>}
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
+                    <button type="button" onClick={() => setShowModalUbicacion(false)} style={{ background: '#e5e7eb', color: '#222', border: 'none', borderRadius: 5, padding: '8px 18px', fontWeight: 600, cursor: 'pointer' }}>Cancelar</button>
+                    <button type="button" onClick={handleGuardarUbicacion} style={{ background: '#059669', color: 'white', border: 'none', borderRadius: 5, padding: '8px 18px', fontWeight: 600, cursor: 'pointer' }}>Guardar</button>
+                  </div>
+                </div>
+              </div>
+            )}
             {/* Campo Plantilla */}
             <div style={{ marginBottom: 24, position: 'relative' }}>
               <label style={{ fontWeight: 600 }}>Plantilla</label>
@@ -1299,10 +1289,53 @@ const Cuadrilla_Asignar: React.FC = () => {
                 Asignar
               </button>
             </div>
-          {/* Botón Asignar eliminado, solo queda el de la línea con Buscar */}
-        </form>
+          </form>
+          {/* Grid de registros anexados */}
+          {gridData.length > 0 && (
+            <div style={{ maxWidth: 800, background: 'white', borderRadius: 12, boxShadow: '0 4px 16px rgba(0,0,0,0.06)', padding: 20, flex: 1, margin: '40px auto' }}>
+              <h3 style={{ marginBottom: 16, textAlign: 'center' }}>Registros anexados</h3>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 10, gap: 8 }}>
+                <button type="button" onClick={handleExportCSV} style={{ background: '#059669', color: 'white', border: 'none', borderRadius: 5, padding: '7px 16px', fontWeight: 600, cursor: 'pointer' }}>
+                  Exportar CSV
+                </button>
+              </div>
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 15 }}>
+                  <thead>
+                    <tr style={{ background: '#f1f5f9' }}>
+                      <th style={{ padding: 8, border: '1px solid #e5e7eb', minWidth: 160 }}>Empleado</th>
+                      <th style={{ padding: 8, border: '1px solid #e5e7eb' }}>Asignacion</th>
+                      <th style={{ padding: 8, border: '1px solid #e5e7eb', minWidth: 110 }}>Fecha</th>
+                      <th style={{ padding: 8, border: '1px solid #e5e7eb', minWidth: 80 }}>Acción</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {gridData.map((row, idx) => (
+                      <tr key={row.Empleado + '-' + idx}>
+                        <td style={{ padding: 8, border: '1px solid #e5e7eb' }}>{row.Empleado}</td>
+                        <td style={{ padding: 8, border: '1px solid #e5e7eb' }}>{row.Nombreubicacion ? row.Nombreubicacion : (row.Concatenado ?? '')}</td>
+                        <td style={{ padding: 8, border: '1px solid #e5e7eb' }}>{row.fecha ?? ''}</td>
+                        <td style={{ padding: 8, border: '1px solid #e5e7eb', textAlign: 'center' }}>
+                          <button type="button" onClick={() => handleDeleteRow(idx)} style={{ background: '#dc2626', color: 'white', border: 'none', borderRadius: 4, padding: '4px 10px', fontWeight: 600, cursor: 'pointer' }}>
+                            Eliminar
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 18 }}>
+                <button type="button" onClick={handleGrabar} style={{ background: '#2563eb', color: 'white', border: 'none', borderRadius: 5, padding: '10px 28px', fontWeight: 700, fontSize: 16, cursor: 'pointer' }}>
+                  Grabar
+                </button>
+              </div>
+            </div>
+          )}
+        </>
       )}
       {activeTab === 1 && (
+        // ...contenido de la pestaña Buscar asignación...
         <div style={{ maxWidth: 600, margin: '40px auto', background: 'white', borderRadius: 16, boxShadow: '0 8px 32px rgba(0,0,0,0.08)', padding: 32 }}>
           <h2 style={{ textAlign: 'center', marginBottom: 32 }}>Buscar asignación</h2>
           {/* Aquí puedes agregar filtros o información de búsqueda adicional si lo necesitas */}
@@ -1341,48 +1374,6 @@ const Cuadrilla_Asignar: React.FC = () => {
                 </table>
               </div>
             </div>
-          </div>
-        </div>
-      )}
-      {/* Grid de registros anexados solo en la pestaña de nueva asignación */}
-      {activeTab === 0 && gridData.length > 0 && (
-        <div style={{ maxWidth: 800, background: 'white', borderRadius: 12, boxShadow: '0 4px 16px rgba(0,0,0,0.06)', padding: 20, flex: 1, margin: '40px auto' }}>
-          <h3 style={{ marginBottom: 16, textAlign: 'center' }}>Registros anexados</h3>
-          <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 10, gap: 8 }}>
-            <button type="button" onClick={handleExportCSV} style={{ background: '#059669', color: 'white', border: 'none', borderRadius: 5, padding: '7px 16px', fontWeight: 600, cursor: 'pointer' }}>
-              Exportar CSV
-            </button>
-          </div>
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 15 }}>
-              <thead>
-                <tr style={{ background: '#f1f5f9' }}>
-                  <th style={{ padding: 8, border: '1px solid #e5e7eb', minWidth: 160 }}>Empleado</th>
-                  <th style={{ padding: 8, border: '1px solid #e5e7eb' }}>Asignacion</th>
-                  <th style={{ padding: 8, border: '1px solid #e5e7eb', minWidth: 110 }}>Fecha</th>
-                  <th style={{ padding: 8, border: '1px solid #e5e7eb', minWidth: 80 }}>Acción</th>
-                </tr>
-              </thead>
-              <tbody>
-                {gridData.map((row, idx) => (
-                  <tr key={row.Empleado + '-' + idx}>
-                    <td style={{ padding: 8, border: '1px solid #e5e7eb' }}>{row.Empleado}</td>
-                    <td style={{ padding: 8, border: '1px solid #e5e7eb' }}>{row.Nombreubicacion ? row.Nombreubicacion : (row.Concatenado ?? '')}</td>
-                    <td style={{ padding: 8, border: '1px solid #e5e7eb' }}>{row.fecha ?? ''}</td>
-                    <td style={{ padding: 8, border: '1px solid #e5e7eb', textAlign: 'center' }}>
-                      <button type="button" onClick={() => handleDeleteRow(idx)} style={{ background: '#dc2626', color: 'white', border: 'none', borderRadius: 4, padding: '4px 10px', fontWeight: 600, cursor: 'pointer' }}>
-                        Eliminar
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 18 }}>
-            <button type="button" onClick={handleGrabar} style={{ background: '#2563eb', color: 'white', border: 'none', borderRadius: 5, padding: '10px 28px', fontWeight: 700, fontSize: 16, cursor: 'pointer' }}>
-              Grabar
-            </button>
           </div>
         </div>
       )}
