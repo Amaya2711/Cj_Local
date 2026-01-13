@@ -109,12 +109,84 @@ const MainForm: React.FC = () => {
       </div>
       {/* Menú principal */}
       <nav style={{ display: 'flex', gap: 24, padding: '18px 32px', background: '#fff', borderBottom: '1px solid #e5e7eb', fontWeight: 600, fontSize: 18 }}>
-        <a href="#" style={{ color: menuColor, textDecoration: 'none' }} onClick={e => { e.preventDefault(); setOpcion('panel'); }}>Inicio</a>
-        <a href="#" style={{ color: menuColor, textDecoration: 'none' }} onClick={e => { e.preventDefault(); setOpcion('asignacion'); }}>Asignacion</a>
-        <a href="#" style={{ color: menuColor, textDecoration: 'none' }} onClick={e => { e.preventDefault(); setOpcion('aprobar'); }}>Aprobar</a>
-        <a href="#" style={{ color: menuColor, textDecoration: 'none' }} onClick={e => { e.preventDefault(); setOpcion('googlemaps'); }}>Google Maps</a>
-        <a href="#" style={{ color: menuColor, textDecoration: 'none' }} onClick={e => { e.preventDefault(); setOpcion('plantilla_v3'); }}>Plantilla</a>
-        <a href="#" style={{ color: menuColor, textDecoration: 'none' }} onClick={e => { e.preventDefault(); setOpcion('reporte'); }}>Reporte</a>
+        <a
+          href="#"
+          style={{
+            color: opcion === 'panel' ? '#fff' : menuColor,
+            background: opcion === 'panel' ? 'linear-gradient(90deg, #2563eb 0%, #1d4ed8 100%)' : 'none',
+            borderRadius: 8,
+            padding: '6px 18px',
+            textDecoration: 'none',
+            boxShadow: opcion === 'panel' ? '0 2px 8px #2563eb22' : 'none',
+            transition: 'background 0.2s, color 0.2s',
+          }}
+          onClick={e => { e.preventDefault(); setOpcion('panel'); }}
+        >Inicio</a>
+        <a
+          href="#"
+          style={{
+            color: opcion === 'asignacion' ? '#fff' : menuColor,
+            background: opcion === 'asignacion' ? 'linear-gradient(90deg, #2563eb 0%, #1d4ed8 100%)' : 'none',
+            borderRadius: 8,
+            padding: '6px 18px',
+            textDecoration: 'none',
+            boxShadow: opcion === 'asignacion' ? '0 2px 8px #2563eb22' : 'none',
+            transition: 'background 0.2s, color 0.2s',
+          }}
+          onClick={e => { e.preventDefault(); setOpcion('asignacion'); }}
+        >Asignacion</a>
+        <a
+          href="#"
+          style={{
+            color: opcion === 'aprobar' ? '#fff' : menuColor,
+            background: opcion === 'aprobar' ? 'linear-gradient(90deg, #2563eb 0%, #1d4ed8 100%)' : 'none',
+            borderRadius: 8,
+            padding: '6px 18px',
+            textDecoration: 'none',
+            boxShadow: opcion === 'aprobar' ? '0 2px 8px #2563eb22' : 'none',
+            transition: 'background 0.2s, color 0.2s',
+          }}
+          onClick={e => { e.preventDefault(); setOpcion('aprobar'); }}
+        >Aprobar</a>
+        <a
+          href="#"
+          style={{
+            color: opcion === 'googlemaps' ? '#fff' : menuColor,
+            background: opcion === 'googlemaps' ? 'linear-gradient(90deg, #2563eb 0%, #1d4ed8 100%)' : 'none',
+            borderRadius: 8,
+            padding: '6px 18px',
+            textDecoration: 'none',
+            boxShadow: opcion === 'googlemaps' ? '0 2px 8px #2563eb22' : 'none',
+            transition: 'background 0.2s, color 0.2s',
+          }}
+          onClick={e => { e.preventDefault(); setOpcion('googlemaps'); }}
+        >Google Maps</a>
+        <a
+          href="#"
+          style={{
+            color: opcion === 'plantilla_v3' ? '#fff' : menuColor,
+            background: opcion === 'plantilla_v3' ? 'linear-gradient(90deg, #2563eb 0%, #1d4ed8 100%)' : 'none',
+            borderRadius: 8,
+            padding: '6px 18px',
+            textDecoration: 'none',
+            boxShadow: opcion === 'plantilla_v3' ? '0 2px 8px #2563eb22' : 'none',
+            transition: 'background 0.2s, color 0.2s',
+          }}
+          onClick={e => { e.preventDefault(); setOpcion('plantilla_v3'); }}
+        >Plantilla</a>
+        <a
+          href="#"
+          style={{
+            color: opcion === 'reporte' ? '#fff' : menuColor,
+            background: opcion === 'reporte' ? 'linear-gradient(90deg, #2563eb 0%, #1d4ed8 100%)' : 'none',
+            borderRadius: 8,
+            padding: '6px 18px',
+            textDecoration: 'none',
+            boxShadow: opcion === 'reporte' ? '0 2px 8px #2563eb22' : 'none',
+            transition: 'background 0.2s, color 0.2s',
+          }}
+          onClick={e => { e.preventDefault(); setOpcion('reporte'); }}
+        >Reporte</a>
       </nav>
       {/* Contenido principal dinámico */}
       <div style={{ width: '100vw', margin: '32px 0', background: '#fff', borderRadius: 10, boxShadow: '0 4px 24px #0001', padding: 32, minHeight: 400 }}>
