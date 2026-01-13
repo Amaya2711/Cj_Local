@@ -121,11 +121,9 @@ const PlantillaV3 = () => {
     axios.post('/api/sp_GetPlaSegmento').then(res => setSegmentos(res.data));
   }, []);
 
-  // Cargar evidencias al entrar en la pestaña de mantenimiento
+  // Cargar evidencias siempre al iniciar y al cambiar de pestaña
   useEffect(() => {
-    if (activeTab === 'mantenimiento') {
-      axios.post('/api/sp_GetPlaEvidencia').then(res => setEvidencias(res.data));
-    }
+    axios.post('/api/sp_GetPlaEvidencia').then(res => setEvidencias(res.data));
   }, [activeTab]);
 
   // Actualizar estructura seleccionada
@@ -333,7 +331,8 @@ const PlantillaV3 = () => {
             <div style={{ marginBottom: 24, opacity: segmentoEvidenciasEnabled ? 1 : 0.5, pointerEvents: segmentoEvidenciasEnabled ? 'auto' : 'none' }}>
               <label style={{ fontWeight: 700 }}>Segmento:</label>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <select value={segmentoSel} onChange={e => setSegmentoSel(e.target.value)}
+                <select
+                  value={segmentoSel}
                   className="form-select"
                   style={{
                     marginLeft: 8,
@@ -354,6 +353,10 @@ const PlantillaV3 = () => {
                   onFocus={e => e.currentTarget.style.border = '2px solid #1d4ed8'}
                   onBlur={e => e.currentTarget.style.border = '1.5px solid #2563eb'}
                   disabled={!segmentoEvidenciasEnabled}
+                  onChange={e => {
+                    setSegmentoSel(e.target.value);
+                    if (e.target.value) setSegmentoEvidenciasEnabled(true);
+                  }}
                 >
                   <option value="">Seleccione...</option>
                   {segmentos.map((s: any) => <option key={s.SegmentoID} value={s.SegmentoID}>{s.Nombre || s.nombre}</option>)}
@@ -364,10 +367,9 @@ const PlantillaV3 = () => {
                 <div style={{ marginTop: 12, marginLeft: 8 }}>
                   <div style={{ display: 'flex', alignItems: 'center', marginBottom: 6, gap: 8 }}>
                     <label style={{ fontWeight: 700, display: 'block', margin: 0 }}>Evidencias:</label>
-                    {/* Botón para agregar evidencia oculto en Registro */}
                   </div>
                   {evidencias.length === 0 ? (
-                    <div style={{ color: '#64748b', fontStyle: 'italic' }}>No hay evidencias para este segmento.</div>
+                    <div style={{ color: '#64748b', fontStyle: 'italic' }}>No hay evidencias registradas.</div>
                   ) : (
                     <>
                       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 4 }}>
