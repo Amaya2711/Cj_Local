@@ -123,8 +123,7 @@ const Aprobar: React.FC<AprobarProps> = ({ titulo = 'Aprobar cuadrilla' }) => {
     const fechaIniParam = filtroFechaActivo ? fechaIni : '';
     const fechaFinParam = filtroFechaActivo ? fechaFin : '';
     const estadoParam = filtroEstadoActivo && estadoSeleccionado ? estadoSeleccionado : '';
-    const mensajeStore = `Store ejecutado: sp_ObtenerCuadrillaAprobar\nParámetros enviados:\n@idCuadrilla: ${idCuadrillaParam}\n@pFechaIni: ${fechaIniParam}\n@pFechaFin: ${fechaFinParam}\n@estado: ${estadoParam}`;
-    alert(mensajeStore);
+    // Eliminado: mensajeStore y alert
     const res = await fetch('/api/aprobar-busqueda', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -168,18 +167,7 @@ const Aprobar: React.FC<AprobarProps> = ({ titulo = 'Aprobar cuadrilla' }) => {
     });
     // Usuario del sistema (ajustar para obtener el real)
     const usuario = 'ADMIN TTT';
-    // Mostrar los parámetros y valores a enviar
-    let mensaje = 'Parámetros a enviar a sp_CrearSeguimiento:';
-    registros.forEach((r, i) => {
-      mensaje += `\n\nRegistro ${i + 1}:\n`;
-      mensaje += `  pidCuadrilla: ${r.pidCuadrilla}\n`;
-      mensaje += `  pNroInterno: ${r.pNroInterno}\n`;
-      mensaje += `  pFecha: ${r.pFecha}\n`;
-      mensaje += `  pEstado: 8\n`;
-      mensaje += `  pUsuario: ${usuario}\n`;
-      mensaje += `  ptipotrabajo: ${r.ptipotrabajo}\n`;
-    });
-    alert(mensaje);
+    // Eliminado: mensaje y alert de parámetros
     try {
       const res = await fetch('/api/aprobar-crear-seguimiento', {
         method: 'POST',
