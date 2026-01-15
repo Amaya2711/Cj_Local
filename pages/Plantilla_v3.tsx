@@ -67,6 +67,13 @@ const PlantillaV3 = () => {
   // Selecciones
   const [areaSel, setAreaSel] = useState('');
   const [plantillaSel, setPlantillaSel] = useState('');
+
+  // Seleccionar automáticamente la primera plantilla si no hay ninguna seleccionada
+  useEffect(() => {
+    if (plantillas.length > 0 && !plantillaSel) {
+      setPlantillaSel(String(plantillas[0].PlantillaID));
+    }
+  }, [plantillas]);
   const [segmentoSel, setSegmentoSel] = useState('');
   const [evidenciasSel, setEvidenciasSel] = useState<string[]>([]);
   // Control de habilitación de bloques
@@ -321,7 +328,9 @@ const PlantillaV3 = () => {
                   onBlur={e => e.currentTarget.style.border = '1.5px solid #2563eb'}
                 >
                   <option value="">Seleccione...</option>
-                  {plantillas.map((p: any) => <option key={p.PlantillaID} value={p.PlantillaID}>{p.Nombre || p.nombre}</option>)}
+                  {plantillas.map((p: any) => (
+                    <option key={p.PlantillaID} value={p.PlantillaID}>{p.Nombre || p.nombre}</option>
+                  ))}
                 </select>
                 {/* Botón para agregar nueva plantilla oculto en Registro */}
                 {/* El botón Cargar Plantilla queda oculto, la acción es automática */}
@@ -641,73 +650,56 @@ const PlantillaV3 = () => {
                     {gridData.map((row, i) => (
                       <tr key={i}
                         style={{ cursor: 'pointer' }}
-                        onDoubleClick={() => {
+                        onDoubleClick={async () => {
                           const plantillaId = row['PlantillaID'];
                           setUltimoParametro(plantillaId ? String(plantillaId) : '');
-                          // Usar el valor del combo de área (areaSel) como pArea (NodoID) solo para Tipo=3
                           const areaId = areaSel;
-                          console.log('Doble clic - parámetro enviado:', { Tipo: 3, PlantillaID: plantillaId, pArea: areaId });
                           if (plantillaId) {
                             setDetalleLoading(true);
-                            axios.post('/api/sp_BuscarPlantilla', { Tipo: 3, PlantillaID: plantillaId, pArea: areaId })
-                              .then(res => {
-                                setDetalleData(res.data);
-                                if (res.data && res.data.length > 0) {
-                                  const found = res.data.find((row: any) => row.PlantillaID && row.SegmentoID);
-                                  if (found) {
-                                    setPlantillaSel(String(found.PlantillaID));
-                                    setSegmentoSel(String(found.SegmentoID));
-                                  } else {
-                                    const foundPlantilla = res.data.find((row: any) => row.PlantillaID);
-                                    if (foundPlantilla) {
-                                      setPlantillaSel(String(foundPlantilla.PlantillaID));
-                                    }
+                            try {
+                              const res = await axios.post('/api/sp_BuscarPlantilla', { Tipo: 3, PlantillaID: plantillaId, pArea: areaId });
+                              setDetalleData(res.data);
+                              if (res.data && res.data.length > 0) {
+                                // Construir la estructura directamente de la respuesta
+                                const segmentosMap: {
+                                  [key: string]: {
+                                    segmento: string,
+                                    segmentoId: string,
+                                    evidencias: Array<{ evidencia: string, evidenciaId: string }>
                                   }
-                                  const evidenciasMarcadas = res.data
-                                    .map((row: any) => row.EvidenciaID)
-                                    .filter((id: any) => !!id);
-                                  if (evidenciasMarcadas.length > 0) {
-                                    setEvidenciasSel(evidenciasMarcadas.map(String));
+                                } = {};
+                                res.data.forEach((row: any) => {
+                                  const segmentoId = String(row.SegmentoID || row.segmentoid || '');
+                                  const segmentoNombre = row.Segmento || row.segmento || segmentoId;
+                                  const evidenciaId = String(row.EvidenciaID || row.evidenciaid || '');
+                                  const evidenciaNombre = row.Evidencia || row.evidencia || evidenciaId;
+                                  if (!segmentosMap[segmentoId]) {
+                                    segmentosMap[segmentoId] = {
+                                      segmento: segmentoNombre,
+                                      segmentoId: segmentoId,
+                                      evidencias: []
+                                    };
                                   }
-                                  // Agrupar segmentos y evidencias con nombre y código (igual que el botón Cargar Plantilla)
-                                  const segmentosMap: {
-                                    [key: string]: {
-                                      segmento: string,
-                                      segmentoId: string,
-                                      evidencias: Array<{ evidencia: string, evidenciaId: string }>
-                                    }
-                                  } = {};
-                                  res.data.forEach((row: any) => {
-                                    const segmentoId = String(row.SegmentoID || row.segmentoid || '');
-                                    const segmentoNombre = row.Segmento || row.segmento || segmentoId;
-                                    const evidenciaId = String(row.EvidenciaID || row.evidenciaid || '');
-                                    const evidenciaNombre = row.Evidencia || row.evidencia || evidenciaId;
-                                    if (!segmentosMap[segmentoId]) {
-                                      segmentosMap[segmentoId] = {
-                                        segmento: segmentoNombre,
-                                        segmentoId: segmentoId,
-                                        evidencias: []
-                                      };
-                                    }
-                                    if (evidenciaId) {
-                                      segmentosMap[segmentoId].evidencias.push({ evidencia: evidenciaNombre, evidenciaId });
-                                    }
-                                  });
-                                  // Usar el valor del combo de área (areaSel) como areaId
-                                  const estructuraNueva = [
-                                    {
-                                      area: res.data[0].Nodo || areaSel,
-                                      areaId: areaId,
-                                      plantilla: res.data[0].Plantilla || plantillaSel,
-                                      plantillaId: plantillaId,
-                                      segmentos: Object.values(segmentosMap)
-                                    }
-                                  ];
-                                  setEstructura(estructuraNueva);
-                                }
-                              })
-                              .catch(() => setDetalleData([]))
-                              .finally(() => setDetalleLoading(false));
+                                  if (evidenciaId) {
+                                    segmentosMap[segmentoId].evidencias.push({ evidencia: evidenciaNombre, evidenciaId });
+                                  }
+                                });
+                                const estructuraNueva = [
+                                  {
+                                    area: res.data[0].Nodo || areaSel,
+                                    areaId: areaId,
+                                    plantilla: res.data[0].Plantilla || plantillaSel,
+                                    plantillaId: plantillaId,
+                                    segmentos: Object.values(segmentosMap)
+                                  }
+                                ];
+                                setEstructura(estructuraNueva);
+                              }
+                            } catch {
+                              setDetalleData([]);
+                            } finally {
+                              setDetalleLoading(false);
+                            }
                           }
                         }}
                       >

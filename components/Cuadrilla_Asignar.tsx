@@ -234,7 +234,6 @@ const Cuadrilla_Asignar: React.FC = () => {
           return;
         }
         if (!data || data.length === 0) {
-          alert('No existe coincidencia');
           setAsignacionesDia([]);
           // Mantener en el primer tab
           setActiveTab(0);
@@ -257,7 +256,6 @@ const Cuadrilla_Asignar: React.FC = () => {
       // Buscar datos completos de cuadrilla y site seleccionados
       const cuadrilla = cuadrillas.find(c => String(c.IdEmpleado ?? c.idempleado) === selectedCuadrilla);
       const site = selectedSiteObj;
-      setSelectedSiteObj(null);
       if (!cuadrilla) {
         alert('Seleccione una asignacion válida.');
         return;
@@ -274,12 +272,10 @@ const Cuadrilla_Asignar: React.FC = () => {
       // Determinar NroInterno según el modo de selección
       let NroInterno = '';
       if (modoSeleccion === 'ubicacion') {
-        // Si el modo es ubicación, usar el campo NroInterno del objeto de ubicación seleccionado (nombre correcto)
         NroInterno = String(selectedUbicacionObj?.NroInterno ?? '');
       } else {
         NroInterno = site ? String(site.NroInterno ?? '') : '';
       }
-      // Usar la fecha seleccionada
       const fecha = fechaInput;
 
       // Validar en el grid local
@@ -320,8 +316,16 @@ const Cuadrilla_Asignar: React.FC = () => {
         NroInterno,
         Nombreubicacion: modoSeleccion === 'ubicacion' ? (selectedUbicacionObj?.Nombreubicacion ?? selectedUbicacionObj?.NombreUbicacion ?? selectedUbicacionObj?.nombreubicacion ?? '') : undefined,
         Concatenado: modoSeleccion === 'site' && site ? site.Concatenado ?? '' : undefined,
-        idsite: modoSeleccion === 'ubicacion' ? 'SIST01' : (site ? String(site.IDSite ?? site.idsite ?? site.IdSite ?? '') : ''),
-        correlativo: modoSeleccion === 'ubicacion' ? '1' : (site ? String(site.Correlativo ?? site.correlativo ?? site.Correlativo ?? '') : ''),
+        idsite: modoSeleccion === 'ubicacion'
+          ? 'SIST01'
+          : (site && (site.IDSite ?? site.idsite ?? site.IdSite) !== undefined
+              ? String(site.IDSite ?? site.idsite ?? site.IdSite)
+              : ''),
+        correlativo: modoSeleccion === 'ubicacion'
+          ? '1'
+          : (site && (site.Correlativo ?? site.correlativo) !== undefined
+              ? String(site.Correlativo ?? site.correlativo)
+              : ''),
         fecha,
         TipoTrabajo: modoSeleccion === 'ubicacion' ? 'VARIOS' : (site ? site.TipoTrabajo ?? '' : ''),
         Nodo: selectedPlantillaObj?.Nodo ?? selectedPlantillaObj?.nodo ?? '',
@@ -333,16 +337,18 @@ const Cuadrilla_Asignar: React.FC = () => {
       };
       setGridData(prev => [...prev, nuevoRegistro]);
 
-      setSiteInput('');
-      setSelectedSite('');
-      setShowSiteSuggestions(true);
-      setTimeout(() => {
-        siteInputRef.current?.focus();
-      }, 100);
+      // Limpiar solo el combobox de asignación (cuadrilla)
+      setCuadrillaInput('');
+      setSelectedCuadrilla('');
+      setShowSuggestions(false);
+      setActiveSuggestion(0);
+      // Site y ubicación se mantienen igual
     };
 
     // ...rest of the component logic and return statement...
   // Estado para asignaciones del día
+  // Estado para selección de registros en el grid
+  const [selectedGridRows, setSelectedGridRows] = useState<number[]>([]);
   const [asignacionesDia, setAsignacionesDia] = useState<any[]>([]);
   const [cuadrillas, setCuadrillas] = useState<EmpleadoCuadrilla[]>([]);
   const [sites, setSites] = useState<SiteAsignacion[]>([]);
@@ -622,13 +628,20 @@ const Cuadrilla_Asignar: React.FC = () => {
       alert('No hay registros para grabar.');
       return;
     }
-    // Preparar los datos para el SP de seguimiento (SP_InsertarPlantillaSeguimientoImagenes)
-    const asignacionesConNroInterno = gridData.map(row => ({
-      ...row,
-      NroInterno: row.NroInterno ?? '',
-      ptipotrabajo: row.TipoTrabajo ?? '', // Enviar como @ptipotrabajo
-      SegmentoID: row.segmentoid ?? '' // Enviar como @SegmentoID
-    }));
+    if (!selectedGridRows || selectedGridRows.length === 0) {
+      alert('Debe seleccionar al menos un registro para grabar.');
+      return;
+    }
+    // Solo grabar los registros seleccionados
+    const asignacionesConNroInterno = selectedGridRows.map(idx => {
+      const row = gridData[idx];
+      return {
+        ...row,
+        NroInterno: row.NroInterno ?? '',
+        ptipotrabajo: row.TipoTrabajo ?? '', // Enviar como @ptipotrabajo
+        SegmentoID: row.segmentoid ?? '' // Enviar como @SegmentoID
+      };
+    });
 
     setLoading(true);
     try {
@@ -642,6 +655,7 @@ const Cuadrilla_Asignar: React.FC = () => {
       if (seguimientoResponse.ok) {
         alert('DATOS REGISTRADOS');
         setGridData([]);
+        setSelectedGridRows([]);
         fetchAsignacionesDia();
       } else {
         let errorMsg = 'Datos NO GRABADOS';
@@ -1313,18 +1327,50 @@ const Cuadrilla_Asignar: React.FC = () => {
                   <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 15 }}>
                     <thead>
                       <tr style={{ background: '#f1f5f9' }}>
+                        <th style={{ padding: 8, border: '1px solid #e5e7eb', minWidth: 40 }}>
+                          <input
+                            type="checkbox"
+                            checked={selectedGridRows.length === gridData.length}
+                            onChange={e => {
+                              if (e.target.checked) {
+                                setSelectedGridRows(gridData.map((_, idx) => idx));
+                              } else {
+                                setSelectedGridRows([]);
+                              }
+                            }}
+                            aria-label="Seleccionar todos"
+                          />
+                        </th>
                         <th style={{ padding: 8, border: '1px solid #e5e7eb', minWidth: 160 }}>Empleado</th>
                         <th style={{ padding: 8, border: '1px solid #e5e7eb' }}>Asignacion</th>
                         <th style={{ padding: 8, border: '1px solid #e5e7eb', minWidth: 110 }}>Fecha</th>
+                        <th style={{ padding: 8, border: '1px solid #e5e7eb', minWidth: 90 }}>idsite</th>
+                        <th style={{ padding: 8, border: '1px solid #e5e7eb', minWidth: 90 }}>correlativo</th>
                         <th style={{ padding: 8, border: '1px solid #e5e7eb', minWidth: 80 }}>Acción</th>
                       </tr>
                     </thead>
                     <tbody>
                       {gridData.map((row, idx) => (
                         <tr key={row.Empleado + '-' + idx}>
+                          <td style={{ padding: 8, border: '1px solid #e5e7eb', textAlign: 'center' }}>
+                            <input
+                              type="checkbox"
+                              checked={selectedGridRows.includes(idx)}
+                              onChange={e => {
+                                if (e.target.checked) {
+                                  setSelectedGridRows(prev => [...prev, idx]);
+                                } else {
+                                  setSelectedGridRows(prev => prev.filter(i => i !== idx));
+                                }
+                              }}
+                              aria-label={`Seleccionar registro ${idx + 1}`}
+                            />
+                          </td>
                           <td style={{ padding: 8, border: '1px solid #e5e7eb' }}>{row.Empleado}</td>
                           <td style={{ padding: 8, border: '1px solid #e5e7eb' }}>{row.Nombreubicacion ? row.Nombreubicacion : (row.Concatenado ?? '')}</td>
                           <td style={{ padding: 8, border: '1px solid #e5e7eb' }}>{row.fecha ?? ''}</td>
+                          <td style={{ padding: 8, border: '1px solid #e5e7eb' }}>{row.idsite ?? ''}</td>
+                          <td style={{ padding: 8, border: '1px solid #e5e7eb' }}>{row.correlativo ?? ''}</td>
                           <td style={{ padding: 8, border: '1px solid #e5e7eb', textAlign: 'center' }}>
                             <button type="button" onClick={() => handleDeleteRow(idx)} style={{ background: '#dc2626', color: 'white', border: 'none', borderRadius: 4, padding: '4px 10px', fontWeight: 600, cursor: 'pointer' }}>
                               Eliminar
