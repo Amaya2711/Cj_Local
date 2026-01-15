@@ -35,8 +35,10 @@ export async function POST(req: Request) {
             ptipotrabajo: row.TipoTrabajo,
             pNodo: row.nodoid,
             pPlantilla: row.plantillaid,
-            pSegmento: row.segmentoid ?? ''
+            pSegmento: row.segmentoid ?? '',
+            pCheck: row.pCheck ?? 0
           });
+          // Ejecutar el SP y obtener el Id_Auto directamente del output
           const request = pool.request()
             .input('pidCuadrilla', row.id_cuadrilla)
             .input('pidsite', row.idsite)
@@ -48,12 +50,11 @@ export async function POST(req: Request) {
             .input('ptipotrabajo', row.TipoTrabajo)
             .input('pNodo', row.nodoid)
             .input('pPlantilla', row.plantillaid)
-            .input('pSegmento', row.segmentoid ?? '');
+            .input('pSegmento', row.segmentoid ?? '')
+            .input('pCheck', row.pCheck ?? 0);
           const insertResult = await request.execute('sp_CrearAsignacion');
-          console.log('Resultado sp_CrearAsignacion:', insertResult);
-          // Obtener el último Id_Auto insertado
-          const idAutoResult = await pool.request().query('SELECT TOP 1 Id_Auto FROM CuadrillaAsignacion ORDER BY Id_Auto DESC');
-          const idAuto = idAutoResult.recordset?.[0]?.Id_Auto;
+          const idAuto = insertResult.recordset?.[0]?.Id_Auto;
+          console.log('Resultado sp_CrearAsignacion:', insertResult, 'Id_Auto:', idAuto);
           // Ejecutar el SP correcto para PlantillaSeguimientoImagenes
           console.log('Ejecutando SP_InsertarPlantillaSeguimientoImagenes con:', {
             NodoID: row.nodoid,
@@ -115,6 +116,7 @@ export async function POST(req: Request) {
             .input('pNodo', NodoID)
             .input('pPlantilla', PlantillaID)
             .input('pSegmento', SegmentoID)
+            .input('pCheck', row.pCheck ?? 0) // Nuevo parámetro agregado
             .execute('sp_CrearAsignacion');
 
           // 2. Obtener el nuevo Id_Auto generado

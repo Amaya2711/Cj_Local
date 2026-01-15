@@ -253,6 +253,11 @@ const Cuadrilla_Asignar: React.FC = () => {
 
     // Handler para el botón Asignar: agrega el registro al gridData
     const handleAsignar = async () => {
+            // Validar que haya plantilla seleccionada
+            if (!selectedPlantillaObj) {
+              alert('Debe seleccionar una plantilla antes de asignar.');
+              return;
+            }
       // Buscar datos completos de cuadrilla y site seleccionados
       const cuadrilla = cuadrillas.find(c => String(c.IdEmpleado ?? c.idempleado) === selectedCuadrilla);
       const site = selectedSiteObj;
@@ -319,12 +324,12 @@ const Cuadrilla_Asignar: React.FC = () => {
         idsite: modoSeleccion === 'ubicacion'
           ? 'SIST01'
           : (site && (site.IDSite ?? site.idsite ?? site.IdSite) !== undefined
-              ? String(site.IDSite ?? site.idsite ?? site.IdSite)
+              ? String(site.IDSite ?? site.idsite ?? site.IdSite).split(',')[0]
               : ''),
         correlativo: modoSeleccion === 'ubicacion'
           ? '1'
           : (site && (site.Correlativo ?? site.correlativo) !== undefined
-              ? String(site.Correlativo ?? site.correlativo)
+              ? String(site.Correlativo ?? site.correlativo).split(',')[0]
               : ''),
         fecha,
         TipoTrabajo: modoSeleccion === 'ubicacion' ? 'VARIOS' : (site ? site.TipoTrabajo ?? '' : ''),
@@ -334,6 +339,7 @@ const Cuadrilla_Asignar: React.FC = () => {
         plantillaid: selectedPlantillaObj?.plantillaid ?? selectedPlantillaObj?.PlantillaID ?? '',
         segmentoid: selectedPlantillaObj?.segmentoid ?? selectedPlantillaObj?.SegmentoID ?? '',
         Segmento: selectedPlantillaObj?.Segmento ?? selectedPlantillaObj?.segmento ?? '',
+        pCheck: 1, // Valor por defecto, puedes ajustar la lógica si es necesario
       };
       setGridData(prev => [...prev, nuevoRegistro]);
 
@@ -608,9 +614,10 @@ const Cuadrilla_Asignar: React.FC = () => {
         Empleado: cuadrilla.NombreEmpleado ?? cuadrilla.nombreempleado ?? '',
         NroInterno: String(site.NroInterno ?? ''),
         Concatenado: site.Concatenado ?? '',
-        idsite: String(site.IDSite ?? site.idsite ?? site.IdSite ?? ''),
-        correlativo: String(site.Correlativo ?? site.correlativo ?? site.Correlativo ?? ''),
-        fecha: fechaLocal
+        idsite: String(site.IDSite ?? site.idsite ?? site.IdSite ?? '').split(',')[0],
+        correlativo: String(site.Correlativo ?? site.correlativo ?? site.Correlativo ?? '').split(',')[0],
+        fecha: fechaLocal,
+        pCheck: 1 // Valor por defecto, puedes ajustar la lógica si es necesario
       }
     ]);
     // Limpiar solo el campo Site y poner focus
@@ -632,16 +639,14 @@ const Cuadrilla_Asignar: React.FC = () => {
       alert('Debe seleccionar al menos un registro para grabar.');
       return;
     }
-    // Solo grabar los registros seleccionados
-    const asignacionesConNroInterno = selectedGridRows.map(idx => {
-      const row = gridData[idx];
-      return {
-        ...row,
-        NroInterno: row.NroInterno ?? '',
-        ptipotrabajo: row.TipoTrabajo ?? '', // Enviar como @ptipotrabajo
-        SegmentoID: row.segmentoid ?? '' // Enviar como @SegmentoID
-      };
-    });
+    // Enviar todos los registros, marcando pCheck=1 si está seleccionado, 0 si no
+    const asignacionesConNroInterno = gridData.map((row, idx) => ({
+      ...row,
+      NroInterno: row.NroInterno ?? '',
+      ptipotrabajo: row.TipoTrabajo ?? '', // Enviar como @ptipotrabajo
+      SegmentoID: row.segmentoid ?? '', // Enviar como @SegmentoID
+      pCheck: selectedGridRows.includes(idx) ? 1 : 0
+    }));
 
     setLoading(true);
     try {
@@ -1081,52 +1086,6 @@ const Cuadrilla_Asignar: React.FC = () => {
                     }}
                     disabled={modoSeleccion !== 'ubicacion'}
                   >Nuevo</button>
-                  {/* Modal Google Maps para seleccionar coordenadas */}
-                  {showMapsModal && (
-                    <div style={MAPS_MODAL_STYLE as React.CSSProperties}>
-                      <div style={{...MAPS_CONTAINER_STYLE, position: 'relative'} as React.CSSProperties}>
-                        {/* Botón Salir en la esquina superior derecha */}
-                        <button
-                          type="button"
-                          onClick={() => setShowMapsModal(false)}
-                          style={{ position: 'absolute', top: 10, right: 10, background: 'transparent', border: 'none', fontSize: 22, color: '#888', cursor: 'pointer', zIndex: 10 }}
-                          title="Salir"
-                        >✕</button>
-                        <h3 style={{ marginBottom: 10, textAlign: 'center' }}>Selecciona una ubicación en el mapa</h3>
-                        {isLoaded ? (
-                          <GoogleMap
-                            mapContainerStyle={{ width: '100%', height: 320, borderRadius: 8 }}
-                            center={selectedMapCoords || { lat: -12.0464, lng: -77.0428 }}
-                            zoom={13}
-                            onClick={e => {
-                              if (e.latLng) setSelectedMapCoords({ lat: e.latLng.lat(), lng: e.latLng.lng() });
-                            }}
-                          >
-                            {selectedMapCoords && <Marker position={selectedMapCoords} />}
-                          </GoogleMap>
-                        ) : (
-                          <div>Cargando mapa...</div>
-                        )}
-                        <div style={{ marginTop: 16, textAlign: 'center' }}>
-                          <div style={{ marginBottom: 8 }}>
-                            <strong>Latitud:</strong> {selectedMapCoords?.lat ?? '-'}<br />
-                            <strong>Longitud:</strong> {selectedMapCoords?.lng ?? '-'}
-                          </div>
-                          <button
-                            type="button"
-                            style={{ background: '#059669', color: 'white', border: 'none', borderRadius: 5, padding: '8px 18px', fontWeight: 600, cursor: 'pointer', marginRight: 8 }}
-                            disabled={!selectedMapCoords}
-                            onClick={handleInsertCoordsToModal}
-                          >Usar estas coordenadas</button>
-                          <button
-                            type="button"
-                            style={{ background: '#e5e7eb', color: '#222', border: 'none', borderRadius: 5, padding: '8px 18px', fontWeight: 600, cursor: 'pointer' }}
-                            onClick={() => setShowMapsModal(false)}
-                          >Cancelar</button>
-                        </div>
-                      </div>
-                    </div>
-                  )}
                 </div>
                 {showUbicacionSuggestions && ubicacionInput && filteredUbicaciones.length > 0 && (
                   <ul
@@ -1344,8 +1303,8 @@ const Cuadrilla_Asignar: React.FC = () => {
                         <th style={{ padding: 8, border: '1px solid #e5e7eb', minWidth: 160 }}>Empleado</th>
                         <th style={{ padding: 8, border: '1px solid #e5e7eb' }}>Asignacion</th>
                         <th style={{ padding: 8, border: '1px solid #e5e7eb', minWidth: 110 }}>Fecha</th>
-                        <th style={{ padding: 8, border: '1px solid #e5e7eb', minWidth: 90 }}>idsite</th>
-                        <th style={{ padding: 8, border: '1px solid #e5e7eb', minWidth: 90 }}>correlativo</th>
+                        {/* <th style={{ padding: 8, border: '1px solid #e5e7eb', minWidth: 90 }}>idsite</th> */}
+                        {/* <th style={{ padding: 8, border: '1px solid #e5e7eb', minWidth: 90 }}>correlativo</th> */}
                         <th style={{ padding: 8, border: '1px solid #e5e7eb', minWidth: 80 }}>Acción</th>
                       </tr>
                     </thead>
@@ -1369,8 +1328,8 @@ const Cuadrilla_Asignar: React.FC = () => {
                           <td style={{ padding: 8, border: '1px solid #e5e7eb' }}>{row.Empleado}</td>
                           <td style={{ padding: 8, border: '1px solid #e5e7eb' }}>{row.Nombreubicacion ? row.Nombreubicacion : (row.Concatenado ?? '')}</td>
                           <td style={{ padding: 8, border: '1px solid #e5e7eb' }}>{row.fecha ?? ''}</td>
-                          <td style={{ padding: 8, border: '1px solid #e5e7eb' }}>{row.idsite ?? ''}</td>
-                          <td style={{ padding: 8, border: '1px solid #e5e7eb' }}>{row.correlativo ?? ''}</td>
+                          {/* <td style={{ padding: 8, border: '1px solid #e5e7eb' }}>{row.idsite ?? ''}</td> */}
+                          {/* <td style={{ padding: 8, border: '1px solid #e5e7eb' }}>{row.correlativo ?? ''}</td> */}
                           <td style={{ padding: 8, border: '1px solid #e5e7eb', textAlign: 'center' }}>
                             <button type="button" onClick={() => handleDeleteRow(idx)} style={{ background: '#dc2626', color: 'white', border: 'none', borderRadius: 4, padding: '4px 10px', fontWeight: 600, cursor: 'pointer' }}>
                               Eliminar
