@@ -6,8 +6,7 @@ const menuItems = [
   { label: 'Sites', path: '/sites' },
   { label: 'Asignacion', path: '/asignacion' },
   { label: 'Formulario', path: '/formulario_x1' },
-  { label: 'Google Mapseeeee', path: '/map-google' },
-  { label: 'prueba', path: '/map-google' },
+  { label: 'Google Maps', path: '/map-google' },
 ];
 
 export default menuItems;
