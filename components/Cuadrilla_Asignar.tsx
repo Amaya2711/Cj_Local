@@ -1,65 +1,55 @@
 import React, { useState, useEffect } from 'react';
 import { GoogleMap, Marker, useJsApiLoader } from '@react-google-maps/api';
-// Definir el array de librerías fuera del componente para evitar warnings de Google Maps
-// Usar solo los valores permitidos por el tipo Library de @react-google-maps/api
-const GOOGLE_MAPS_LIBRARIES: Array<'places' | 'drawing' | 'geometry' | 'visualization'> = ['places'];
-// Configuración para el modal de Google Maps
-const MAPS_MODAL_STYLE = {
-  position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(0,0,0,0.25)', zIndex: 2000,
-  display: 'flex', alignItems: 'center', justifyContent: 'center',
-};
-const MAPS_CONTAINER_STYLE = {
-  width: '400px', height: '400px', borderRadius: 12, overflow: 'hidden', boxShadow: '0 8px 32px rgba(0,0,0,0.18)', background: 'white', padding: 24
-};
 
-type Cuadrilla = {
-  IdEmpleado?: number;
-  idempleado?: number;
-  NombreEmpleado?: string;
-  nombreempleado?: string;
-}
-
-type Asignacion = {
-  id_cuadrilla?: string;
-  empleado?: string;
-  asignacion?: string;
-  fecha?: string;
-}
-
-// (Removed duplicate broken export default function and its logic.)
-// The correct Cuadrilla_Asignar React.FC is defined below and already includes TabNames and all required state.
-
-interface EmpleadoCuadrilla {
-  IdEmpleado?: number;
-  NombreEmpleado?: string;
-  idempleado?: number;
-  nombreempleado?: string;
-}
-
+// Define the SiteAsignacion type (adjust fields as needed based on your API response)
 interface SiteAsignacion {
   NroInterno?: string | number;
-  Concatenado: string;
+  Concatenado?: string;
   IDSite?: string | number;
   idsite?: string | number;
   IdSite?: string | number;
   Correlativo?: string | number;
   correlativo?: string | number;
   TipoTrabajo?: string;
+  // Add any other fields you expect from your API
 }
 
-// Tipos para Ubicación
+// Define the EmpleadoCuadrilla type (adjust fields as needed based on your API response)
+interface EmpleadoCuadrilla {
+  IdEmpleado?: string | number;
+  idempleado?: string | number;
+  NombreEmpleado?: string;
+  nombreempleado?: string;
+  // Add any other fields you expect from your API
+}
+
+// Define the Ubicacion type (adjust fields as needed based on your API response)
 interface Ubicacion {
-  IdUbicacion?: number;
-  idubicacion?: number;
+  IdUbicacion?: string | number;
+  idubicacion?: string | number;
+  NroInterno?: string | number;
   NombreUbicacion?: string;
   nombreubicacion?: string;
   Nombreubicacion?: string;
-  NroInterno?: string; // Campo correcto para Ubicacion
   Latitud?: string;
   Longitud?: string;
   Direccion?: string;
   Referencia?: string;
+  // Add any other fields you expect from your API
 }
+
+// Definir el array de librerías fuera del componente para evitar warnings de Google Maps
+// Usar solo los valores permitidos por el tipo Library de @react-google-maps/api
+const GOOGLE_MAPS_LIBRARIES: Array<'places' | 'drawing' | 'geometry' | 'visualization'> = ['places'];
+// Configuración para el modal de Google Maps
+const MAPS_MODAL_STYLE = {
+  position: 'fixed' as 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(0,0,0,0.25)', zIndex: 2000,
+  display: 'flex', alignItems: 'center', justifyContent: 'center',
+};
+const MAPS_CONTAINER_STYLE = {
+  width: '400px', height: '400px', borderRadius: 12, overflow: 'hidden', boxShadow: '0 8px 32px rgba(0,0,0,0.18)', background: 'white', padding: 24
+};
+
 
 const Cuadrilla_Asignar: React.FC = () => {
     // Estado para la fecha seleccionada
@@ -724,17 +714,11 @@ const Cuadrilla_Asignar: React.FC = () => {
   };
           // ...código existente...
 
-  // Obtener asignaciones del día
+  // Obtener asignaciones del día (por fecha seleccionada, sin filtrar por cuadrilla)
   const fetchAsignacionesDia = async () => {
-    // Validar que selectedCuadrilla tenga valor antes de llamar
-    if (!selectedCuadrilla) {
-      setAsignacionesDia([]);
-      return;
-    }
-    // Usar la fecha seleccionada
     const pFecha = fechaInput;
     try {
-      const res = await fetch(`/api/cuadrilla-asignacion-dia?idCuadrilla=${selectedCuadrilla}&pFecha=${pFecha}`);
+      const res = await fetch(`/api/cuadrilla-asignacion-dia?pFecha=${pFecha}`);
       if (!res.ok) throw new Error('No se pudo cargar asignaciones del día');
       const data = await res.json();
       setAsignacionesDia(data);
@@ -820,7 +804,10 @@ const Cuadrilla_Asignar: React.FC = () => {
             borderTopLeftRadius: 10,
             borderTopRightRadius: 10
           }}
-          onClick={() => setActiveTab(1)}
+          onClick={() => {
+            setActiveTab(1);
+            fetchAsignacionesDia();
+          }}
         >Asignacion del dia</button>
       </div>
       {/* Contenido de pestañas */}
@@ -1351,13 +1338,23 @@ const Cuadrilla_Asignar: React.FC = () => {
         </div>
       )}
       {activeTab === 1 && (
-        // ...contenido de la pestaña Buscar asignación...
         <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', margin: '40px 0' }}>
           <div style={{ maxWidth: 1200, width: '100%', background: 'white', borderRadius: 16, boxShadow: '0 8px 32px rgba(0,0,0,0.08)', padding: 32, marginBottom: 32, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            {/* Aquí puedes agregar filtros o información de búsqueda adicional si lo necesitas */}
             <h3 style={{ marginBottom: 16, textAlign: 'center' }}>Asignaciones del día</h3>
-            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 10, gap: 8, width: '100%' }}>
-              <button type="button" onClick={() => handleExportAsignacionesDiaCSV()} style={{ background: '#059669', color: 'white', border: 'none', borderRadius: 5, padding: '7px 16px', fontWeight: 600, cursor: 'pointer' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 18 }}>
+              <label style={{ fontWeight: 600 }}>Fecha:</label>
+              <input
+                type="date"
+                value={fechaInput}
+                onChange={e => setFechaInput(e.target.value)}
+                style={{ padding: 8, borderRadius: 6, border: '1px solid #cbd5e1', fontSize: 15 }}
+              />
+              <button
+                type="button"
+                onClick={fetchAsignacionesDia}
+                style={{ background: '#059669', color: 'white', border: 'none', borderRadius: 5, padding: '7px 16px', fontWeight: 600, cursor: 'pointer' }}
+              >Buscar</button>
+              <button type="button" onClick={() => handleExportAsignacionesDiaCSV()} style={{ background: '#2563eb', color: 'white', border: 'none', borderRadius: 5, padding: '7px 16px', fontWeight: 600, cursor: 'pointer' }}>
                 Exportar CSV
               </button>
             </div>
@@ -1368,6 +1365,8 @@ const Cuadrilla_Asignar: React.FC = () => {
                     <th style={{ padding: 8, border: '1px solid #e5e7eb', minWidth: 260 }}>Empleado</th>
                     <th style={{ padding: 8, border: '1px solid #e5e7eb', minWidth: 260 }}>Asignacion</th>
                     <th style={{ padding: 8, border: '1px solid #e5e7eb', minWidth: 110 }}>Fecha</th>
+                    <th style={{ padding: 8, border: '1px solid #e5e7eb', minWidth: 60 }}>ID_Principal</th>
+                    <th style={{ padding: 8, border: '1px solid #e5e7eb', minWidth: 80 }}>Acción</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1379,6 +1378,71 @@ const Cuadrilla_Asignar: React.FC = () => {
                       <td style={{ padding: 8, border: '1px solid #e5e7eb', minWidth: 260, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{row.Empleado ?? row.NombreEmpleado ?? row.nombreempleado ?? ''}</td>
                       <td style={{ padding: 8, border: '1px solid #e5e7eb', minWidth: 260, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{row.Concatenado ?? row.concatenado ?? ''}</td>
                       <td style={{ padding: 8, border: '1px solid #e5e7eb' }}>{row.fecha ?? ''}</td>
+                      <td style={{ padding: 8, border: '1px solid #e5e7eb', textAlign: 'center' }}>
+                        <input type="checkbox" checked={!!row.ID_Principal} disabled readOnly />
+                      </td>
+                      <td style={{ padding: 8, border: '1px solid #e5e7eb', textAlign: 'center' }}>
+                        <button
+                          type="button"
+                          style={{
+                            background: (Number(row.ID_Principal) === 1) ? '#2563eb' : '#e5e7eb',
+                            color: (Number(row.ID_Principal) === 1) ? 'white' : '#888',
+                            border: 'none',
+                            borderRadius: 5,
+                            padding: '6px 14px',
+                            fontWeight: 600,
+                            fontSize: 15,
+                            cursor: (Number(row.ID_Principal) === 1) ? 'pointer' : 'not-allowed',
+                            opacity: (Number(row.ID_Principal) === 1) ? 1 : 0.6
+                          }}
+                          disabled={Number(row.ID_Principal) !== 1}
+                          onClick={() => {
+                            if (Number(row.ID_Principal) === 1) {
+                              setActiveTab(0);
+                              // Cargar datos en el formulario
+                              const cuadrillaId = String(row.id_cuadrilla ?? row.ID_CUADRILLA ?? row.idempleado ?? row.IdEmpleado ?? '');
+                              setSelectedCuadrilla(cuadrillaId);
+                              const cuadrillaObj = cuadrillas.find(c => String(c.IdEmpleado ?? c.idempleado) === cuadrillaId);
+                              setCuadrillaInput(cuadrillaObj ? (cuadrillaObj.NombreEmpleado ?? cuadrillaObj.nombreempleado ?? '') : '');
+                              if (row.idsite || row.IDSITE || row.IdSite) {
+                                const siteId = String(row.idsite ?? row.IDSITE ?? row.IdSite ?? '');
+                                const siteObj = sites.find(s => String(s.IDSite ?? s.idsite ?? s.IdSite) === siteId);
+                                setSelectedSiteObj(siteObj || null);
+                                setSiteInput(siteObj ? (siteObj.NroInterno ? siteObj.NroInterno + ' - ' : '') + siteObj.Concatenado : '');
+                                setModoSeleccion('site');
+                              } else if (row.Nombreubicacion || row.NombreUbicacion || row.nombreubicacion) {
+                                setModoSeleccion('ubicacion');
+                                const ubicacionObj = ubicaciones.find(u => String(u.NroInterno ?? '') === String(row.NroInterno ?? ''));
+                                setSelectedUbicacionObj(ubicacionObj || null);
+                                setUbicacionInput(ubicacionObj ? (ubicacionObj.NombreUbicacion ?? ubicacionObj.nombreubicacion ?? ubicacionObj.Nombreubicacion ?? '') : '');
+                              }
+                              setFechaInput(row.fecha ? String(row.fecha).slice(0, 10) : fechaInput);
+
+                              // Limpiar el grid y agregar solo el registro editado
+                              setGridData([
+                                {
+                                  id_cuadrilla: cuadrillaId,
+                                  Empleado: cuadrillaObj ? (cuadrillaObj.NombreEmpleado ?? cuadrillaObj.nombreempleado ?? '') : '',
+                                  NroInterno: String(row.NroInterno ?? ''),
+                                  Nombreubicacion: row.Nombreubicacion ?? row.NombreUbicacion ?? row.nombreubicacion ?? undefined,
+                                  Concatenado: row.Concatenado ?? '',
+                                  idsite: row.idsite ?? row.IDSITE ?? row.IdSite ?? '',
+                                  correlativo: row.correlativo ?? row.Correlativo ?? '',
+                                  fecha: row.fecha ? String(row.fecha).slice(0, 10) : fechaInput,
+                                  TipoTrabajo: row.TipoTrabajo ?? '',
+                                  Segmento: row.Segmento ?? '',
+                                  segmentoid: row.segmentoid ?? '',
+                                  Nodo: row.Nodo ?? '',
+                                  Plantilla: row.Plantilla ?? '',
+                                  nodoid: row.nodoid ?? '',
+                                  plantillaid: row.plantillaid ?? '',
+                                  // ...otros campos si es necesario
+                                }
+                              ]);
+                            }
+                          }}
+                        >Editar</button>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -1387,6 +1451,58 @@ const Cuadrilla_Asignar: React.FC = () => {
           </div>
         </div>
       )}
+    {/* Modal Google Maps para seleccionar ubicación */}
+    {showMapsModal && (
+      <div style={MAPS_MODAL_STYLE}>
+        <div style={{ width: '480px', height: '520px', borderRadius: 12, overflow: 'hidden', boxShadow: '0 8px 32px rgba(0,0,0,0.18)', background: 'white', padding: 24, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start' }}>
+          <h3 style={{ marginBottom: 12, textAlign: 'center' }}>Seleccionar ubicación en el mapa</h3>
+          <div style={{ width: '440px', height: '340px', borderRadius: 8, overflow: 'hidden', marginBottom: 18, border: '1px solid #e5e7eb' }}>
+            {isLoaded ? (
+              <GoogleMap
+                mapContainerStyle={{ width: '100%', height: '100%' }}
+                center={selectedMapCoords || { lat: -12.0464, lng: -77.0428 }}
+                zoom={selectedMapCoords ? 16 : 12}
+                onClick={e => {
+                  if (e && e.latLng) {
+                    setSelectedMapCoords({ lat: e.latLng.lat(), lng: e.latLng.lng() });
+                  }
+                }}
+              >
+                {selectedMapCoords && (
+                  <Marker position={selectedMapCoords} />
+                )}
+              </GoogleMap>
+            ) : (
+              <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>Cargando mapa...</div>
+            )}
+          </div>
+          {selectedMapCoords && (
+            <div style={{ marginBottom: 12, fontSize: 15, color: '#2563eb', textAlign: 'center' }}>
+              Coordenadas seleccionadas:<br />
+              <span style={{ fontWeight: 600 }}>Lat: {selectedMapCoords.lat.toFixed(6)}, Lng: {selectedMapCoords.lng.toFixed(6)}</span>
+            </div>
+          )}
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, width: '100%' }}>
+            <button
+              type="button"
+              onClick={() => setShowMapsModal(false)}
+              style={{ background: '#e5e7eb', color: '#222', border: 'none', borderRadius: 5, padding: '8px 18px', fontWeight: 600, cursor: 'pointer' }}
+            >Cancelar</button>
+            <button
+              type="button"
+              onClick={() => {
+                setShowMapsModal(false);
+                if (showModalUbicacion && selectedMapCoords) {
+                  setModalUbicacion(v => ({ ...v, Latitud: String(selectedMapCoords.lat), Longitud: String(selectedMapCoords.lng) }));
+                }
+              }}
+              style={{ background: '#059669', color: 'white', border: 'none', borderRadius: 5, padding: '8px 18px', fontWeight: 600, cursor: 'pointer' }}
+              disabled={!selectedMapCoords}
+            >Usar ubicación</button>
+          </div>
+        </div>
+      </div>
+    )}
     </div>
   );
 };

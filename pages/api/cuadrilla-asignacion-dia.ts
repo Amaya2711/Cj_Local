@@ -7,14 +7,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
     // Obtener parámetros desde la query
     const { idCuadrilla, pFecha } = req.query;
-    if (!idCuadrilla || !pFecha) {
-      res.status(400).json({ error: 'Faltan parámetros: idCuadrilla y pFecha son requeridos.' });
+    if (!idCuadrilla && !pFecha) {
+      res.status(400).json({ error: 'Debe enviar al menos el idCuadrilla o la fecha.' });
       return;
     }
 
     try {
-      // Ejecutar el procedimiento con ambos parámetros
-      const result = await sqlQuery`EXEC sp_ObtenerCuadrillaAsignacion @idCuadrilla = ${idCuadrilla}, @pFecha = ${pFecha}`;
+      // Ejecutar el procedimiento solo con los parámetros que se envíen
+      let result;
+      if (idCuadrilla && pFecha) {
+        result = await sqlQuery`EXEC sp_ObtenerCuadrillaAsignacion @idCuadrilla = ${idCuadrilla}, @pFecha = ${pFecha}`;
+      } else if (idCuadrilla) {
+        result = await sqlQuery`EXEC sp_ObtenerCuadrillaAsignacion @idCuadrilla = ${idCuadrilla}`;
+      } else if (pFecha) {
+        result = await sqlQuery`EXEC sp_ObtenerCuadrillaAsignacion @pFecha = ${pFecha}`;
+      }
       res.status(200).json(result);
     } catch (err: any) {
       console.error('Error en sp_ObtenerCuadrillaAsignacion:', err);
